@@ -16,7 +16,15 @@ class NumbersViewController: ViewController {
     @IBOutlet weak var number3: UITextField!
 
     @IBOutlet weak var result: UILabel!
-
+    
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 

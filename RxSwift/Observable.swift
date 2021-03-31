@@ -1,14 +1,4 @@
-//
-//  Observable.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 2/8/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
 
-/// A type-erased `ObservableType`. 
-///
-/// It represents a push style sequence.
 public class Observable<Element> : ObservableType {
     init() {
 #if TRACE_RESOURCES

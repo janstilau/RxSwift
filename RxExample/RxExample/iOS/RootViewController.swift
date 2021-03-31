@@ -10,9 +10,11 @@ import UIKit
 import RxSwift
 import RxCocoa
 
+// RootVC, 是在 Main 里面指定的.
 public class RootViewController : UITableViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
+        
         // force load
         _ = GitHubSearchRepositoriesAPI.sharedAPI
         _ = DefaultWikipediaAPI.sharedAPI
@@ -25,6 +27,7 @@ public class RootViewController : UITableViewController {
         geoService.authorized.drive(onNext: { _ in
 
         }).dispose()
+        
         geoService.location.drive(onNext: { _ in
 
         }).dispose()
