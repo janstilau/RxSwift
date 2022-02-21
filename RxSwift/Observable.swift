@@ -16,6 +16,7 @@ public class Observable<Element> : ObservableType {
 #endif
     }
     
+    // 一个, 公共的接口, 交给各个子类去完成.
     public func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         rxAbstractMethod()
     }

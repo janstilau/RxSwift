@@ -27,6 +27,8 @@ or create a new one in its place.
 
 In case explicit disposal is necessary, there is also `CompositeDisposable`.
 */
+
+// 一个 RAII 对象. 使用 init, deinit 方法, 进行 Disposeable 资源的管理工作. 
 public final class DisposeBag: DisposeBase {
     
     private var lock = SpinLock()
@@ -50,11 +52,12 @@ public final class DisposeBag: DisposeBase {
     private func _insert(_ disposable: Disposable) -> Disposable? {
         self.lock.performLocked {
             if self.isDisposed {
+                // 如果, 自己已经 disposed 了, 那么新加入的 Disposable 返回, 从上面的代码看到是直接调用 dispose 了.
                 return disposable
             }
 
+            // 如果, 自己没有 disposed, 存起来.
             self.disposables.append(disposable)
-
             return nil
         }
     }

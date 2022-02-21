@@ -6,6 +6,10 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
+/*
+ 一个工具类, 专门进行内存对象的统计工作.
+ TRACE_RESOURCES 是 Swift 版本里面, 宏定义控制编译的方式. 
+ */
 #if TRACE_RESOURCES
     private let resourceCount = AtomicInt(0)
 

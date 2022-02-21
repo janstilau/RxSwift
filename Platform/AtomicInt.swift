@@ -65,6 +65,7 @@ func decrement(_ this: AtomicInt) -> Int32 {
     sub(this, 1)
 }
 
+// 只是取值的时候加锁, & 运算不进行加锁.
 @inline(__always)
 func isFlagSet(_ this: AtomicInt, _ mask: Int32) -> Bool {
     (load(this) & mask) != 0

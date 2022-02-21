@@ -14,11 +14,16 @@ extension ObservableType {
 
      - returns: An observable sequence with no elements.
      */
+    /*
+     类方法, 返回实际的逻辑对象, 是一个经常使用的办法.
+     类方法, 是一个工厂, 返回一个抽象数据类型, 根据类方法的名称不同, 返回不同的实际对象.
+     */
     public static func empty() -> Observable<Element> {
         EmptyProducer<Element>()
     }
 }
 
+// EmptyProducer 直接复写了 subscribe 方法, 在 subscribe 的时候, 直接给 observer 发送 complete event.
 final private class EmptyProducer<Element>: Producer<Element> {
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         observer.on(.completed)

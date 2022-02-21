@@ -9,21 +9,21 @@
 extension ObservableType {
     /**
      Returns an observable sequence that contains a single element.
-
+     
      - seealso: [just operator on reactivex.io](http://reactivex.io/documentation/operators/just.html)
-
+     
      - parameter element: Single element in the resulting observable sequence.
      - returns: An observable sequence containing the single specified element.
      */
     public static func just(_ element: Element) -> Observable<Element> {
         Just(element: element)
     }
-
+    
     /**
      Returns an observable sequence that contains a single element.
-
+     
      - seealso: [just operator on reactivex.io](http://reactivex.io/documentation/operators/just.html)
-
+     
      - parameter element: Single element in the resulting observable sequence.
      - parameter scheduler: Scheduler to send the single element on.
      - returns: An observable sequence containing the single specified element.
@@ -35,14 +35,14 @@ extension ObservableType {
 
 final private class JustScheduledSink<Observer: ObserverType>: Sink<Observer> {
     typealias Parent = JustScheduled<Observer.Element>
-
+    
     private let parent: Parent
-
+    
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
         super.init(observer: observer, cancel: cancel)
     }
-
+    
     func run() -> Disposable {
         let scheduler = self.parent.scheduler
         return scheduler.schedule(self.parent.element) { element in
@@ -59,12 +59,12 @@ final private class JustScheduledSink<Observer: ObserverType>: Sink<Observer> {
 final private class JustScheduled<Element>: Producer<Element> {
     fileprivate let scheduler: ImmediateSchedulerType
     fileprivate let element: Element
-
+    
     init(element: Element, scheduler: ImmediateSchedulerType) {
         self.scheduler = scheduler
         self.element = element
     }
-
+    
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         let sink = JustScheduledSink(parent: self, observer: observer, cancel: cancel)
         let subscription = sink.run()
@@ -79,6 +79,8 @@ final private class Just<Element>: Producer<Element> {
         self.element = element
     }
     
+    // Just, 完全重写了父类的 subscribe 方法. 返回了一个 FakeDisposable.
+    // 当一个 Just 进行 subscribe 的时候, 直接就是将存储的值, 发送给 observer, 然后结束.
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         observer.on(.next(self.element))
         observer.on(.completed)

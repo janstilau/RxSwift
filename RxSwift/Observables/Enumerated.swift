@@ -31,8 +31,7 @@ final private class EnumeratedSink<Element, Observer: ObserverType>: Sink<Observ
                 let nextIndex = try incrementChecked(&self.index)
                 let next = (index: nextIndex, element: value)
                 self.forwardOn(.next(next))
-            }
-            catch let e {
+            } catch let e {
                 self.forwardOn(.error(e))
                 self.dispose()
             }
@@ -46,6 +45,7 @@ final private class EnumeratedSink<Element, Observer: ObserverType>: Sink<Observ
     }
 }
 
+// Enumerated 就没有复写 subscribe 方法, 而是走了 Producer 的逻辑. 
 final private class Enumerated<Element>: Producer<(index: Int, element: Element)> {
     private let source: Observable<Element>
 
