@@ -242,5 +242,9 @@ func printSequenceDifferences<Element>(_ lhs: [Element], _ rhs: [Element], _ equ
     for (index, element) in rhs[shortest ..< rhs.count].enumerated() {
         print("rhs[\(index + shortest)]:\n    \(element)")
     }
+    
+    Observable.create { observer in
+        observer.on(.c)
+    }
 }
 #endif

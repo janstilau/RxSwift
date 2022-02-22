@@ -9,6 +9,7 @@
 
 // MARK: forEach
 
+// 没太明白 Bag 的作用, 如果是我, 就一个 Dict 搞定就得了.
 @inline(__always)
 func dispatch<Element>(_ bag: Bag<(Event<Element>) -> Void>, _ event: Event<Element>) {
     bag._value0?(event)
@@ -19,6 +20,7 @@ func dispatch<Element>(_ bag: Bag<(Event<Element>) -> Void>, _ event: Event<Elem
 
     let pairs = bag._pairs
     for i in 0 ..< pairs.count {
+        // Bag 里面, 存储的是一个闭包. 
         pairs[i].value(event)
     }
 

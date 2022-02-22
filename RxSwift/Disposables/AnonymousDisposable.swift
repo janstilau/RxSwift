@@ -52,6 +52,7 @@ extension Disposables {
     /// Constructs a new disposable with the given action used for disposal.
     ///
     /// - parameter dispose: Disposal action which will be run upon calling `dispose`.
+    // 这里, 传递过来的动作是, 当被 dispose 的时候, 应该执行的动作. 
     public static func create(with dispose: @escaping () -> Void) -> Cancelable {
         AnonymousDisposable(disposeAction: dispose)
     }

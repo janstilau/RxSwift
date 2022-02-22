@@ -194,6 +194,7 @@ private class ReplayBufferBase<Element>
     }
 }
 
+// 只存储一个值.
 private final class ReplayOne<Element> : ReplayBufferBase<Element> {
     private var value: Element?
     
@@ -205,6 +206,7 @@ private final class ReplayOne<Element> : ReplayBufferBase<Element> {
         
     }
     
+    // One, 就是替换.
     override func addValueToBuffer(_ value: Element) {
         self.value = value
     }
@@ -232,6 +234,7 @@ private class ReplayManyBase<Element>: ReplayBufferBase<Element> {
         self.queue.enqueue(value)
     }
 
+    // 将, 缓存里面的事件, 发送给新的 Observer. 
     override func replayBuffer<Observer: ObserverType>(_ observer: Observer) where Observer.Element == Element {
         for item in self.queue {
             observer.on(.next(item))

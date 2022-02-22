@@ -36,6 +36,8 @@ final private class MapSink<SourceType, Observer: ObserverType>: Sink<Observer>,
         super.init(observer: observer, cancel: cancel)
     }
 
+    // self.dispose -> SinkDispose 的 Dispose. 这会导致, 整个响应链的上游进行 dispose.
+    // 然而, Event 还是在进行传递, 所以后续的节点, 在 On 事件里面, 应该对于 error, complete 进行 dispose. 这样, 下游的节点也可以正常的进行 dispose.
     func on(_ event: Event<SourceType>) {
         switch event {
         case .next(let element):

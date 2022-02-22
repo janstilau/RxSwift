@@ -6,6 +6,7 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
+// 提供一个处理 Event 的闭包, 所有的 on 操作, 都是调用这个闭包. 
 final class AnonymousObserver<Element>: ObserverBase<Element> {
     typealias EventHandler = (Event<Element>) -> Void
     

@@ -124,6 +124,7 @@ final private class SkipUntilSink<Other, Observer: ObserverType>
     }
     
     func run() -> Disposable {
+        // 引入了一个中间层, 这个中间层, 来进行控制变量的值进行变化. 
         let sourceSubscription = self.parent.source.subscribe(self)
         let otherObserver = SkipUntilSinkOther(parent: self)
         let otherSubscription = self.parent.other.subscribe(otherObserver)

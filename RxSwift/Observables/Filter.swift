@@ -52,11 +52,11 @@ final private class FilterSink<Observer: ObserverType>: Sink<Observer>, Observer
         case .next(let value):
             do {
                 let satisfies = try self.predicate(value)
+                // 只有, 符合了 Filter 的过滤条件的信号, 才会参与到后面的信号处理中. 
                 if satisfies {
                     self.forwardOn(.next(value))
                 }
-            }
-            catch let e {
+            } catch let e {
                 self.forwardOn(.error(e))
                 self.dispose()
             }

@@ -7,7 +7,7 @@
 //
 
 #if DEBUG
-    import Foundation
+import Foundation
 #endif
 
 extension ObservableType {
@@ -82,48 +82,50 @@ extension ObservableType {
         onCompleted: (() -> Void)? = nil,
         onDisposed: (() -> Void)? = nil
     ) -> Disposable {
-            let disposable: Disposable
+        let disposable: Disposable
+        
+        if let disposed = onDisposed {
+            disposable = Disposables.create(with: disposed)
+        } else {
+            disposable = Disposables.create()
+        }
+        
+#if DEBUG
+        let synchronizationTracker = SynchronizationTracker()
+#endif
+        
+        let callStack = Hooks.recordCallStackOnError ? Hooks.customCaptureSubscriptionCallstack() : []
+        
+        // 将各种闭包包装成为一个对象. 后续操作的是这个对象 .
+        let observer = AnonymousObserver<Element> { event in
             
-            if let disposed = onDisposed {
-                disposable = Disposables.create(with: disposed)
-            }
-            else {
-                disposable = Disposables.create()
-            }
+#if DEBUG
+            synchronizationTracker.register(synchronizationErrorMessage: .default)
+            defer { synchronizationTracker.unregister() }
+#endif
             
-            #if DEBUG
-                let synchronizationTracker = SynchronizationTracker()
-            #endif
-            
-            let callStack = Hooks.recordCallStackOnError ? Hooks.customCaptureSubscriptionCallstack() : []
-            
-            let observer = AnonymousObserver<Element> { event in
-                
-                #if DEBUG
-                    synchronizationTracker.register(synchronizationErrorMessage: .default)
-                    defer { synchronizationTracker.unregister() }
-                #endif
-                
-                switch event {
-                case .next(let value):
-                    onNext?(value)
-                case .error(let error):
-                    if let onError = onError {
-                        onError(error)
-                    }
-                    else {
-                        Hooks.defaultErrorHandler(callStack, error)
-                    }
-                    disposable.dispose()
-                case .completed:
-                    onCompleted?()
-                    disposable.dispose()
+            switch event {
+            case .next(let value):
+                onNext?(value)
+            case .error(let error):
+                if let onError = onError {
+                    onError(error)
                 }
+                else {
+                    Hooks.defaultErrorHandler(callStack, error)
+                }
+                disposable.dispose()
+            case .completed:
+                onCompleted?()
+                disposable.dispose()
             }
-            return Disposables.create(
-                self.asObservable().subscribe(observer),
-                disposable
-            )
+        }
+        
+        // 大量的使用了面向接口编程的思想.
+        return Disposables.create(
+            self.asObservable().subscribe(observer),
+            disposable
+        )
     }
 }
 
@@ -132,25 +134,25 @@ import Foundation
 extension Hooks {
     public typealias DefaultErrorHandler = (_ subscriptionCallStack: [String], _ error: Error) -> Void
     public typealias CustomCaptureSubscriptionCallstack = () -> [String]
-
+    
     private static let lock = RecursiveLock()
     private static var _defaultErrorHandler: DefaultErrorHandler = { subscriptionCallStack, error in
-        #if DEBUG
-            let serializedCallStack = subscriptionCallStack.joined(separator: "\n")
-            print("Unhandled error happened: \(error)")
-            if !serializedCallStack.isEmpty {
-                print("subscription called from:\n\(serializedCallStack)")
-            }
-        #endif
+#if DEBUG
+        let serializedCallStack = subscriptionCallStack.joined(separator: "\n")
+        print("Unhandled error happened: \(error)")
+        if !serializedCallStack.isEmpty {
+            print("subscription called from:\n\(serializedCallStack)")
+        }
+#endif
     }
     private static var _customCaptureSubscriptionCallstack: CustomCaptureSubscriptionCallstack = {
-        #if DEBUG
-            return Thread.callStackSymbols
-        #else
-            return []
-        #endif
+#if DEBUG
+        return Thread.callStackSymbols
+#else
+        return []
+#endif
     }
-
+    
     /// Error handler called in case onError handler wasn't provided.
     public static var defaultErrorHandler: DefaultErrorHandler {
         get {

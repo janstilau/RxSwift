@@ -10,6 +10,7 @@
 ///
 /// Sequence grammar: 
 /// **next\* (error | completed)**
+
 @frozen public enum Event<Element> {
     /// Next element is produced.
     case next(Element)
@@ -35,6 +36,7 @@ extension Event: CustomDebugStringConvertible {
     }
 }
 
+// 这种, Enum 添加 is 查询的写法, 是很好的写法. Enum 就是一个盒子, 将盒子的拆解过程, 封装到盒子的类里面, 是正确的.
 extension Event {
     /// Is `completed` or `error` event.
     public var isStopEvent: Bool {

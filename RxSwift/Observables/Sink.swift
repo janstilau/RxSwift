@@ -25,10 +25,6 @@ class Sink<Observer: ObserverType>: Disposable {
     }
     
     final func forwardOn(_ event: Event<Observer.Element>) {
-#if DEBUG
-        self.synchronizationTracker.register(synchronizationErrorMessage: .default)
-        defer { self.synchronizationTracker.unregister() }
-#endif
         // 如果, 自身已经 disposed 了, 那么就不接受后续发射的信号了.
         if isFlagSet(self.disposed, 1) {
             return
@@ -48,6 +44,8 @@ class Sink<Observer: ObserverType>: Disposable {
     // 将自身的状态, 设置为 disposed
     func dispose() {
         fetchOr(self.disposed, 1)
+        // Sink 的 dispose, 仅仅是状态的改变.
+        // 真正的取消操作, 是 cancel 的 dispose 进行的. 
         self.cancel.dispose()
     }
     
