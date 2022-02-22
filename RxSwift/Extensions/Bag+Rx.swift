@@ -9,9 +9,13 @@
 
 // MARK: forEach
 
-// 没太明白 Bag 的作用, 如果是我, 就一个 Dict 搞定就得了.
+/*
+ 对于 Bag 逻辑的处理.
+ 以下的逻辑, 是完完全全建立在, 对于 Bag 的实现细节清楚明白的基础上的.
+ */
 @inline(__always)
 func dispatch<Element>(_ bag: Bag<(Event<Element>) -> Void>, _ event: Event<Element>) {
+    // Bag 里面, 存储的元素, 应该是一个接受 Event 数据的闭包表达式
     bag._value0?(event)
 
     if bag._onlyFastPath {
@@ -20,7 +24,6 @@ func dispatch<Element>(_ bag: Bag<(Event<Element>) -> Void>, _ event: Event<Elem
 
     let pairs = bag._pairs
     for i in 0 ..< pairs.count {
-        // Bag 里面, 存储的是一个闭包. 
         pairs[i].value(event)
     }
 

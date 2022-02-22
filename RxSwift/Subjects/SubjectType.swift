@@ -7,6 +7,7 @@
 //
 
 /// Represents an object that is both an observable sequence as well as an observer.
+/// SubjectType 就是, 既可以充当发布者, 也可以充当监听者.
 public protocol SubjectType : ObservableType {
     /// The type of the observer that represents this subject.
     ///
@@ -17,5 +18,4 @@ public protocol SubjectType : ObservableType {
     ///
     /// - returns: Observer interface for subject.
     func asObserver() -> Observer
-    
 }

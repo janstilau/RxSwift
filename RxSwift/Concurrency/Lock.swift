@@ -15,7 +15,8 @@ protocol Lock {
 typealias SpinLock = RecursiveLock
 
 extension RecursiveLock : Lock {
-    @inline(__always)
+        
+    // 这种, 根据闭包的返回值, 来确定自己的返回值的函数是一种通用设计范式. 
     final func performLocked<T>(_ action: () -> T) -> T {
         self.lock(); defer { self.unlock() }
         return action()

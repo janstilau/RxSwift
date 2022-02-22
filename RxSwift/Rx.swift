@@ -10,7 +10,6 @@
  一个工具类, 专门进行内存对象的统计工作.
  TRACE_RESOURCES 是 Swift 版本里面, 宏定义控制编译的方式. 
  */
-#if TRACE_RESOURCES
 private let resourceCount = AtomicInt(0)
 
 /// Resource utilization information
@@ -34,7 +33,6 @@ public struct Resources {
         decrement(resourceCount)
     }
 }
-#endif
 
 /// Swift does not implement abstract methods. This method is used as a runtime check to ensure that methods which intended to be abstract (i.e., they should be implemented in subclasses) are not called directly on the superclass.
 func rxAbstractMethod(file: StaticString = #file, line: UInt = #line) -> Swift.Never {

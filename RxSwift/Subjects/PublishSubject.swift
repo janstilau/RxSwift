@@ -8,13 +8,17 @@
 
 /// Represents an object that is both an observable sequence as well as an observer.
 ///
-/// Each notification is broadcasted to all subscribed observers.
+/// Each notification is broadcasted to all subscribed observers. /**
+
+
+
 public final class PublishSubject<Element>
 : Observable<Element>
 , SubjectType
 , Cancelable
 , ObserverType
 , SynchronizedUnsubscribeType {
+    
     public typealias SubjectObserverType = PublishSubject<Element>
     
     typealias Observers = AnyObserver<Element>.s
@@ -28,7 +32,7 @@ public final class PublishSubject<Element>
     private let lock = RecursiveLock()
     
     // state
-    private var disposed = false
+    private var disposed = false // 标记, 是否已经结束.
     private var observers = Observers()
     private var stopped = false
     private var stoppedEvent = nil as Event<Element>?
@@ -45,9 +49,6 @@ public final class PublishSubject<Element>
     /// Creates a subject.
     public override init() {
         super.init()
-#if TRACE_RESOURCES
-        _ = Resources.incrementTotal()
-#endif
     }
     
     /// Notifies all subscribed observers about next event.
@@ -71,7 +72,7 @@ public final class PublishSubject<Element>
             return self.observers
         case .completed, .error:
             // 如果, 是结束事件, 那么要记录一下 stopEvent.
-            // 在之后的订阅的时候, 直接传递 stopEvent 给对方. 
+            // 在之后的订阅的时候, 直接传递 stopEvent 给对方.
             if self.stoppedEvent == nil {
                 self.stoppedEvent = event
                 self.stopped = true
@@ -95,7 +96,8 @@ public final class PublishSubject<Element>
     }
     
     // synchronized_subscribe 这种明显函数名的命名, 展示了这个方法, 就是在锁的环境下. 方法内部不需要考虑所的问题.
-    func synchronized_subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
+    func synchronized_subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable
+    where Observer.Element == Element {
         if let stoppedEvent = self.stoppedEvent {
             observer.on(stoppedEvent)
             return Disposables.create()
@@ -121,6 +123,7 @@ public final class PublishSubject<Element>
     }
     
     /// Returns observer interface for subject.
+    // asObserver() 的限制, 是返回一个 Observeable 就可以了. 所以, 具体各个子类型, 返回什么样的数据, 各个子类型自己把握.
     public func asObserver() -> PublishSubject<Element> {
         self
     }
@@ -135,10 +138,4 @@ public final class PublishSubject<Element>
         self.observers.removeAll()
         self.stoppedEvent = nil
     }
-    
-#if TRACE_RESOURCES
-    deinit {
-        _ = Resources.decrementTotal()
-    }
-#endif
 }

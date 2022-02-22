@@ -135,7 +135,24 @@ class NumbersViewController: ViewController {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        testKeypath()
+        testPublisherSuj()
+    }
+    
+    func testPublisherSuj() {
+        let value =
+//        Observable.from([1, 2, 3])
+        Observable<Int>.interval(RxTimeInterval.seconds(1), scheduler: MainScheduler())
+            .map{ $0 * 2}
+            .filter{ $0 % 2 == 0}
+        let observer = PublishSubject<Int>()
+        let observerSubscription = observer.subscribe { event in
+            print("1 \(event)")
+        }
+        value.subscribe(observer)
+        
+        value.subscribe { event in
+            print("2 \(event)")
+        }
     }
     
     func testCase() {

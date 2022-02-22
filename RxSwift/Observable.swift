@@ -6,27 +6,25 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
+/*
+ 
+ */
 /// A type-erased `ObservableType`. 
 ///
 /// It represents a push style sequence.
 public class Observable<Element> : ObservableType {
     init() {
-#if TRACE_RESOURCES
         _ = Resources.incrementTotal()
-#endif
+    }
+    deinit {
+        _ = Resources.decrementTotal()
     }
     
-    // 一个, 公共的接口, 交给各个子类去完成.
+    // func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element
     public func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         rxAbstractMethod()
     }
     
     public func asObservable() -> Observable<Element> { self }
-    
-    deinit {
-#if TRACE_RESOURCES
-        _ = Resources.decrementTotal()
-#endif
-    }
 }
 
