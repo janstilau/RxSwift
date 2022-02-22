@@ -1,25 +1,17 @@
-//
-//  Reactive.swift
-//  RxSwift
-//
-//  Created by Yury Korolev on 5/2/16.
-//  Copyright © 2016 Krunoslav Zaher. All rights reserved.
-//
-
 /**
  Use `Reactive` proxy as customization point for constrained protocol extensions.
-
+ 
  General pattern would be:
-
+ 
  // 1. Extend Reactive protocol with constrain on Base
  // Read as: Reactive Extension where Base is a SomeType
  extension Reactive where Base: SomeType {
  // 2. Put any specific reactive extension for SomeType here
  }
-
+ 
  With this approach we can have more specialized methods and properties using
  `Base` and not just specialized on common base type.
-
+ 
  `Binder`s are also automatically synthesized using `@dynamicMemberLookup` for writable reference properties of the reactive base.
  */
 
@@ -27,14 +19,15 @@
 public struct Reactive<Base> {
     /// Base object to extend.
     public let base: Base
-
+    
     /// Creates extensions with base object.
     ///
     /// - parameter base: Base object.
     public init(_ base: Base) {
         self.base = base
     }
-
+    
+    // 这种写法, 仅仅在实现 Wrapper 的方式下出现过.
     /// Automatically synthesized binder for a key path between the reactive
     /// base and one of its properties
     public subscript<Property>(dynamicMember keyPath: ReferenceWritableKeyPath<Base, Property>) -> Binder<Property> where Base: AnyObject {
@@ -48,10 +41,10 @@ public struct Reactive<Base> {
 public protocol ReactiveCompatible {
     /// Extended type
     associatedtype ReactiveBase
-
+    
     /// Reactive extensions.
     static var rx: Reactive<ReactiveBase>.Type { get set }
-
+    
     /// Reactive extensions.
     var rx: Reactive<ReactiveBase> { get set }
 }
@@ -64,7 +57,7 @@ extension ReactiveCompatible {
         // swiftlint:disable:next unused_setter_value
         set { }
     }
-
+    
     /// Reactive extensions.
     public var rx: Reactive<Self> {
         get { Reactive(self) }

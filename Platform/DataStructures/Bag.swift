@@ -17,6 +17,8 @@ struct BagKey {
     It's underlying type is UInt64. If we assume there in an idealized CPU that works at 4GHz,
      it would take ~150 years of continuous running time for it to overflow.
     */
+    
+    // 直接使用的 Int64 作为 Key. 理论上, 不会出问题.
     fileprivate let rawValue: UInt64
 }
 
@@ -29,6 +31,12 @@ Time and space complexity of insertion and deletion is O(n).
 
 It is suitable for storing small number of elements.
 */
+/*
+ Bag 是一个复合的数据结构.
+ 先是一个特殊的位置.
+ 然后是数组存储.
+ 最后是字典存储.
+ */
 struct Bag<T> : CustomDebugStringConvertible {
     /// Type of identifier for inserted elements.
     typealias KeyType = BagKey
@@ -52,8 +60,7 @@ struct Bag<T> : CustomDebugStringConvertible {
     var _onlyFastPath = true
 
     /// Creates new empty `Bag`.
-    init() {
-    }
+    init() { }
     
     /**
     Inserts `value` into bag.
@@ -66,6 +73,7 @@ struct Bag<T> : CustomDebugStringConvertible {
 
         _nextKey = BagKey(rawValue: _nextKey.rawValue &+ 1)
 
+        // 如果, 还没有占用那个特殊的位置, 占用了
         if _key0 == nil {
             _key0 = key
             _value0 = element
@@ -74,12 +82,15 @@ struct Bag<T> : CustomDebugStringConvertible {
 
         _onlyFastPath = false
 
+        // 如果, 已经使用了 Dict, 那么就直接 Dict 插入.
         if _dictionary != nil {
             _dictionary![key] = element
             return key
         }
 
+        // 如果, 数组还没有填满, 添加
         if _pairs.count < arrayDictionaryMaxSize {
+            // 数组里面, 存储的是 key value 的 pair.
             _pairs.append((key: key, value: element))
             return key
         }
@@ -89,7 +100,7 @@ struct Bag<T> : CustomDebugStringConvertible {
         return key
     }
     
-    /// - returns: Number of elements in bag.
+    // Count 累加.
     var count: Int {
         let dictionaryCount: Int = _dictionary?.count ?? 0
         return (_value0 != nil ? 1 : 0) + _pairs.count + dictionaryCount

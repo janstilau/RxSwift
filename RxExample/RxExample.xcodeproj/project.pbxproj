@@ -292,6 +292,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		06D3AB1627C4E15700CBB899 /* Attributes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Attributes.h; sourceTree = "<group>"; };
 		0744CDD31C4DB5F000720FD2 /* GeolocationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeolocationService.swift; sourceTree = "<group>"; };
 		0744CDEC1C4DB78600720FD2 /* GeolocationViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeolocationViewController.swift; sourceTree = "<group>"; };
 		075F130F1B4E9D5A000D7861 /* APIWrappersViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = APIWrappersViewController.swift; sourceTree = "<group>"; };
@@ -786,6 +787,7 @@
 		C86E2F2E1AE5A0CA00C31024 /* Examples */ = {
 			isa = PBXGroup;
 			children = (
+				06D3AB1627C4E15700CBB899 /* Attributes.h */,
 				252C9F671F1410D600F5F951 /* UIPickerViewExample */,
 				8479BC6F1C3BCB4800FB8B54 /* ImagePicker */,
 				C8BCD3E41C14A950005F1280 /* Numbers */,
@@ -1672,7 +1674,8 @@
 				PRODUCT_NAME = "RxExample-iOS";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
-				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Release;
 		};
@@ -1706,7 +1709,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "kzaher.RxExample-iOSTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RxExample-iOS.app/RxExample-iOS";
 			};
 			name = Release;
@@ -1724,7 +1728,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "kzaher.RxExample-iOSTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RxExample-iOS.app/RxExample-iOS";
 			};
 			name = "Release-Tests";
@@ -1791,7 +1796,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "rx.RxExample-iOSUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				TEST_TARGET_NAME = "RxExample-iOS";
 			};
 			name = Release;
@@ -1811,7 +1817,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "rx.RxExample-iOSUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				TEST_TARGET_NAME = "RxExample-iOS";
 			};
 			name = "Release-Tests";
@@ -1887,7 +1894,8 @@
 				PRODUCT_NAME = "RxExample-iOS";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
-				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = "Release-Tests";
 		};

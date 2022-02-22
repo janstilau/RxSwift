@@ -10,6 +10,7 @@
 
     import Foundation
 
+// 实际上 MAC 平台的 Thread.threadDict 也很有可能是这样实现的. 
     extension Thread {
 
         static func setThreadLocalStorageValue<T: AnyObject>(_ value: T?, forKey key: String) {

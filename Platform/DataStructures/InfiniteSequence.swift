@@ -8,6 +8,7 @@
 
 /// Sequence that repeats `repeatedValue` infinite number of times.
 struct InfiniteSequence<Element> : Sequence {
+    
     typealias Iterator = AnyIterator<Element>
     
     private let repeatedValue: Element

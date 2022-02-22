@@ -11,6 +11,9 @@
     import Darwin
     import Foundation
 
+/*
+ You can use the returned dictionary to store thread-specific data. The thread dictionary is not used during any manipulations of the NSThread object—it is simply a place where you can store any interesting data. For example, Foundation uses it to store the thread’s default NSConnection and NSAssertionHandler instances. You may define your own keys for the dictionary.
+ */
     extension Thread {
         static func setThreadLocalStorageValue<T: AnyObject>(_ value: T?, forKey key: NSCopying) {
             let currentThread = Thread.current
@@ -18,8 +21,7 @@
 
             if let newValue = value {
                 threadDictionary[key] = newValue
-            }
-            else {
+            } else {
                 threadDictionary[key] = nil
             }
         }

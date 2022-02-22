@@ -9,21 +9,21 @@
 extension ObservableType {
     /**
      Converts a optional to an observable sequence.
-
+     
      - seealso: [from operator on reactivex.io](http://reactivex.io/documentation/operators/from.html)
-
+     
      - parameter optional: Optional element in the resulting observable sequence.
      - returns: An observable sequence containing the wrapped value or not from given optional.
      */
     public static func from(optional: Element?) -> Observable<Element> {
         ObservableOptional(optional: optional)
     }
-
+    
     /**
      Converts a optional to an observable sequence.
-
+     
      - seealso: [from operator on reactivex.io](http://reactivex.io/documentation/operators/from.html)
-
+     
      - parameter optional: Optional element in the resulting observable sequence.
      - parameter scheduler: Scheduler to send the optional element on.
      - returns: An observable sequence containing the wrapped value or not from given optional.
@@ -34,16 +34,16 @@ extension ObservableType {
 }
 
 final private class ObservableOptionalScheduledSink<Observer: ObserverType>: Sink<Observer> {
-    typealias Element = Observer.Element 
+    typealias Element = Observer.Element
     typealias Parent = ObservableOptionalScheduled<Element>
-
+    
     private let parent: Parent
-
+    
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
         super.init(observer: observer, cancel: cancel)
     }
-
+    
     func run() -> Disposable {
         return self.parent.scheduler.schedule(self.parent.optional) { (optional: Element?) -> Disposable in
             if let next = optional {
@@ -65,12 +65,12 @@ final private class ObservableOptionalScheduledSink<Observer: ObserverType>: Sin
 final private class ObservableOptionalScheduled<Element>: Producer<Element> {
     fileprivate let optional: Element?
     fileprivate let scheduler: ImmediateSchedulerType
-
+    
     init(optional: Element?, scheduler: ImmediateSchedulerType) {
         self.optional = optional
         self.scheduler = scheduler
     }
-
+    
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         let sink = ObservableOptionalScheduledSink(parent: self, observer: observer, cancel: cancel)
         let subscription = sink.run()

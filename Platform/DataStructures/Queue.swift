@@ -7,32 +7,36 @@
 //
 
 /**
-Data structure that represents queue.
+ Data structure that represents queue.
+ 
+ Complexity of `enqueue`, `dequeue` is O(1) when number of operations is
+ averaged over N operations.
+ 
+ Complexity of `peek` is O(1).
+ */
 
-Complexity of `enqueue`, `dequeue` is O(1) when number of operations is
-averaged over N operations.
-
-Complexity of `peek` is O(1).
-*/
+// 一个自实现的循环队列. 
 struct Queue<T>: Sequence {
+    
     /// Type of generator.
     typealias Generator = AnyIterator<T>
-
+    
     private let resizeFactor = 2
     
     private var storage: ContiguousArray<T?>
     private var innerCount = 0
     private var pushNextIndex = 0
     private let initialCapacity: Int
-
-    /**
-    Creates new queue.
     
-    - parameter capacity: Capacity of newly created queue.
-    */
+    /**
+     Creates new queue.
+     
+     - parameter capacity: Capacity of newly created queue.
+     */
     init(capacity: Int) {
         initialCapacity = capacity
-
+        
+        // 直接使用的 ContiguousArray, 更加高效的数组.
         storage = ContiguousArray<T?>(repeating: nil, count: capacity)
     }
     
@@ -49,8 +53,6 @@ struct Queue<T>: Sequence {
     
     /// - returns: Element in front of a list of elements to `dequeue`.
     func peek() -> T {
-        precondition(count > 0)
-        
         return storage[dequeueIndex]!
     }
     
@@ -87,24 +89,23 @@ struct Queue<T>: Sequence {
         pushNextIndex += 1
         innerCount += 1
         
+        // 这是一个循环数组.
         if pushNextIndex >= storage.count {
             pushNextIndex -= storage.count
         }
     }
     
     private mutating func dequeueElementOnly() -> T {
-        precondition(count > 0)
-        
         let index = dequeueIndex
-
+        
         defer {
             storage[index] = nil
             innerCount -= 1
         }
-
+        
         return storage[index]!
     }
-
+    
     /// Dequeues element or throws an exception in case queue is empty.
     ///
     /// - returns: Dequeued element.
@@ -112,14 +113,14 @@ struct Queue<T>: Sequence {
         if self.count == 0 {
             return nil
         }
-
+        
         defer {
             let downsizeLimit = storage.count / (resizeFactor * resizeFactor)
             if count < downsizeLimit && downsizeLimit >= initialCapacity {
                 resizeTo(storage.count / resizeFactor)
             }
         }
-
+        
         return dequeueElementOnly()
     }
     
@@ -127,21 +128,21 @@ struct Queue<T>: Sequence {
     func makeIterator() -> AnyIterator<T> {
         var i = dequeueIndex
         var innerCount = count
-
+        
         return AnyIterator {
             if innerCount == 0 {
                 return nil
             }
-
+            
             defer {
                 innerCount -= 1
                 i += 1
             }
-
+            
             if i >= self.storage.count {
                 i -= self.storage.count
             }
-
+            
             return self.storage[i]
         }
     }
