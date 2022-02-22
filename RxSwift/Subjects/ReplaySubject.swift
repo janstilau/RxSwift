@@ -9,16 +9,19 @@
 /// Represents an object that is both an observable sequence as well as an observer.
 ///
 /// Each notification is broadcasted to all subscribed and future observers, subject to buffer trimming policies.
-public class ReplaySubject<Element>
-    : Observable<Element>
-    , SubjectType
-    , ObserverType
-    , Disposable {
-    public typealias SubjectObserverType = ReplaySubject<Element>
 
+// 大部分的逻辑, 和 PublishSubject 没有太大的区别.
+// 有了缓存管理的相关的策略.
+public class ReplaySubject<Element>
+: Observable<Element>
+, SubjectType
+, ObserverType
+, Disposable {
+    public typealias SubjectObserverType = ReplaySubject<Element>
+    
     typealias Observers = AnyObserver<Element>.s
     typealias DisposeKey = Observers.KeyType
-
+    
     /// Indicates whether the subject has any observers
     public var hasObservers: Bool {
         self.lock.performLocked { self.observers.count > 0 }
@@ -35,15 +38,15 @@ public class ReplaySubject<Element>
         }
     }
     fileprivate var observers = Observers()
-
-    #if DEBUG
-        fileprivate let synchronizationTracker = SynchronizationTracker()
-    #endif
-
+    
+#if DEBUG
+    fileprivate let synchronizationTracker = SynchronizationTracker()
+#endif
+    
     func unsubscribe(_ key: DisposeKey) {
         rxAbstractMethod()
     }
-
+    
     final var isStopped: Bool {
         self.stopped
     }
@@ -63,11 +66,12 @@ public class ReplaySubject<Element>
     /// Unsubscribe all observers and release resources.
     public func dispose() {
     }
-
+    
     /// Creates new instance of `ReplaySubject` that replays at most `bufferSize` last elements of sequence.
     ///
     /// - parameter bufferSize: Maximal number of elements to replay to observer after subscription.
     /// - returns: New instance of replay subject.
+    // 个人感觉, 这有点设计复杂, 直接数组不就得了, 一个的情况, 仅仅是 Many 的特例啊.
     public static func create(bufferSize: Int) -> ReplaySubject<Element> {
         if bufferSize == 1 {
             return ReplayOne()
@@ -76,28 +80,28 @@ public class ReplaySubject<Element>
             return ReplayMany(bufferSize: bufferSize)
         }
     }
-
+    
     /// Creates a new instance of `ReplaySubject` that buffers all the elements of a sequence.
     /// To avoid filling up memory, developer needs to make sure that the use case will only ever store a 'reasonable'
     /// number of elements.
     public static func createUnbounded() -> ReplaySubject<Element> {
         ReplayAll()
     }
-
-    #if TRACE_RESOURCES
-        override init() {
-            _ = Resources.incrementTotal()
-        }
-
-        deinit {
-            _ = Resources.decrementTotal()
-        }
-    #endif
+    
+#if TRACE_RESOURCES
+    override init() {
+        _ = Resources.incrementTotal()
+    }
+    
+    deinit {
+        _ = Resources.decrementTotal()
+    }
+#endif
 }
 
 private class ReplayBufferBase<Element>
-    : ReplaySubject<Element>
-    , SynchronizedUnsubscribeType {
+: ReplaySubject<Element>
+, SynchronizedUnsubscribeType {
     
     func trim() {
         rxAbstractMethod()
@@ -112,13 +116,13 @@ private class ReplayBufferBase<Element>
     }
     
     override func on(_ event: Event<Element>) {
-        #if DEBUG
-            self.synchronizationTracker.register(synchronizationErrorMessage: .default)
-            defer { self.synchronizationTracker.unregister() }
-        #endif
+#if DEBUG
+        self.synchronizationTracker.register(synchronizationErrorMessage: .default)
+        defer { self.synchronizationTracker.unregister() }
+#endif
         dispatch(self.synchronized_on(event), event)
     }
-
+    
     func synchronized_on(_ event: Event<Element>) -> Observers {
         self.lock.lock(); defer { self.lock.unlock() }
         if self.isDisposed {
@@ -146,13 +150,13 @@ private class ReplayBufferBase<Element>
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         self.lock.performLocked { self.synchronized_subscribe(observer) }
     }
-
+    
     func synchronized_subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         if self.isDisposed {
             observer.on(.error(RxError.disposed(object: self)))
             return Disposables.create()
         }
-     
+        
         let anyObserver = observer.asObserver()
         
         self.replayBuffer(anyObserver)
@@ -165,11 +169,11 @@ private class ReplayBufferBase<Element>
             return SubscriptionDisposable(owner: self, key: key)
         }
     }
-
+    
     func synchronizedUnsubscribe(_ disposeKey: DisposeKey) {
         self.lock.performLocked { self.synchronized_unsubscribe(disposeKey) }
     }
-
+    
     func synchronized_unsubscribe(_ disposeKey: DisposeKey) {
         if self.isDisposed {
             return
@@ -180,14 +184,14 @@ private class ReplayBufferBase<Element>
     
     override func dispose() {
         super.dispose()
-
+        
         self.synchronizedDispose()
     }
-
+    
     func synchronizedDispose() {
         self.lock.performLocked { self.synchronized_dispose() }
     }
-
+    
     func synchronized_dispose() {
         self.isDisposed = true
         self.observers.removeAll()
@@ -210,13 +214,13 @@ private final class ReplayOne<Element> : ReplayBufferBase<Element> {
     override func addValueToBuffer(_ value: Element) {
         self.value = value
     }
-
+    
     override func replayBuffer<Observer: ObserverType>(_ observer: Observer) where Observer.Element == Element {
         if let value = self.value {
             observer.on(.next(value))
         }
     }
-
+    
     override func synchronized_dispose() {
         super.synchronized_dispose()
         self.value = nil
@@ -233,14 +237,14 @@ private class ReplayManyBase<Element>: ReplayBufferBase<Element> {
     override func addValueToBuffer(_ value: Element) {
         self.queue.enqueue(value)
     }
-
-    // 将, 缓存里面的事件, 发送给新的 Observer. 
+    
+    // 对于 Many 来说, 就是将已经缓存的数据, 给新添加的 Observer 逐个的进行发送. 
     override func replayBuffer<Observer: ObserverType>(_ observer: Observer) where Observer.Element == Element {
         for item in self.queue {
             observer.on(.next(item))
         }
     }
-
+    
     override func synchronized_dispose() {
         super.synchronized_dispose()
         self.queue = Queue(capacity: 0)

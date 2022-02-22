@@ -13,18 +13,18 @@ protocol CombineLatestProtocol: AnyObject {
 }
 
 class CombineLatestSink<Observer: ObserverType>
-    : Sink<Observer>
-    , CombineLatestProtocol {
+: Sink<Observer>
+, CombineLatestProtocol {
     typealias Element = Observer.Element 
-   
+    
     let lock = RecursiveLock()
-
+    
     private let arity: Int
     private var numberOfValues = 0
     private var numberOfDone = 0
     private var hasValue: [Bool]
     private var isDone: [Bool]
-   
+    
     init(arity: Int, observer: Observer, cancel: Cancelable) {
         self.arity = arity
         self.hasValue = [Bool](repeating: false, count: arity)
@@ -42,7 +42,7 @@ class CombineLatestSink<Observer: ObserverType>
             self.hasValue[index] = true
             self.numberOfValues += 1
         }
-
+        
         if self.numberOfValues == self.arity {
             do {
                 let result = try self.getResult()
@@ -55,7 +55,7 @@ class CombineLatestSink<Observer: ObserverType>
         }
         else {
             var allOthersDone = true
-
+            
             for i in 0 ..< self.arity {
                 if i != index && !self.isDone[i] {
                     allOthersDone = false
@@ -79,10 +79,10 @@ class CombineLatestSink<Observer: ObserverType>
         if self.isDone[index] {
             return
         }
-
+        
         self.isDone[index] = true
         self.numberOfDone += 1
-
+        
         if self.numberOfDone == self.arity {
             self.forwardOn(.completed)
             self.dispose()
@@ -91,9 +91,9 @@ class CombineLatestSink<Observer: ObserverType>
 }
 
 final class CombineLatestObserver<Element>
-    : ObserverType
-    , LockOwnerType
-    , SynchronizedOnType {
+: ObserverType
+, LockOwnerType
+, SynchronizedOnType {
     typealias ValueSetter = (Element) -> Void
     
     private let parent: CombineLatestProtocol
@@ -114,7 +114,7 @@ final class CombineLatestObserver<Element>
     func on(_ event: Event<Element>) {
         self.synchronizedOn(event)
     }
-
+    
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next(let value):

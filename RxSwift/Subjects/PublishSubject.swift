@@ -58,9 +58,6 @@ public final class PublishSubject<Element>
         dispatch(self.synchronized_on(event), event)
     }
     
-    // 非常让人不爽的写法.
-    // synchronized_on 应该变为, getObservers 这样的写法.
-    // 因为, 真正的进行 invoke, 是在 dispatch 的内部.
     func synchronized_on(_ event: Event<Element>) -> Observers {
         self.lock.lock(); defer { self.lock.unlock() }
         
@@ -108,8 +105,6 @@ public final class PublishSubject<Element>
             return Disposables.create()
         }
         
-        // 这里, 存储的也是一个闭包.
-        // observer.on.
         let key = self.observers.insert(observer.on)
         return SubscriptionDisposable(owner: self, key: key)
     }

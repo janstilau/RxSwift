@@ -11,18 +11,18 @@
 
 
 private final class BinaryDisposable : DisposeBase, Cancelable {
-
+    
     private let disposed = AtomicInt(0)
-
+    
     // state
     private var disposable1: Disposable?
     private var disposable2: Disposable?
-
+    
     /// - returns: Was resource disposed.
     var isDisposed: Bool {
         isFlagSet(self.disposed, 1)
     }
-
+    
     /// Constructs new binary disposable from two disposables.
     ///
     /// - parameter disposable1: First disposable
@@ -32,7 +32,7 @@ private final class BinaryDisposable : DisposeBase, Cancelable {
         self.disposable2 = disposable2
         super.init()
     }
-
+    
     /// Calls the disposal action if and only if the current instance hasn't been disposed yet.
     ///
     /// After invoking disposal action, disposal action will be dereferenced.
@@ -47,10 +47,10 @@ private final class BinaryDisposable : DisposeBase, Cancelable {
 }
 
 extension Disposables {
-
+    
     /// Creates a disposable with the given disposables.
     public static func create(_ disposable1: Disposable, _ disposable2: Disposable) -> Cancelable {
         BinaryDisposable(disposable1, disposable2)
     }
-
+    
 }

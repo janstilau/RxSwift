@@ -40,7 +40,8 @@ class Producer<Element>: Observable<Element> {
         }
     }
 
-    func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
+    func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable)
+        where Observer.Element == Element {
         rxAbstractMethod()
     }
 }
@@ -83,6 +84,7 @@ private final class SinkDisposer: Cancelable {
         let previousState = fetchOr(self.state, DisposeState.disposed.rawValue)
 
         // 已经 disposded, 直接返回, 防止重复 dispose.
+        // 这个是十分必要的, 因为触发 dispose 的时机会很多. complete Event 事件会触发. 返回的 subscription 会触发. 所以, 应该进行拦截.
         if (previousState & DisposeState.disposed.rawValue) != 0 {
             return
         }
@@ -98,7 +100,8 @@ private final class SinkDisposer: Cancelable {
 
             sink.dispose()
             subscription.dispose()
-            // 主动, 放开引用, 放开了循环引用. 
+            
+            // 主动, 放开引用, 放开了循环引用. 这里非常重要, Sink 的生命周期, 其实是靠 Sink 和 SinkDisposer 循环引用保持的.
             self.sink = nil
             self.subscription = nil
         }

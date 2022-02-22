@@ -10,6 +10,7 @@ class Sink<Observer: ObserverType>: Disposable {
     
     fileprivate let observer: Observer // Sink 操作后数据后, 应该传递数据的去向
     fileprivate let cancel: Cancelable
+    
     private let disposed = AtomicInt(0)
     
 #if DEBUG
