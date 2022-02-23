@@ -120,18 +120,20 @@ class NumbersViewController: ViewController {
     @IBOutlet weak var number1: UITextField!
     @IBOutlet weak var number2: UITextField!
     @IBOutlet weak var number3: UITextField!
-
+    
     @IBOutlet weak var result: UILabel!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        Observable.combineLatest(number1.rx.text.orEmpty, number2.rx.text.orEmpty, number3.rx.text.orEmpty) { textValue1, textValue2, textValue3 -> Int in
-                return (Int(textValue1) ?? 0) + (Int(textValue2) ?? 0) + (Int(textValue3) ?? 0)
-            }
-            .map { $0.description }
-            .bind(to: result.rx.text)
-            .disposed(by: disposeBag)
+        
+        Observable.combineLatest(number1.rx.text.orEmpty,
+                                 number2.rx.text.orEmpty,
+                                 number3.rx.text.orEmpty) { textValue1, textValue2, textValue3 -> Int in
+            return (Int(textValue1) ?? 0) + (Int(textValue2) ?? 0) + (Int(textValue3) ?? 0)
+        }
+        .map { $0.description }
+        .bind(to: result.rx.text)
+        .disposed(by: disposeBag)
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -155,7 +157,7 @@ class NumbersViewController: ViewController {
     
     func testPublisherSuj() {
         let value =
-//        Observable.from([1, 2, 3])
+        //        Observable.from([1, 2, 3])
         Observable<Int>.interval(RxTimeInterval.seconds(1), scheduler: MainScheduler())
             .map{ $0 * 2}
             .filter{ $0 % 2 == 0}
@@ -168,12 +170,12 @@ class NumbersViewController: ViewController {
     
     func testCase() {
         let s = DynamicStruct()
-
+        
         // Use dynamic member lookup.
         let dynamic: Int = s.someDynamicMember
         print(dynamic)
         // Prints "325"
-
+        
         // Call the underlying subscript directly.
         let equivalent: String = s.someDynamicMember
         print(equivalent)
@@ -249,15 +251,15 @@ class NumbersViewController: ViewController {
         // 1
         let stringDebugDescription = \String.debugDescription
         // KeyPath
-
+        
         // 2
         let userRole = \IUser.role
         // KeyPath
-
+        
         // 3
         let firstIndexInteger = \[Int][0]
         // WritableKeyPath<[Int], Int>
-
+        
         // 4
         let firstInteger = \Array<Int>.first
         // KeyPath<[Int], Int?>
@@ -279,4 +281,4 @@ class Animal: NSObject {
 
 
 
- 
+
