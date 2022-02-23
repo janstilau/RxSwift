@@ -17,5 +17,6 @@ import RxSwift
 #endif
 
 class ViewController: OSViewController {
+    // 也就是, 带有一个 disposeBag 的 ViewController
     var disposeBag = DisposeBag()
 }

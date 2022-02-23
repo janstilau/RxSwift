@@ -20,6 +20,7 @@ enum SignupState {
     case signedUp(signedUp: Bool)
 }
 
+// 各种请求, 最终, 都是返回一个 Publisher. 里面的内容, 是这个请求的结果 
 protocol GitHubAPI {
     func usernameAvailable(_ username: String) -> Observable<Bool>
     func signup(_ username: String, password: String) -> Observable<Bool>

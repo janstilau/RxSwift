@@ -16,9 +16,9 @@ class ZipSink<Observer: ObserverType> : Sink<Observer>, ZipSinkProtocol {
     typealias Element = Observer.Element
     
     let arity: Int
-
+    
     let lock = RecursiveLock()
-
+    
     // state
     private var isDone: [Bool]
     
@@ -28,7 +28,7 @@ class ZipSink<Observer: ObserverType> : Sink<Observer>, ZipSinkProtocol {
         
         super.init(observer: observer, cancel: cancel)
     }
-
+    
     func getResult() throws -> Element {
         rxAbstractMethod()
     }
@@ -37,6 +37,7 @@ class ZipSink<Observer: ObserverType> : Sink<Observer>, ZipSinkProtocol {
         rxAbstractMethod()
     }
     
+    // 每个
     func next(_ index: Int) {
         var hasValueAll = true
         
@@ -51,8 +52,7 @@ class ZipSink<Observer: ObserverType> : Sink<Observer>, ZipSinkProtocol {
             do {
                 let result = try self.getResult()
                 self.forwardOn(.next(result))
-            }
-            catch let e {
+            } catch let e {
                 self.forwardOn(.error(e))
                 self.dispose()
             }
@@ -82,11 +82,11 @@ class ZipSink<Observer: ObserverType> : Sink<Observer>, ZipSinkProtocol {
 }
 
 final class ZipObserver<Element>
-    : ObserverType
-    , LockOwnerType
-    , SynchronizedOnType {
+: ObserverType
+, LockOwnerType
+, SynchronizedOnType {
     typealias ValueSetter = (Element) -> Void
-
+    
     private var parent: ZipSinkProtocol?
     
     let lock: RecursiveLock
@@ -107,7 +107,8 @@ final class ZipObserver<Element>
     func on(_ event: Event<Element>) {
         self.synchronizedOn(event)
     }
-
+    
+    // 在线程安全下做这个操作, 每个 Observer 都是使用的同一个锁.
     func synchronized_on(_ event: Event<Element>) {
         if self.parent != nil {
             switch event {

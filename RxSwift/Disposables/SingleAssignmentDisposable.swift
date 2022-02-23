@@ -11,6 +11,9 @@
  
  If an underlying disposable resource has already been set, future attempts to set the underlying disposable resource will throw an exception.
  */
+
+// 不太明白, 设计这么复杂的原因.
+// 不过, 就是存了一个 dispose 对象. 可以进行 dispose.
 public final class SingleAssignmentDisposable : DisposeBase, Cancelable {
     
     private struct DisposeState: OptionSet {
@@ -43,6 +46,7 @@ public final class SingleAssignmentDisposable : DisposeBase, Cancelable {
         let previousState = fetchOr(self.state, DisposeState.disposableSet.rawValue)
         
         if (previousState & DisposeState.disposableSet.rawValue) != 0 {
+            // 如果, 已经 dispose 了, 那么直接就报错.
             rxFatalError("oldState.disposable != nil")
         }
         

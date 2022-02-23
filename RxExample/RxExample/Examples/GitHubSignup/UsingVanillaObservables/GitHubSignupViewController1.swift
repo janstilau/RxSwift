@@ -11,6 +11,7 @@ import RxSwift
 import RxCocoa
 
 class GitHubSignupViewController1 : ViewController {
+    
     @IBOutlet weak var usernameOutlet: UITextField!
     @IBOutlet weak var usernameValidationOutlet: UILabel!
     
@@ -22,10 +23,10 @@ class GitHubSignupViewController1 : ViewController {
     
     @IBOutlet weak var signupOutlet: UIButton!
     @IBOutlet weak var signingUpOulet: UIActivityIndicatorView!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         let viewModel = GithubSignupViewModel1(
             input: (
                 username: usernameOutlet.rx.text.orEmpty.asObservable(),
@@ -39,7 +40,7 @@ class GitHubSignupViewController1 : ViewController {
                 wireframe: DefaultWireframe.shared
             )
         )
-
+        
         // bind results to  {
         viewModel.signupEnabled
             .subscribe(onNext: { [weak self] valid  in
@@ -47,30 +48,30 @@ class GitHubSignupViewController1 : ViewController {
                 self?.signupOutlet.alpha = valid ? 1.0 : 0.5
             })
             .disposed(by: disposeBag)
-
+        
         viewModel.validatedUsername
             .bind(to: usernameValidationOutlet.rx.validationResult)
             .disposed(by: disposeBag)
-
+        
         viewModel.validatedPassword
             .bind(to: passwordValidationOutlet.rx.validationResult)
             .disposed(by: disposeBag)
-
+        
         viewModel.validatedPasswordRepeated
             .bind(to: repeatedPasswordValidationOutlet.rx.validationResult)
             .disposed(by: disposeBag)
-
+        
         viewModel.signingIn
             .bind(to: signingUpOulet.rx.isAnimating)
             .disposed(by: disposeBag)
-
+        
         viewModel.signedIn
             .subscribe(onNext: { signedIn in
                 print("User signed in \(signedIn)")
             })
             .disposed(by: disposeBag)
         //}
-
+        
         let tapBackground = UITapGestureRecognizer()
         tapBackground.rx.event
             .subscribe(onNext: { [weak self] _ in

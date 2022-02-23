@@ -17,6 +17,15 @@ protocol CombineLatestProtocol: AnyObject {
  CombineLatestObserver 的 on 操作, 会调用 CombineLatestSink 的 next, fail, done 方法.
  CombineLatestSink 会在 next, fail, done 内部维护自己的状态, 然后根据结果, 判断应该给后续节点发送什么样的信号. 
  */
+
+/*
+ 如果, 我们自己去写, 可能就是一个 check 函数, 里面进行所有的状态判断, 如果都有值了, 就进行后续操作.
+ 然后, 每个异步操作的最后, 都进行这个 check 函数.
+ 
+ 现在, 使用 CombineLatestSink, 将各个异步操作的结果用信号的方式发出.
+ chekc 的逻辑在内部进行封装.
+ 这就像是使用 sequence map, filter 的逻辑已经, 使用这些提供好, 经典的通用的设计模板, 会让书写简洁, 阅读清晰. 
+ */
 class CombineLatestSink<Observer: ObserverType>
 : Sink<Observer> , CombineLatestProtocol {
     typealias Element = Observer.Element

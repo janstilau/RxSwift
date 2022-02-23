@@ -7,36 +7,28 @@
 //
 
 extension ObservableType {
-
-    /**
+    
+    /*
      Applies an accumulator function over an observable sequence and returns each intermediate result. The specified seed value is used as the initial accumulator value.
-
-     For aggregation behavior with no intermediate results, see `reduce`.
-
-     - seealso: [scan operator on reactivex.io](http://reactivex.io/documentation/operators/scan.html)
-
-     - parameter seed: The initial accumulator value.
-     - parameter accumulator: An accumulator function to be invoked on each element.
-     - returns: An observable sequence containing the accumulated values.
      */
     public func scan<A>(into seed: A, accumulator: @escaping (inout A, Element) throws -> Void)
-        -> Observable<A> {
+    -> Observable<A> {
         Scan(source: self.asObservable(), seed: seed, accumulator: accumulator)
     }
-
+    
     /**
      Applies an accumulator function over an observable sequence and returns each intermediate result. The specified seed value is used as the initial accumulator value.
-
+     
      For aggregation behavior with no intermediate results, see `reduce`.
-
+     
      - seealso: [scan operator on reactivex.io](http://reactivex.io/documentation/operators/scan.html)
-
+     
      - parameter seed: The initial accumulator value.
      - parameter accumulator: An accumulator function to be invoked on each element.
      - returns: An observable sequence containing the accumulated values.
      */
     public func scan<A>(_ seed: A, accumulator: @escaping (A, Element) throws -> A)
-        -> Observable<A> {
+    -> Observable<A> {
         return Scan(source: self.asObservable(), seed: seed) { acc, element in
             let currentAcc = acc
             acc = try accumulator(currentAcc, element)
@@ -45,9 +37,9 @@ extension ObservableType {
 }
 
 final private class ScanSink<Element, Observer: ObserverType>: Sink<Observer>, ObserverType {
-    typealias Accumulate = Observer.Element 
+    typealias Accumulate = Observer.Element
     typealias Parent = Scan<Element, Accumulate>
-
+    
     private let parent: Parent
     private var accumulate: Accumulate
     
@@ -57,14 +49,15 @@ final private class ScanSink<Element, Observer: ObserverType>: Sink<Observer>, O
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 在每次接收到事件之后, 进行 accumulate 之后, 立马将这个值交给下游节点.
+    // scan 会输出和原始序列相同个数的事件. 
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let element):
             do {
                 try self.parent.accumulator(&self.accumulate, element)
                 self.forwardOn(.next(self.accumulate))
-            }
-            catch let error {
+            } catch let error {
                 self.forwardOn(.error(error))
                 self.dispose()
             }
