@@ -90,42 +90,31 @@ extension ObservableType {
             disposable = Disposables.create()
         }
         
-#if DEBUG
-        let synchronizationTracker = SynchronizationTracker()
-#endif
-        
         let callStack = Hooks.recordCallStackOnError ? Hooks.customCaptureSubscriptionCallstack() : []
         
-        // 将各种闭包包装成为一个对象. 后续操作的是这个对象 .
+        // 还是处理事件, 不过这里将事件处理进行了拆包, 交给了各个传递过来的 Block.
         let observer = AnonymousObserver<Element> { event in
-            
-#if DEBUG
-            synchronizationTracker.register(synchronizationErrorMessage: .default)
-            defer { synchronizationTracker.unregister() }
-#endif
-            
             switch event {
             case .next(let value):
                 onNext?(value)
             case .error(let error):
                 if let onError = onError {
                     onError(error)
-                }
-                else {
+                } else {
                     Hooks.defaultErrorHandler(callStack, error)
                 }
+                // 如果, 遇到了 EndEvent, 主动地调用 onDisposed 闭包.
                 disposable.dispose()
             case .completed:
                 onCompleted?()
+                // 如果, 遇到了 EndEvent, 主动地调用 onDisposed 闭包.
                 disposable.dispose()
             }
         }
         
         // 大量的使用了面向接口编程的思想.
-        return Disposables.create(
-            self.asObservable().subscribe(observer),
-            disposable
-        )
+        // Subscription 也对 disposable 进行了注册, 外界取消订阅, 也可以调用传递过来的 onDisposed
+        return Disposables.create( self.asObservable().subscribe(observer), disposable )
     }
 }
 

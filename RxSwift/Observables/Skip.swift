@@ -7,34 +7,34 @@
 //
 
 extension ObservableType {
-
+    
     /**
      Bypasses a specified number of elements in an observable sequence and then returns the remaining elements.
-
+     
      - seealso: [skip operator on reactivex.io](http://reactivex.io/documentation/operators/skip.html)
-
+     
      - parameter count: The number of elements to skip before returning the remaining elements.
      - returns: An observable sequence that contains the elements that occur after the specified index in the input sequence.
      */
     public func skip(_ count: Int)
-        -> Observable<Element> {
+    -> Observable<Element> {
         SkipCount(source: self.asObservable(), count: count)
     }
 }
 
 extension ObservableType {
-
+    
     /**
      Skips elements for the specified duration from the start of the observable source sequence, using the specified scheduler to run timers.
-
+     
      - seealso: [skip operator on reactivex.io](http://reactivex.io/documentation/operators/skip.html)
-
+     
      - parameter duration: Duration for skipping elements from the start of the sequence.
      - parameter scheduler: Scheduler to run the timer on.
      - returns: An observable sequence with the elements skipped during the specified duration from the start of the source sequence.
      */
     public func skip(_ duration: RxTimeInterval, scheduler: SchedulerType)
-        -> Observable<Element> {
+    -> Observable<Element> {
         SkipTime(source: self.asObservable(), duration: duration, scheduler: scheduler)
     }
 }
@@ -42,27 +42,31 @@ extension ObservableType {
 // count version
 
 final private class SkipCountSink<Observer: ObserverType>: Sink<Observer>, ObserverType {
-    typealias Element = Observer.Element 
+    
+    typealias Element = Observer.Element
     typealias Parent = SkipCount<Element>
     
     let parent: Parent
     
     var remaining: Int
     
+    // 没太明白, 这个 Parent 存储的意义.
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
         self.remaining = parent.count
         super.init(observer: observer, cancel: cancel)
     }
     
+    // Skip 的含义就是, 前面几个事件过滤掉.
+    // 所谓的过滤, 就是 SkipSink 之后的节点, 不会收到这个信号.
+    // 这个逻辑, 就是在 SkipSink 中, 进行计数管理, 如果没到数量, 不进行 forward.
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
             
             if self.remaining <= 0 {
                 self.forwardOn(.next(value))
-            }
-            else {
+            } else {
                 self.remaining -= 1
             }
         case .error:
@@ -88,7 +92,7 @@ final private class SkipCount<Element>: Producer<Element> {
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         let sink = SkipCountSink(parent: self, observer: observer, cancel: cancel)
         let subscription = self.source.subscribe(sink)
-
+        
         return (sink: sink, subscription: subscription)
     }
 }
@@ -97,7 +101,7 @@ final private class SkipCount<Element>: Producer<Element> {
 
 final private class SkipTimeSink<Element, Observer: ObserverType>: Sink<Observer>, ObserverType where Observer.Element == Element {
     typealias Parent = SkipTime<Element>
-
+    
     let parent: Parent
     
     // state
@@ -128,7 +132,7 @@ final private class SkipTimeSink<Element, Observer: ObserverType>: Sink<Observer
     }
     
     func run() -> Disposable {
-        let disposeTimer = self.parent.scheduler.scheduleRelative((), dueTime: self.parent.duration) { _ in 
+        let disposeTimer = self.parent.scheduler.scheduleRelative((), dueTime: self.parent.duration) { _ in
             self.tick()
             return Disposables.create()
         }

@@ -15,6 +15,7 @@ struct DispatchQueueConfiguration {
 }
 
 extension DispatchQueueConfiguration {
+    
     func schedule<StateType>(_ state: StateType, action: @escaping (StateType) -> Disposable) -> Disposable {
         let cancel = SingleAssignmentDisposable()
 
@@ -22,8 +23,6 @@ extension DispatchQueueConfiguration {
             if cancel.isDisposed {
                 return
             }
-
-
             cancel.setDisposable(action(state))
         }
 
@@ -64,7 +63,13 @@ extension DispatchQueueConfiguration {
         return compositeDisposable
     }
 
-    func schedulePeriodic<StateType>(_ state: StateType, startAfter: RxTimeInterval, period: RxTimeInterval, action: @escaping (StateType) -> StateType) -> Disposable {
+    func schedulePeriodic<StateType>(_ state: StateType,
+                                     startAfter: RxTimeInterval,
+                                     period: RxTimeInterval,
+                                     action: @escaping (StateType) -> StateType) -> Disposable {
+        
+        
+        // 使用 GCD 完成了 Timer 的构建.
         let initial = DispatchTime.now() + startAfter
 
         var timerState = state
@@ -79,11 +84,15 @@ extension DispatchQueueConfiguration {
         // It looks like just setting timer to fire and not holding a reference to it
         // until deadline causes timer cancellation.
         var timerReference: DispatchSourceTimer? = timer
+        // timer 的声明周期, 被 cancelTimer 保持着.
+        // 只有, cancelTimer 明确的调用 dispose, 才能解除.
         let cancelTimer = Disposables.create {
             timerReference?.cancel()
             timerReference = nil
         }
 
+        // cancelTimer 的生命周期, 又让 timer 进行保持着.
+        // cancelTimer 保持着 timer, timer 保持着 cancelTimer. 只有明确的进行 dispose 的调用, 才能打破这层循环引用环.
         timer.setEventHandler(handler: {
             if cancelTimer.isDisposed {
                 return

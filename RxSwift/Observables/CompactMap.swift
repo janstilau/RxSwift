@@ -34,6 +34,10 @@ final private class CompactMapSink<SourceType, Observer: ObserverType>: Sink<Obs
         super.init(observer: observer, cancel: cancel)
     }
 
+    /*
+     CompactMapSink 的逻辑, 和 compact 在 sequence 的含义一样.
+     在信号链条上, 后面的节点, 完全依赖于前面的节点的产出, 后面的节点, 并不知道前面节点的过滤, 变化, 等待各种操作.
+     */
     func on(_ event: Event<SourceType>) {
         switch event {
         case .next(let element):
@@ -41,8 +45,7 @@ final private class CompactMapSink<SourceType, Observer: ObserverType>: Sink<Obs
                 if let mappedElement = try self.transform(element) {
                     self.forwardOn(.next(mappedElement))
                 }
-            }
-            catch let e {
+            } catch let e {
                 self.forwardOn(.error(e))
                 self.dispose()
             }

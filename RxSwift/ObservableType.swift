@@ -7,7 +7,11 @@
 //
 
 /*
-    
+ 
+ This pattern facilitates concurrent operations because it does not need to block while waiting for the Observable to emit objects, but instead it creates a sentry in the form of an observer that stands ready to react appropriately at whatever future time the Observable does so.
+ 这里, 官方的文档讲的很明白, Observer 是作为, Publisher emit 信号后的相应处理哨兵存在的.
+ 
+ Rather than calling a method, you define a mechanism for retrieving and transforming the data, in the form of an “Observable,” and then subscribe an observer to it, at which point the previously-defined mechanism fires into action with the observer standing sentry to capture and respond to its emissions whenever they are ready.
  */
 
 /// Represents a push style sequence.

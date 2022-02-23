@@ -6,6 +6,9 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
+/*
+ 大部分的 Sink, 都是 Observer, 接受上游的信号, 完成自己的业务逻辑处理后, 将信号 forward 给自己的下游. 
+ */
 class Sink<Observer: ObserverType>: Disposable {
     
     fileprivate let observer: Observer // Sink 操作后数据后, 应该传递数据的去向

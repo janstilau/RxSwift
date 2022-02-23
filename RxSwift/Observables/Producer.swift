@@ -6,6 +6,10 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
+
+/*
+    Producer 中, 记录的是事件发生的时候的处理逻辑, 并不会立刻对事件进行处理. 
+ */
 class Producer<Element>: Observable<Element> {
     
     override init() {

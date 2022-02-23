@@ -9,7 +9,7 @@
 import Dispatch
 import Foundation
 
-/**
+/*
 Abstracts the work that needs to be performed on a specific `dispatch_queue_t`. It will make sure 
 that even if concurrent dispatch queue is passed, it's transformed into a serial one.
 
@@ -126,6 +126,7 @@ public class SerialDispatchQueueScheduler : SchedulerType {
     - returns: The disposable object used to cancel the scheduled action (best effort).
     */
     public func schedulePeriodic<StateType>(_ state: StateType, startAfter: RxTimeInterval, period: RxTimeInterval, action: @escaping (StateType) -> StateType) -> Disposable {
+        // 直接, 使用了 DispatchQueueConfiguration 完成了定时器的工作. 
         self.configuration.schedulePeriodic(state, startAfter: startAfter, period: period, action: action)
     }
 }

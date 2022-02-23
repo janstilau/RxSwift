@@ -135,7 +135,22 @@ class NumbersViewController: ViewController {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        testPublisherSuj()
+        testCreate()
+    }
+    
+    func testCreate() {
+        let sub =
+        Observable<Int>.create { observer in
+            observer.onNext(1)
+            observer.onNext(2)
+            observer.onCompleted()
+            return Disposables.create {
+                print("Dispose inVOKE")
+            }
+        }.subscribe { event in
+            print(event)
+        }
+        sub.dispose()
     }
     
     func testPublisherSuj() {
@@ -149,10 +164,6 @@ class NumbersViewController: ViewController {
             print("1 \(event)")
         }
         value.subscribe(observer)
-        
-        value.subscribe { event in
-            print("2 \(event)")
-        }
     }
     
     func testCase() {

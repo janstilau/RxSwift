@@ -17,6 +17,9 @@ extension ObservableType {
      - parameter subscribe: Implementation of the resulting observable sequence's `subscribe` method.
      - returns: The observable sequence with the specified implementation for the `subscribe` method.
      */
+    
+    // 这个返回的 Disposable 对象, 也不是实际获取使用的. 他会存储到最后的 Disposable 对象的内部.
+    // 当最后一个 Disposable 对象调用 dispose 的时候, 会触发 create 返回的 Disposable 对象 .
     public static func create(_ subscribe: @escaping (AnyObserver<Element>) -> Disposable) -> Observable<Element> {
         AnonymousObservable(subscribe)
     }
