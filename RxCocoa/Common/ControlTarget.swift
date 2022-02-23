@@ -31,16 +31,16 @@ final class ControlTarget: RxTarget {
     let controlEvents: UIControl.Event
 #endif
     var callback: Callback?
+    
     #if os(iOS) || os(tvOS)
     init(control: Control, controlEvents: UIControl.Event, callback: @escaping Callback) {
-        MainScheduler.ensureRunningOnMainThread()
-
         self.control = control
         self.controlEvents = controlEvents
         self.callback = callback
 
         super.init()
 
+        // 在构建方法里面, 进行了 target action 的监听.
         control.addTarget(self, action: selector, for: controlEvents)
 
         let method = self.method(for: selector)
@@ -50,8 +50,6 @@ final class ControlTarget: RxTarget {
     }
 #elseif os(macOS)
     init(control: Control, callback: @escaping Callback) {
-        MainScheduler.ensureRunningOnMainThread()
-
         self.control = control
         self.callback = callback
 
@@ -76,6 +74,7 @@ final class ControlTarget: RxTarget {
     override func dispose() {
         super.dispose()
 #if os(iOS) || os(tvOS)
+        // 在 dispose 的时候, 解除 target action 的监听状态.
         self.control?.removeTarget(self, action: self.selector, for: self.controlEvents)
 #elseif os(macOS)
         self.control?.target = nil

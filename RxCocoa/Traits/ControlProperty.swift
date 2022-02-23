@@ -10,41 +10,42 @@ import RxSwift
 
 /// Protocol that enables extension of `ControlProperty`.
 public protocol ControlPropertyType : ObservableType, ObserverType {
-
+    
     /// - returns: `ControlProperty` interface
     func asControlProperty() -> ControlProperty<Element>
 }
 
 /**
-    Trait for `Observable`/`ObservableType` that represents property of UI element.
+ Trait for `Observable`/`ObservableType` that represents property of UI element.
  
-    Sequence of values only represents initial control value and user initiated value changes.
-    Programmatic value changes won't be reported.
-
-    It's properties are:
-
-    - `shareReplay(1)` behavior
-        - it's stateful, upon subscription (calling subscribe) last element is immediately replayed if it was produced
-    - it will `Complete` sequence on control being deallocated
-    - it never errors out
-    - it delivers events on `MainScheduler.instance`
-
-    **The implementation of `ControlProperty` will ensure that sequence of values is being subscribed on main scheduler
-    (`subscribe(on: ConcurrentMainScheduler.instance)` behavior).**
-
-    **It is implementor's responsibility to make sure that that all other properties enumerated above are satisfied.**
-
-    **If they aren't, then using this trait communicates wrong properties and could potentially break someone's code.**
-
-    **In case `values` observable sequence that is being passed into initializer doesn't satisfy all enumerated
-    properties, please don't use this trait.**
-*/
+ Sequence of values only represents initial control value and user initiated value changes.
+ Programmatic value changes won't be reported.
+ 
+ It's properties are:
+ 
+ - `shareReplay(1)` behavior
+ - it's stateful, upon subscription (calling subscribe) last element is immediately replayed if it was produced
+ - it will `Complete` sequence on control being deallocated
+ - it never errors out
+ - it delivers events on `MainScheduler.instance`
+ 
+ **The implementation of `ControlProperty` will ensure that sequence of values is being subscribed on main scheduler
+ (`subscribe(on: ConcurrentMainScheduler.instance)` behavior).**
+ 
+ **It is implementor's responsibility to make sure that that all other properties enumerated above are satisfied.**
+ 
+ **If they aren't, then using this trait communicates wrong properties and could potentially break someone's code.**
+ 
+ **In case `values` observable sequence that is being passed into initializer doesn't satisfy all enumerated
+ properties, please don't use this trait.**
+ */
 public struct ControlProperty<PropertyType> : ControlPropertyType {
+    
     public typealias Element = PropertyType
-
+    
     let values: Observable<PropertyType>
     let valueSink: AnyObserver<PropertyType>
-
+    
     /// Initializes control property with a observable sequence that represents property values and observer that enables
     /// binding values to property.
     ///
@@ -56,15 +57,16 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
         self.values = values.subscribe(on: ConcurrentMainScheduler.instance)
         self.valueSink = valueSink.asObserver()
     }
-
+    
     /// Subscribes an observer to control property values.
     ///
     /// - parameter observer: Observer to subscribe to property values.
     /// - returns: Disposable object that can be used to unsubscribe the observer from receiving control property values.
+    // 充当发布者的角色, 就是使用自己的 Publisher 序列.
     public func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         self.values.subscribe(observer)
     }
-
+    
     /// `ControlEvent` of user initiated value changes. Every time user updates control value change event
     /// will be emitted from `changed` event.
     ///
@@ -78,22 +80,23 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
     public var changed: ControlEvent<PropertyType> {
         ControlEvent(events: self.values.skip(1))
     }
-
+    
     /// - returns: `Observable` interface.
     public func asObservable() -> Observable<Element> {
         self.values
     }
-
+    
     /// - returns: `ControlProperty` interface.
     public func asControlProperty() -> ControlProperty<Element> {
         self
     }
-
+    
     /// Binds event to user interface.
     ///
     /// - In case next element is received, it is being set to control value.
     /// - In case error is received, DEBUG builds raise fatal error, RELEASE builds log event to standard output.
     /// - In case sequence completes, nothing happens.
+    // 充当监听者, 就是使用自己的 self.valueSink Observer
     public func on(_ event: Event<Element>) {
         switch event {
         case .error(let error):
@@ -110,7 +113,8 @@ extension ControlPropertyType where Element == String? {
     /// Transforms control property of type `String?` into control property of type `String`.
     public var orEmpty: ControlProperty<String> {
         let original: ControlProperty<String?> = self.asControlProperty()
-
+        
+        // 如果, 原有序列是 nil, 直接这里转化一次, 变为 ""
         let values: Observable<String> = original.values.map { $0 ?? "" }
         let valueSink: AnyObserver<String> = original.valueSink.mapObserver { $0 }
         return ControlProperty<String>(values: values, valueSink: valueSink)

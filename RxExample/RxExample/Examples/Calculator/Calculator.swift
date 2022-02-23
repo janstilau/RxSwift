@@ -30,6 +30,7 @@ enum CalculatorState {
 }
 
 extension CalculatorState {
+    
     static let initial = CalculatorState.oneOperand(screen: "0")
 
     func mapScreen(transform: (String) -> String) -> CalculatorState {

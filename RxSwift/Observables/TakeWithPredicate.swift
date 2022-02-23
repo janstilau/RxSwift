@@ -7,70 +7,70 @@
 //
 
 extension ObservableType {
-    /**
+    /*
      Returns the elements from the source observable sequence until the other observable sequence produces an element.
-
+     
      - seealso: [takeUntil operator on reactivex.io](http://reactivex.io/documentation/operators/takeuntil.html)
-
+     
      - parameter other: Observable sequence that terminates propagation of elements of the source sequence.
      - returns: An observable sequence containing the elements of the source sequence up to the point the other sequence interrupted further propagation.
      */
     public func take<Source: ObservableType>(until other: Source)
-        -> Observable<Element> {
+    -> Observable<Element> {
         TakeUntil(source: self.asObservable(), other: other.asObservable())
     }
-
+    
     /**
      Returns elements from an observable sequence until the specified condition is true.
-
+     
      - seealso: [takeUntil operator on reactivex.io](http://reactivex.io/documentation/operators/takeuntil.html)
-
+     
      - parameter predicate: A function to test each element for a condition.
      - parameter behavior: Whether or not to include the last element matching the predicate. Defaults to `exclusive`.
-
+     
      - returns: An observable sequence that contains the elements from the input sequence that occur before the element at which the test passes.
      */
     public func take(until predicate: @escaping (Element) throws -> Bool,
                      behavior: TakeBehavior = .exclusive)
-        -> Observable<Element> {
+    -> Observable<Element> {
         TakeUntilPredicate(source: self.asObservable(),
                            behavior: behavior,
                            predicate: predicate)
     }
-
+    
     /**
      Returns elements from an observable sequence as long as a specified condition is true.
-
+     
      - seealso: [takeWhile operator on reactivex.io](http://reactivex.io/documentation/operators/takewhile.html)
-
+     
      - parameter predicate: A function to test each element for a condition.
      - returns: An observable sequence that contains the elements from the input sequence that occur before the element at which the test no longer passes.
      */
     public func take(while predicate: @escaping (Element) throws -> Bool,
                      behavior: TakeBehavior = .exclusive)
-        -> Observable<Element> {
+    -> Observable<Element> {
         take(until: { try !predicate($0) }, behavior: behavior)
     }
-
+    
     /**
      Returns the elements from the source observable sequence until the other observable sequence produces an element.
-
+     
      - seealso: [takeUntil operator on reactivex.io](http://reactivex.io/documentation/operators/takeuntil.html)
-
+     
      - parameter other: Observable sequence that terminates propagation of elements of the source sequence.
      - returns: An observable sequence containing the elements of the source sequence up to the point the other sequence interrupted further propagation.
      */
     @available(*, deprecated, renamed: "take(until:)")
     public func takeUntil<Source: ObservableType>(_ other: Source)
-        -> Observable<Element> {
+    -> Observable<Element> {
         take(until: other)
     }
-
+    
     /**
      Returns elements from an observable sequence until the specified condition is true.
-
+     
      - seealso: [takeUntil operator on reactivex.io](http://reactivex.io/documentation/operators/takeuntil.html)
-
+     
      - parameter behavior: Whether or not to include the last element matching the predicate.
      - parameter predicate: A function to test each element for a condition.
      - returns: An observable sequence that contains the elements from the input sequence that occur before the element at which the test passes.
@@ -78,21 +78,21 @@ extension ObservableType {
     @available(*, deprecated, renamed: "take(until:behavior:)")
     public func takeUntil(_ behavior: TakeBehavior,
                           predicate: @escaping (Element) throws -> Bool)
-        -> Observable<Element> {
+    -> Observable<Element> {
         take(until: predicate, behavior: behavior)
     }
-
+    
     /**
      Returns elements from an observable sequence as long as a specified condition is true.
-
+     
      - seealso: [takeWhile operator on reactivex.io](http://reactivex.io/documentation/operators/takewhile.html)
-
+     
      - parameter predicate: A function to test each element for a condition.
      - returns: An observable sequence that contains the elements from the input sequence that occur before the element at which the test no longer passes.
      */
     @available(*, deprecated, renamed: "take(while:)")
     public func takeWhile(_ predicate: @escaping (Element) throws -> Bool)
-        -> Observable<Element> {
+    -> Observable<Element> {
         take(until: { try !predicate($0) }, behavior: .exclusive)
     }
 }
@@ -101,21 +101,21 @@ extension ObservableType {
 public enum TakeBehavior {
     /// Include the last element matching the predicate.
     case inclusive
-
+    
     /// Exclude the last element matching the predicate.
     case exclusive
 }
 
 // MARK: - TakeUntil Observable
 final private class TakeUntilSinkOther<Other, Observer: ObserverType>
-    : ObserverType
-    , LockOwnerType
-    , SynchronizedOnType {
+: ObserverType
+, LockOwnerType
+, SynchronizedOnType {
     typealias Parent = TakeUntilSink<Other, Observer>
     typealias Element = Other
     
     private let parent: Parent
-
+    
     var lock: RecursiveLock {
         self.parent.lock
     }
@@ -124,15 +124,12 @@ final private class TakeUntilSinkOther<Other, Observer: ObserverType>
     
     init(parent: Parent) {
         self.parent = parent
-#if TRACE_RESOURCES
-        _ = Resources.incrementTotal()
-#endif
     }
     
     func on(_ event: Event<Element>) {
         self.synchronizedOn(event)
     }
-
+    
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next:
@@ -145,24 +142,18 @@ final private class TakeUntilSinkOther<Other, Observer: ObserverType>
             self.subscription.dispose()
         }
     }
-    
-#if TRACE_RESOURCES
-    deinit {
-        _ = Resources.decrementTotal()
-    }
-#endif
 }
 
 final private class TakeUntilSink<Other, Observer: ObserverType>
-    : Sink<Observer>
-    , LockOwnerType
-    , ObserverType
-    , SynchronizedOnType {
-    typealias Element = Observer.Element 
+: Sink<Observer>
+, LockOwnerType
+, ObserverType
+, SynchronizedOnType {
+    typealias Element = Observer.Element
     typealias Parent = TakeUntil<Element, Other>
     
     private let parent: Parent
- 
+    
     let lock = RecursiveLock()
     
     
@@ -171,10 +162,11 @@ final private class TakeUntilSink<Other, Observer: ObserverType>
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 对于 source 的事件处理, 还是照常进行.
     func on(_ event: Event<Element>) {
         self.synchronizedOn(event)
     }
-
+    
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next:
@@ -189,6 +181,7 @@ final private class TakeUntilSink<Other, Observer: ObserverType>
     }
     
     func run() -> Disposable {
+        // 对于 other 进行了注册监听, 当 other 发送了信号之后, 这里立马进入 dispose 状态.
         let otherObserver = TakeUntilSinkOther(parent: self)
         let otherSubscription = self.parent.other.subscribe(otherObserver)
         otherObserver.subscription.setDisposable(otherSubscription)
@@ -217,25 +210,25 @@ final private class TakeUntil<Element, Other>: Producer<Element> {
 
 // MARK: - TakeUntil Predicate
 final private class TakeUntilPredicateSink<Observer: ObserverType>
-    : Sink<Observer>, ObserverType {
-    typealias Element = Observer.Element 
+: Sink<Observer>, ObserverType {
+    typealias Element = Observer.Element
     typealias Parent = TakeUntilPredicate<Element>
-
+    
     private let parent: Parent
     private var running = true
-
+    
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
         super.init(observer: observer, cancel: cancel)
     }
-
+    
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
             if !self.running {
                 return
             }
-
+            
             do {
                 self.running = try !self.parent.predicate(value)
             } catch let e {
@@ -243,14 +236,14 @@ final private class TakeUntilPredicateSink<Observer: ObserverType>
                 self.dispose()
                 return
             }
-
+            
             if self.running {
                 self.forwardOn(.next(value))
             } else {
                 if self.parent.behavior == .inclusive {
                     self.forwardOn(.next(value))
                 }
-
+                
                 self.forwardOn(.completed)
                 self.dispose()
             }
@@ -259,16 +252,16 @@ final private class TakeUntilPredicateSink<Observer: ObserverType>
             self.dispose()
         }
     }
-
+    
 }
 
 final private class TakeUntilPredicate<Element>: Producer<Element> {
     typealias Predicate = (Element) throws -> Bool
-
+    
     private let source: Observable<Element>
     fileprivate let predicate: Predicate
     fileprivate let behavior: TakeBehavior
-
+    
     init(source: Observable<Element>,
          behavior: TakeBehavior,
          predicate: @escaping Predicate) {
@@ -276,7 +269,7 @@ final private class TakeUntilPredicate<Element>: Producer<Element> {
         self.behavior = behavior
         self.predicate = predicate
     }
-
+    
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         let sink = TakeUntilPredicateSink(parent: self, observer: observer, cancel: cancel)
         let subscription = self.source.subscribe(sink)

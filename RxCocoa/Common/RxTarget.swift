@@ -10,6 +10,8 @@ import Foundation
 
 import RxSwift
 
+// 自循环引用的一个对象.
+// 只有明确的调用 dispose 的时候, 才会去释放.
 class RxTarget : NSObject
                , Disposable {
     
@@ -19,25 +21,12 @@ class RxTarget : NSObject
         super.init()
         self.retainSelf = self
 
-#if TRACE_RESOURCES
-        _ = Resources.incrementTotal()
-#endif
-
 #if DEBUG
         MainScheduler.ensureRunningOnMainThread()
 #endif
     }
     
     func dispose() {
-#if DEBUG
-        MainScheduler.ensureRunningOnMainThread()
-#endif
         self.retainSelf = nil
     }
-
-#if TRACE_RESOURCES
-    deinit {
-        _ = Resources.decrementTotal()
-    }
-#endif
 }

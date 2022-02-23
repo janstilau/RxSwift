@@ -45,12 +45,14 @@ extension Reactive where Base: UIControl {
         getter: @escaping (Base) -> T,
         setter: @escaping (Base, T) -> Void
     ) -> ControlProperty<T> {
+        // 创建一个 Publisher. 每次 Control 的 event 触发的时候, 会发送一个信号出来. 
         let source: Observable<T> = Observable.create { [weak weakControl = base] observer in
                 guard let control = weakControl else {
                     observer.on(.completed)
                     return Disposables.create()
                 }
-
+                
+                // 对于 controlProperty 来说, 会有一个默认值.
                 observer.on(.next(getter(control)))
 
                 let controlTarget = ControlTarget(control: control, controlEvents: editingEvents) { _ in
@@ -60,8 +62,7 @@ extension Reactive where Base: UIControl {
                 }
                 
                 return Disposables.create(with: controlTarget.dispose)
-            }
-            .take(until: deallocated)
+            }.take(until: deallocated)
 
         let bindingObserver = Binder(base, binding: setter)
 

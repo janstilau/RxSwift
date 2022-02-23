@@ -137,7 +137,24 @@ class NumbersViewController: ViewController {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        testCreate()
+        testQueue()
+    }
+    
+    func testQueue() {
+        
+        let selfQueue = DispatchQueue.init(label: "SelfQueue", attributes: .concurrent)
+        for _ in 0...10000 {
+            selfQueue.async {
+                print("Async \(Thread.current)")
+                for _ in 0...10000 {
+                    let a = 1
+                }
+            }
+        }
+        selfQueue.sync {
+            print("TSync \(Thread.current)")
+        }
+        dispatchMain()
     }
     
     func testCreate() {

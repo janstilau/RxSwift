@@ -7,7 +7,7 @@
 //
 
 extension ObservableType {
-    /**
+    /*
      Projects each element of an observable sequence into a new sequence of observable sequences and then
      transforms an observable sequence of observable sequences into an observable sequence producing values only from the most recent observable sequence.
 

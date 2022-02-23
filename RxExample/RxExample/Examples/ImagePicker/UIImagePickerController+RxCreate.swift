@@ -15,10 +15,10 @@ func dismissViewController(_ viewController: UIViewController, animated: Bool) {
         DispatchQueue.main.async {
             dismissViewController(viewController, animated: animated)
         }
-
+        
         return
     }
-
+    
     if viewController.presentingViewController != nil {
         viewController.dismiss(animated: animated, completion: nil)
     }
@@ -44,18 +44,18 @@ extension Reactive where Base: UIImagePickerController {
                 observer.on(.error(error))
                 return Disposables.create()
             }
-
+            
             guard let parent = parent else {
                 observer.on(.completed)
                 return Disposables.create()
             }
-
+            
             parent.present(imagePicker, animated: animated, completion: nil)
             observer.on(.next(imagePicker))
             
             return Disposables.create(dismissDisposable, Disposables.create {
-                    dismissViewController(imagePicker, animated: animated)
-                })
+                dismissViewController(imagePicker, animated: animated)
+            })
         }
     }
 }

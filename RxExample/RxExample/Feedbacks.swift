@@ -275,7 +275,7 @@ extension Observable {
     }
 }
 
-/**
+/*
  Contains subscriptions and events.
  - `subscriptions` map a system state to UI presentation.
  - `events` map events from UI to events of a given system.
