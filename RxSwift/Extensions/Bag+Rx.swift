@@ -34,7 +34,10 @@ func dispatch<Element>(_ bag: Bag<(Event<Element>) -> Void>, _ event: Event<Elem
     }
 }
 
-/// Dispatches `dispose` to all disposables contained inside bag.
+/// Dispatches `dispose` to all disposables contained inside bag
+/*
+ disposeAll 的处理逻辑, 和 dispatch 没有任何区别. 不过是 Bag 里面存储的数据类型不同.
+ */
 func disposeAll(in bag: Bag<Disposable>) {
     bag._value0?.dispose()
 

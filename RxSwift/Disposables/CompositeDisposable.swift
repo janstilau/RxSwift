@@ -73,6 +73,7 @@ public final class CompositeDisposable : DisposeBase, Cancelable {
     public func insert(_ disposable: Disposable) -> DisposeKey? {
         let key = self._insert(disposable)
         
+        // 如果, 当前的 Compostion 已经是 dispose 的状态了, 那么新插入的 Disposable 立马执行自己的 dispose()
         if key == nil {
             disposable.dispose()
         }
@@ -104,6 +105,8 @@ public final class CompositeDisposable : DisposeBase, Cancelable {
     }
     
     /// Disposes all disposables in the group and removes them from the group.
+    // 真正执行 Dispose 的时候, 就是将 Bag 里面的所有内容提取出来, 挨个进行 dispose.
+    // 这里, 没有把 disposables 进行释放.
     public func dispose() {
         if let disposables = self._dispose() {
             disposeAll(in: disposables)
