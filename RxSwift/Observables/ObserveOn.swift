@@ -7,38 +7,16 @@
 //
 
 extension ObservableType {
-    /**
-     Wraps the source sequence in order to run its observer callbacks on the specified scheduler.
-     
-     This only invokes observer callbacks on a `scheduler`. In case the subscription and/or unsubscription
-     actions have side-effects that require to be run on a scheduler, use `subscribeOn`.
-     
-     - seealso: [observeOn operator on reactivex.io](http://reactivex.io/documentation/operators/observeon.html)
-     
-     - parameter scheduler: Scheduler to notify observers on.
-     - returns: The source sequence whose observations happen on the specified scheduler.
-     */
+    
     public func observe(on scheduler: ImmediateSchedulerType)
     -> Observable<Element> {
         guard let serialScheduler = scheduler as? SerialDispatchQueueScheduler else {
             return ObserveOn(source: self.asObservable(), scheduler: scheduler)
         }
-        
         return ObserveOnSerialDispatchQueue(source: self.asObservable(),
                                             scheduler: serialScheduler)
     }
     
-    /**
-     Wraps the source sequence in order to run its observer callbacks on the specified scheduler.
-     
-     This only invokes observer callbacks on a `scheduler`. In case the subscription and/or unsubscription
-     actions have side-effects that require to be run on a scheduler, use `subscribeOn`.
-     
-     - seealso: [observeOn operator on reactivex.io](http://reactivex.io/documentation/operators/observeon.html)
-     
-     - parameter scheduler: Scheduler to notify observers on.
-     - returns: The source sequence whose observations happen on the specified scheduler.
-     */
     @available(*, deprecated, renamed: "observe(on:)")
     public func observeOn(_ scheduler: ImmediateSchedulerType)
     -> Observable<Element> {
@@ -47,6 +25,7 @@ extension ObservableType {
 }
 
 final private class ObserveOn<Element>: Producer<Element> {
+    
     let scheduler: ImmediateSchedulerType
     let source: Observable<Element>
     
@@ -188,6 +167,7 @@ final private class ObserveOnSerialDispatchQueueSink<Observer: ObserverType>: Ob
         self.cachedScheduleLambda = { pair in
             guard !cancel.isDisposed else { return Disposables.create() }
             
+            // 传递 event 的过程.
             pair.sink.observer.on(pair.event)
             
             if pair.event.isStopEvent {
@@ -199,6 +179,7 @@ final private class ObserveOnSerialDispatchQueueSink<Observer: ObserverType>: Ob
     }
     
     override func onCore(_ event: Event<Element>) {
+        // 调度的过程.
         _ = self.scheduler.schedule((self, event), action: self.cachedScheduleLambda!)
     }
     
@@ -219,6 +200,12 @@ final private class ObserveOnSerialDispatchQueue<Element>: Producer<Element> {
     }
     
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
+        /*
+         source subscribe ObserveOnSerialDispatchQueueSink
+         ObserveOnSerialDispatchQueueSink 内部, 会将信号中的数据处理, 进行调度.
+         然后在调度后的代码块里面, 是将数据 forward 到自己存储的 Observer 上.
+         这样, 数据处理就从原来的线程, 或者时间点, 到了新的线程或者时间了.
+         */
         let sink = ObserveOnSerialDispatchQueueSink(scheduler: self.scheduler, observer: observer, cancel: cancel)
         let subscription = self.source.subscribe(sink)
         return (sink: sink, subscription: subscription)

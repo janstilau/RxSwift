@@ -44,15 +44,6 @@ public final class AsyncSubject<Element>
     private let synchronizationTracker = SynchronizationTracker()
 #endif
     
-    
-    /// Creates a subject.
-    public override init() {
-#if TRACE_RESOURCES
-        _ = Resources.incrementTotal()
-#endif
-        super.init()
-    }
-    
     /// Notifies all subscribed observers about next event.
     ///
     /// - parameter event: Event to send to the observers.
@@ -151,11 +142,5 @@ public final class AsyncSubject<Element>
     public func asObserver() -> AsyncSubject<Element> {
         self
     }
-    
-#if TRACE_RESOURCES
-    deinit {
-        _ = Resources.decrementTotal()
-    }
-#endif
 }
 

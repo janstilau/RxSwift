@@ -35,10 +35,6 @@ public final class BehaviorSubject<Element>
     private var observers = Observers()
     private var stoppedEvent: Event<Element>?
     
-#if DEBUG
-    private let synchronizationTracker = SynchronizationTracker()
-#endif
-    
     /// Indicates whether the subject has been disposed.
     /// 这是为了完成 Cancleable 协议.
     public var isDisposed: Bool {
@@ -48,13 +44,10 @@ public final class BehaviorSubject<Element>
     /// Initializes a new instance of the subject that caches its last value and starts with the specified value.
     ///
     // 必须在生成 PublishSubject 的时候, 必须要存储初值.
+    // 除了初始化的时候, 和 on 里面, 是没有其他的地方, 去修改 element 的值的.
     public init(value: Element) {
         // 具有一个默认的参数值.
         self.element = value
-        
-#if TRACE_RESOURCES
-        _ = Resources.incrementTotal()
-#endif
     }
     
     /// Gets the current value or throws an error.
@@ -179,10 +172,4 @@ public final class BehaviorSubject<Element>
             self.stoppedEvent = nil
         }
     }
-    
-#if TRACE_RESOURCES
-    deinit {
-        _ = Resources.decrementTotal()
-    }
-#endif
 }

@@ -6,12 +6,6 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
-/// Represents an object that is both an observable sequence as well as an observer.
-///
-/// Each notification is broadcasted to all subscribed observers. /**
-
-
-
 public final class PublishSubject<Element>
 : Observable<Element>
 , SubjectType
@@ -36,10 +30,6 @@ public final class PublishSubject<Element>
     private var observers = Observers()
     private var stopped = false
     private var stoppedEvent = nil as Event<Element>?
-    
-#if DEBUG
-    private let synchronizationTracker = SynchronizationTracker()
-#endif
     
     /// Indicates whether the subject has been isDisposed.
     public var isDisposed: Bool {

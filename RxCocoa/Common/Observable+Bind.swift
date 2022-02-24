@@ -8,6 +8,9 @@
 
 import RxSwift
 
+/*
+ 其实 bind 的逻辑, 和 Subscribe 的逻辑没有任何的区别. 更多的是, 语义上的差别. 
+ */
 extension ObservableType {
     /**
      Creates new subscription and sends elements to observer(s).
