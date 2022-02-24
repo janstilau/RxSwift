@@ -11,11 +11,16 @@ import Foundation
 
 struct DispatchQueueConfiguration {
     let queue: DispatchQueue
+    // 余地
     let leeway: DispatchTimeInterval
 }
 
+/*
+ DispatchQueueConfiguration 就是将 DispatchQueue 的对于 scheduleType 实现代码进行聚拢.
+ */
 extension DispatchQueueConfiguration {
     
+    // 这里的实现思路, 和 OperationQueue 的没有区别.
     func schedule<StateType>(_ state: StateType, action: @escaping (StateType) -> Disposable) -> Disposable {
         let cancel = SingleAssignmentDisposable()
 
@@ -29,6 +34,10 @@ extension DispatchQueueConfiguration {
         return cancel
     }
 
+    // 延时执行.
+    // 不太明白, 为什么不用 dispatchAfter.
+    // 这里就是起了一个定时器, 定时器触发前, 可以进行取消, 定时器触发后, 取消的是 action 对象的返回值.
+    // 感觉可以使用上面函数的思路.
     func scheduleRelative<StateType>(_ state: StateType, dueTime: RxTimeInterval, action: @escaping (StateType) -> Disposable) -> Disposable {
         let deadline = DispatchTime.now() + dueTime
 
@@ -67,8 +76,6 @@ extension DispatchQueueConfiguration {
                                      startAfter: RxTimeInterval,
                                      period: RxTimeInterval,
                                      action: @escaping (StateType) -> StateType) -> Disposable {
-        
-        
         // 使用 GCD 完成了 Timer 的构建.
         let initial = DispatchTime.now() + startAfter
 
@@ -101,6 +108,7 @@ extension DispatchQueueConfiguration {
         })
         timer.resume()
         
+        // cancelTimer 引用着 Timer, CancelTiemr 的 dispose, 可以促使 Timer 的取消, 并且打破对于 Timer 的引用.
         return cancelTimer
     }
 }

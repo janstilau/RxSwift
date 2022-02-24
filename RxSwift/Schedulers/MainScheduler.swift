@@ -29,6 +29,8 @@ public final class MainScheduler : SerialDispatchQueueScheduler {
 
     /// Initializes new instance of `MainScheduler`.
     public init() {
+        // 固定, 将 queue 变为了 mainqueue.
+        // 然后, 将 mainqueue 传入进去.
         self.mainQueue = DispatchQueue.main
         super.init(serialQueue: self.mainQueue)
     }
@@ -59,6 +61,7 @@ public final class MainScheduler : SerialDispatchQueueScheduler {
     override func scheduleInternal<StateType>(_ state: StateType, action: @escaping (StateType) -> Disposable) -> Disposable {
         let previousNumberEnqueued = increment(self.numberEnqueued)
 
+        // 如果, 当前的就是 MainQueue, 那么直接执行 action.
         if DispatchQueue.isMain && previousNumberEnqueued == 0 {
             let disposable = action(state)
             decrement(self.numberEnqueued)
@@ -67,6 +70,7 @@ public final class MainScheduler : SerialDispatchQueueScheduler {
 
         let cancel = SingleAssignmentDisposable()
 
+        // 否则, 就把任务添加到 MainQueue 的末尾.
         self.mainQueue.async {
             if !cancel.isDisposed {
                 cancel.setDisposable(action(state))

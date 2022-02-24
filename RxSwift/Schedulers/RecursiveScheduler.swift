@@ -16,12 +16,12 @@ private enum ScheduleState {
 final class AnyRecursiveScheduler<State> {
     
     typealias Action =  (State, AnyRecursiveScheduler<State>) -> Void
-
+    
     private let lock = RecursiveLock()
     
     // state
     private let group = CompositeDisposable()
-
+    
     private var scheduler: SchedulerType
     private var action: Action?
     
@@ -29,16 +29,16 @@ final class AnyRecursiveScheduler<State> {
         self.action = action
         self.scheduler = scheduler
     }
-
-    /**
-    Schedules an action to be executed recursively.
     
-    - parameter state: State passed to the action to be executed.
-    - parameter dueTime: Relative time after which to execute the recursive action.
-    */
+    /**
+     Schedules an action to be executed recursively.
+     
+     - parameter state: State passed to the action to be executed.
+     - parameter dueTime: Relative time after which to execute the recursive action.
+     */
     func schedule(_ state: State, dueTime: RxTimeInterval) {
         var scheduleState: ScheduleState = .initial
-
+        
         let d = self.scheduler.scheduleRelative(state, dueTime: dueTime) { state -> Disposable in
             // best effort
             if self.group.isDisposed {
@@ -54,9 +54,9 @@ final class AnyRecursiveScheduler<State> {
                 case .done:
                     break
                 }
-
+                
                 scheduleState = .done
-
+                
                 return self.action
             }
             
@@ -66,7 +66,7 @@ final class AnyRecursiveScheduler<State> {
             
             return Disposables.create()
         }
-            
+        
         self.lock.performLocked {
             switch scheduleState {
             case .added:
@@ -83,13 +83,13 @@ final class AnyRecursiveScheduler<State> {
             }
         }
     }
-
+    
     /// Schedules an action to be executed recursively.
     ///
     /// - parameter state: State passed to the action to be executed.
     func schedule(_ state: State) {
         var scheduleState: ScheduleState = .initial
-
+        
         let d = self.scheduler.schedule(state) { state -> Disposable in
             // best effort
             if self.group.isDisposed {
@@ -105,12 +105,12 @@ final class AnyRecursiveScheduler<State> {
                 case .done:
                     break
                 }
-
+                
                 scheduleState = .done
                 
                 return self.action
             }
-           
+            
             if let action = action {
                 action(state, self)
             }
@@ -165,7 +165,7 @@ final class RecursiveImmediateScheduler<State> {
     /// - parameter state: State passed to the action to be executed.
     func schedule(_ state: State) {
         var scheduleState: ScheduleState = .initial
-
+        
         let d = self.scheduler.schedule(state) { state -> Disposable in
             // best effort
             if self.group.isDisposed {
@@ -181,9 +181,9 @@ final class RecursiveImmediateScheduler<State> {
                 case .done:
                     break
                 }
-
+                
                 scheduleState = .done
-
+                
                 return self.action
             }
             

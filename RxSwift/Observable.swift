@@ -9,9 +9,9 @@
 /*
  
  */
-/// A type-erased `ObservableType`. 
-///
-/// It represents a push style sequence.
+/// A type-erased `ObservableType`.
+
+
 public class Observable<Element> : ObservableType {
     init() {
         _ = Resources.incrementTotal()

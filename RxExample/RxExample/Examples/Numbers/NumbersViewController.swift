@@ -137,7 +137,25 @@ class NumbersViewController: ViewController {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        testQueue()
+        testLife()
+    }
+    
+    func testLife() {
+        let timeAfter = Observable<Int>.create { observer in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                observer.onNext(1)
+                observer.onCompleted()
+            }
+            return Disposables.create()
+        }
+        
+        let mapProducer = timeAfter.map { _ in
+            return 1
+        }
+        let mapSubscription = mapProducer.subscribe { event in
+            print(event)
+        }
+        print(mapSubscription)
     }
     
     func testQueue() {

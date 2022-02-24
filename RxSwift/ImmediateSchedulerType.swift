@@ -6,7 +6,8 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
-/// Represents an object that immediately schedules units of work.
+// 有一个数据, 以及对于这个数据的操作, 调度这个操作, 而不是立马进行触发.
+// 调度这个动作, 本身可以取消. 如果动作执行了, 那么执行后的返回值, 可以取消这个动作产生的序列.
 public protocol ImmediateSchedulerType {
     /**
     Schedules an action to be executed immediately.

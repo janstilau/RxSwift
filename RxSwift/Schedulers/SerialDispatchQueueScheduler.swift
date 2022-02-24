@@ -10,8 +10,8 @@ import Dispatch
 import Foundation
 
 /*
-Abstracts the work that needs to be performed on a specific `dispatch_queue_t`. It will make sure 
-that even if concurrent dispatch queue is passed, it's transformed into a serial one.
+Abstracts the work that needs to be performed on a specific `dispatch_queue_t`.
+It will make sure that even if concurrent dispatch queue is passed, it's transformed into a serial one.
 
 It is extremely important that this scheduler is serial, because
 certain operator perform optimizations that rely on that property.
@@ -27,6 +27,7 @@ internal serial queue can be customized using `serialQueueConfiguration`
 callback.
 */
 public class SerialDispatchQueueScheduler : SchedulerType {
+    
     public typealias TimeInterval = Foundation.TimeInterval
     public typealias Time = Date
     
@@ -47,16 +48,8 @@ public class SerialDispatchQueueScheduler : SchedulerType {
         self.configuration = DispatchQueueConfiguration(queue: serialQueue, leeway: leeway)
     }
 
-    /**
-    Constructs new `SerialDispatchQueueScheduler` with internal serial queue named `internalSerialQueueName`.
-    
-    Additional dispatch queue properties can be set after dispatch queue is created using `serialQueueConfiguration`.
-    
-    - parameter internalSerialQueueName: Name of internal serial dispatch queue.
-    - parameter serialQueueConfiguration: Additional configuration of internal serial dispatch queue.
-    - parameter leeway: The amount of time, in nanoseconds, that the system will defer the timer.
-    */
     public convenience init(internalSerialQueueName: String, serialQueueConfiguration: ((DispatchQueue) -> Void)? = nil, leeway: DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0)) {
+        // 内部创建一个 DispatchQueue
         let queue = DispatchQueue(label: internalSerialQueueName, attributes: [])
         serialQueueConfiguration?(queue)
         self.init(serialQueue: queue, leeway: leeway)
