@@ -10,13 +10,12 @@
 import Foundation
 #endif
 
+/*
+ 这是一座桥梁.
+ 可以将响应式的 Publisher 链式代码, 终结并且桥接到指令式的世界里面来.
+ */
 extension ObservableType {
-    /**
-     Subscribes an event handler to an observable sequence.
-     
-     - parameter on: Action to invoke for each event in the observable sequence.
-     - returns: Subscription object used to unsubscribe from the observable sequence.
-     */
+    
     public func subscribe(_ on: @escaping (Event<Element>) -> Void) -> Disposable {
         let observer = AnonymousObserver { e in
             on(e)
@@ -24,21 +23,7 @@ extension ObservableType {
         return self.asObservable().subscribe(observer)
     }
     
-    /**
-     Subscribes an element handler, an error handler, a completion handler and disposed handler to an observable sequence.
-     
-     Also, take in an object and provide an unretained, safe to use (i.e. not implicitly unwrapped), reference to it along with the events emitted by the sequence.
-     
-     - Note: If `object` can't be retained, none of the other closures will be invoked.
-     
-     - parameter object: The object to provide an unretained reference on.
-     - parameter onNext: Action to invoke for each element in the observable sequence.
-     - parameter onError: Action to invoke upon errored termination of the observable sequence.
-     - parameter onCompleted: Action to invoke upon graceful termination of the observable sequence.
-     - parameter onDisposed: Action to invoke upon any type of termination of sequence (if the sequence has
-     gracefully completed, errored, or if the generation is canceled by disposing subscription).
-     - returns: Subscription object used to unsubscribe from the observable sequence.
-     */
+    // 没有看到过这样的用法, object 作为了信号的附加数据, 在每一个时间处理中被传递.
     public func subscribe<Object: AnyObject>(
         with object: Object,
         onNext: ((Object, Element) -> Void)? = nil,
@@ -66,15 +51,8 @@ extension ObservableType {
         )
     }
     
-    /**
-     Subscribes an element handler, an error handler, a completion handler and disposed handler to an observable sequence.
-     
-     - parameter onNext: Action to invoke for each element in the observable sequence.
-     - parameter onError: Action to invoke upon errored termination of the observable sequence.
-     - parameter onCompleted: Action to invoke upon graceful termination of the observable sequence.
-     - parameter onDisposed: Action to invoke upon any type of termination of sequence (if the sequence has
-     gracefully completed, errored, or if the generation is canceled by disposing subscription).
-     - returns: Subscription object used to unsubscribe from the observable sequence.
+    /*
+     实际上, 经常使用的方法.
      */
     public func subscribe(
         onNext: ((Element) -> Void)? = nil,
@@ -90,9 +68,10 @@ extension ObservableType {
             disposable = Disposables.create()
         }
         
-        let callStack = Hooks.recordCallStackOnError ? Hooks.customCaptureSubscriptionCallstack() : []
-        
-        // 还是处理事件, 不过这里将事件处理进行了拆包, 交给了各个传递过来的 Block.
+        /*
+         将以上传递过来的各种闭包, 包装到了 AnonymousObserver 的 event 处理闭包里面了.
+         然后, 将 AnonymousObserver 注册到信号处理中.
+         */
         let observer = AnonymousObserver<Element> { event in
             switch event {
             case .next(let value):
@@ -101,22 +80,19 @@ extension ObservableType {
                 if let onError = onError {
                     onError(error)
                 } else {
-                    Hooks.defaultErrorHandler(callStack, error)
                 }
-                // 如果, 遇到了 EndEvent, 主动地调用 onDisposed 闭包.
                 disposable.dispose()
             case .completed:
                 onCompleted?()
-                // 如果, 遇到了 EndEvent, 主动地调用 onDisposed 闭包.
                 disposable.dispose()
             }
         }
         
-        // 大量的使用了面向接口编程的思想.
-        // Subscription 也对 disposable 进行了注册, 外界取消订阅, 也可以调用传递过来的 onDisposed
         return Disposables.create( self.asObservable().subscribe(observer), disposable )
     }
 }
+
+
 
 import Foundation
 

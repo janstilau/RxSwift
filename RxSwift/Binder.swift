@@ -6,26 +6,18 @@
 //  Copyright © 2017 Krunoslav Zaher. All rights reserved.
 //
 
-/**
- Observer that enforces interface binding rules:
- * can't bind errors (in debug builds binding of errors causes `fatalError` in release builds errors are being logged)
- * ensures binding is performed on a specific scheduler
-
- `Binder` doesn't retain target and in case target is released, element isn't bound.
- 
- By default it binds elements on main scheduler.
+/*
+ Binder, 传入一个对象, 以及当数据发送过来的时候, 应该如何处理这个数据, 一般来说, 是利用这个数据进行 Target 的操作. 这也就是 Bind 的命名的含义.
  */
 public struct Binder<Value>: ObserverType {
     public typealias Element = Value
     
     private let binding: (Event<Value>) -> Void
 
-    /// Initializes `Binder`
-    ///
-    /// - parameter target: Target object.
-    /// - parameter scheduler: Scheduler used to bind the events.
     /// - parameter binding: Binding logic.
-    public init<Target: AnyObject>(_ target: Target, scheduler: ImmediateSchedulerType = MainScheduler(), binding: @escaping (Target, Value) -> Void) {
+    public init<Target: AnyObject>(_ target: Target,
+                                   scheduler: ImmediateSchedulerType = MainScheduler(),
+                                   binding: @escaping (Target, Value) -> Void) {
         weak var weakTarget = target
 
         self.binding = { event in
@@ -35,6 +27,7 @@ public struct Binder<Value>: ObserverType {
                     if let target = weakTarget {
                         binding(target, element)
                     }
+                    // 仅仅是做事件调度, 没有必要进行取消, 直接返回一个 FakeCancle 对象.
                     return Disposables.create()
                 }
             case .error(let error):
