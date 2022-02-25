@@ -1,26 +1,20 @@
-//
-//  CompositeDisposable.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 2/20/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
 
-/// Represents a group of disposable resources that are disposed together.
+// 就是使用 DisposeBag, 来存储所有的 Dispose 对象. 
+// Represents a group of disposable resources that are disposed together.
 public final class CompositeDisposable : DisposeBase, Cancelable {
-    /// Key used to remove disposable from composite disposable
+    
     public struct DisposeKey {
         fileprivate let key: BagKey
         fileprivate init(key: BagKey) {
             self.key = key
         }
     }
-
+    
     private var lock = SpinLock()
     
-    // state
+    // Dispose 的 Container 对象 .
     private var disposables: Bag<Disposable>? = Bag()
-
+    
     public var isDisposed: Bool {
         self.lock.performLocked { self.disposables == nil }
     }
@@ -62,8 +56,8 @@ public final class CompositeDisposable : DisposeBase, Cancelable {
             _ = self.disposables!.insert(disposable)
         }
     }
-
-    /**
+    
+    /*
      Adds a disposable to the CompositeDisposable or disposes the disposable if the CompositeDisposable is disposed.
      
      - parameter disposable: Disposable to add.
@@ -112,7 +106,7 @@ public final class CompositeDisposable : DisposeBase, Cancelable {
             disposeAll(in: disposables)
         }
     }
-
+    
     private func _dispose() -> Bag<Disposable>? {
         self.lock.performLocked {
             let current = self.disposables
@@ -123,7 +117,7 @@ public final class CompositeDisposable : DisposeBase, Cancelable {
 }
 
 extension Disposables {
-
+    
     /// Creates a disposable with the given disposables.
     public static func create(_ disposable1: Disposable, _ disposable2: Disposable, _ disposable3: Disposable) -> Cancelable {
         CompositeDisposable(disposable1, disposable2, disposable3)

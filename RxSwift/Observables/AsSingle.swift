@@ -1,11 +1,6 @@
-//
-//  AsSingle.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 3/12/17.
-//  Copyright © 2017 Krunoslav Zaher. All rights reserved.
-//
 
+// 必须要有一个 next 事件, 然后是 complete 事件.
+// 如果没有 next 事件, 或者多个事件, 那么会报错. 
 private final class AsSingleSink<Observer: ObserverType> : Sink<Observer>, ObserverType {
     typealias Element = Observer.Element
     
@@ -25,7 +20,6 @@ private final class AsSingleSink<Observer: ObserverType> : Sink<Observer>, Obser
             self.forwardOn(event)
             self.dispose()
         case .completed:
-            // 这种情况, 只能是, 一次 next, 一次 complete 才可以发生. 
             if let element = self.element {
                 self.forwardOn(element)
                 self.forwardOn(.completed)

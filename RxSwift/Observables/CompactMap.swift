@@ -1,13 +1,6 @@
-//
-//  CompactMap.swift
-//  RxSwift
-//
-//  Created by Michael Long on 04/09/2019.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
+
 
 extension ObservableType {
-    
     public func compactMap<Result>(_ transform: @escaping (Element) throws -> Result?)
     -> Observable<Result> {
         CompactMap(source: self.asObservable(), transform: transform)

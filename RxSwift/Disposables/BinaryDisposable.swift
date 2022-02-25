@@ -1,15 +1,5 @@
-//
-//  BinaryDisposable.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 6/12/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
 
-/// Represents two disposable resources that are disposed together.
-
-
-
+// 一个两个数据的盒子.
 private final class BinaryDisposable : DisposeBase, Cancelable {
     
     private let disposed = AtomicInt(0)
@@ -23,19 +13,13 @@ private final class BinaryDisposable : DisposeBase, Cancelable {
         isFlagSet(self.disposed, 1)
     }
     
-    /// Constructs new binary disposable from two disposables.
-    ///
-    /// - parameter disposable1: First disposable
-    /// - parameter disposable2: Second disposable
     init(_ disposable1: Disposable, _ disposable2: Disposable) {
         self.disposable1 = disposable1
         self.disposable2 = disposable2
         super.init()
     }
     
-    /// Calls the disposal action if and only if the current instance hasn't been disposed yet.
-    ///
-    /// After invoking disposal action, disposal action will be dereferenced.
+    // 这个盒子, 实现
     func dispose() {
         if fetchOr(self.disposed, 1) == 0 {
             self.disposable1?.dispose()
