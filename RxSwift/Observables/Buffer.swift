@@ -1,10 +1,3 @@
-//
-//  Buffer.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 9/13/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
 
 extension ObservableType {
     

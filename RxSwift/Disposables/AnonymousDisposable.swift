@@ -1,14 +1,8 @@
-//
-//  AnonymousDisposable.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 2/15/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
 
-/// Represents an Action-based disposable.
-///
-/// When dispose method is called, disposal action will be dereferenced.
+
+// Anony 的实现, 就是在里面存储一个闭包.
+// Swift 直接传对象方法, 可以保存那个对象的生命周期. 所以, 不用像之前 OC 那样包装一层.
+
 private final class AnonymousDisposable : DisposeBase, Cancelable {
     public typealias DisposeAction = () -> Void
     
@@ -20,9 +14,6 @@ private final class AnonymousDisposable : DisposeBase, Cancelable {
         isFlagSet(self.disposed, 1)
     }
     
-    /// Constructs a new disposable with the given action used for disposal.
-    ///
-    /// - parameter disposeAction: Disposal action which will be run upon calling `dispose`.
     private init(_ disposeAction: @escaping DisposeAction) {
         self.disposeAction = disposeAction
         super.init()
@@ -51,9 +42,6 @@ private final class AnonymousDisposable : DisposeBase, Cancelable {
 
 extension Disposables {
     
-    /// Constructs a new disposable with the given action used for disposal.
-    ///
-    /// - parameter dispose: Disposal action which will be run upon calling `dispose`.
     // 这里, 传递过来的动作是, 当被 dispose 的时候, 应该执行的动作.
     public static func create(with dispose: @escaping () -> Void) -> Cancelable {
         AnonymousDisposable(disposeAction: dispose)

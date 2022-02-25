@@ -9,13 +9,13 @@
 extension ObservableType {
     /**
      Propagates the observable sequence that reacts first.
-
+     
      - seealso: [amb operator on reactivex.io](http://reactivex.io/documentation/operators/amb.html)
-
+     
      - returns: An observable sequence that surfaces any of the given sequences, whichever reacted first.
      */
     public static func amb<Sequence: Swift.Sequence>(_ sequence: Sequence) -> Observable<Element>
-        where Sequence.Element == Observable<Element> {
+    where Sequence.Element == Observable<Element> {
         sequence.reduce(Observable<Sequence.Element.Element>.never()) { a, o in
             a.amb(o.asObservable())
         }
@@ -23,18 +23,18 @@ extension ObservableType {
 }
 
 extension ObservableType {
-
+    
     /**
      Propagates the observable sequence that reacts first.
-
+     
      - seealso: [amb operator on reactivex.io](http://reactivex.io/documentation/operators/amb.html)
-
+     
      - parameter right: Second observable sequence.
      - returns: An observable sequence that surfaces either of the given sequences, whichever reacted first.
      */
     public func amb<O2: ObservableType>
-        (_ right: O2)
-        -> Observable<Element> where O2.Element == Element {
+    (_ right: O2)
+    -> Observable<Element> where O2.Element == Element {
         Amb(left: self.asObservable(), right: right.asObservable())
     }
 }
@@ -46,7 +46,7 @@ private enum AmbState {
 }
 
 final private class AmbObserver<Observer: ObserverType>: ObserverType {
-    typealias Element = Observer.Element 
+    typealias Element = Observer.Element
     typealias Parent = AmbSink<Observer>
     typealias This = AmbObserver<Observer>
     typealias Sink = (This, Event<Element>) -> Void
@@ -83,7 +83,7 @@ final private class AmbSink<Observer: ObserverType>: Sink<Observer> {
     typealias Element = Observer.Element
     typealias Parent = Amb<Element>
     typealias AmbObserverType = AmbObserver<Observer>
-
+    
     private let parent: Parent
     
     private let lock = RecursiveLock()
@@ -106,7 +106,7 @@ final private class AmbSink<Observer: ObserverType>: Sink<Observer> {
                 self.dispose()
             }
         }
-
+        
         let decide = { (o: AmbObserverType, event: Event<Element>, me: AmbState, otherSubscription: Disposable) in
             self.lock.performLocked {
                 if self.choice == .neither {

@@ -1,10 +1,3 @@
-//
-//  ScheduledDisposable.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 6/13/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
 
 private let disposeScheduledDisposable: (ScheduledDisposable) -> Disposable = { sd in
     sd.disposeInner()

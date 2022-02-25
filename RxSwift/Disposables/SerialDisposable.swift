@@ -25,12 +25,12 @@ public final class SerialDisposable : DisposeBase, Cancelable {
     }
     
     /**
-    Gets or sets the underlying disposable.
-    
-    Assigning this property disposes the previous disposable object.
-    
-    If the `SerialDisposable` has already been disposed, assignment to this property causes immediate disposal of the given disposable object.
-    */
+     Gets or sets the underlying disposable.
+     
+     Assigning this property disposes the previous disposable object.
+     
+     If the `SerialDisposable` has already been disposed, assignment to this property causes immediate disposal of the given disposable object.
+     */
     public var disposable: Disposable {
         get {
             self.lock.performLocked {
@@ -59,11 +59,11 @@ public final class SerialDisposable : DisposeBase, Cancelable {
     public func dispose() {
         self._dispose()?.dispose()
     }
-
+    
     private func _dispose() -> Disposable? {
         self.lock.performLocked {
             guard !self.isDisposed else { return nil }
-
+            
             self.disposed = true
             let current = self.current
             self.current = nil
