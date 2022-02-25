@@ -14,13 +14,7 @@ extension ObservableType {
 }
 
 extension ObservableType {
-    /**
-     Skips elements and completes (or errors) when the observable sequence completes (or errors). Equivalent to filter that always returns false.
-     
-     - seealso: [ignoreElements operator on reactivex.io](http://reactivex.io/documentation/operators/ignoreelements.html)
-     
-     - returns: An observable sequence that skips all elements of the source sequence.
-     */
+    // 为什么要这面复杂, 一个 next 里面不会做任何操作的 Sink 不更加的简单明了吗.
     public func ignoreElements()
     -> Observable<Never> {
         self.flatMap { _ in Observable<Never>.empty() }

@@ -8,27 +8,11 @@
 
 extension ObservableType {
     
-    /*
-     Applies an accumulator function over an observable sequence and returns each intermediate result. The specified seed value is used as the initial accumulator value.
-     */
-    // Seed 是初始值, 然后, Source 每发出一个信号, 就使用 accumulator 将存储的 result 和 信号值进行计算, 发送给后续的 observer
-    // 并且将计算出来的 result, 进行存储.
     public func scan<A>(into seed: A, accumulator: @escaping (inout A, Element) throws -> Void)
     -> Observable<A> {
         Scan(source: self.asObservable(), seed: seed, accumulator: accumulator)
     }
     
-    /**
-     Applies an accumulator function over an observable sequence and returns each intermediate result. The specified seed value is used as the initial accumulator value.
-     
-     For aggregation behavior with no intermediate results, see `reduce`.
-     
-     - seealso: [scan operator on reactivex.io](http://reactivex.io/documentation/operators/scan.html)
-     
-     - parameter seed: The initial accumulator value.
-     - parameter accumulator: An accumulator function to be invoked on each element.
-     - returns: An observable sequence containing the accumulated values.
-     */
     public func scan<A>(_ seed: A, accumulator: @escaping (A, Element) throws -> A)
     -> Observable<A> {
         return Scan(source: self.asObservable(), seed: seed) { acc, element in

@@ -7,14 +7,8 @@
 //
 
 extension ObservableType {
-    /*
-     Returns the elements from the source observable sequence until the other observable sequence produces an element.
-     
-     - seealso: [takeUntil operator on reactivex.io](http://reactivex.io/documentation/operators/takeuntil.html)
-     
-     - parameter other: Observable sequence that terminates propagation of elements of the source sequence.
-     - returns: An observable sequence containing the elements of the source sequence up to the point the other sequence interrupted further propagation.
-     */
+    
+    // 在 other 触发之前, 一直进行订阅.
     public func take<Source: ObservableType>(until other: Source)
     -> Observable<Element> {
         TakeUntil(source: self.asObservable(), other: other.asObservable())

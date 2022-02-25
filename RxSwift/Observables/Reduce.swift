@@ -6,14 +6,11 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
+/*
+ 具有同样的函数名, 和 Sequence 的 Reduce 具有差不多相同的逻辑.
+ */
 
 extension ObservableType {
-    /*
-     Applies an `accumulator` function over an observable sequence, returning the result of the aggregation as a single element in the result sequence. The specified `seed` value is used as the initial accumulator value.
-     将时间序列上的值, 进行 accumulate, 然后最终在 complete 的时候, 将 accumulate 的值发送出去, 然后调用 complete.
-     
-     For aggregation behavior with incremental intermediate results, see `scan`.
-     */
     public func reduce<A, Result>(_ seed: A,
                                   accumulator: @escaping (A, Element) throws -> A,
                                   mapResult: @escaping (A) throws -> Result)
@@ -21,17 +18,6 @@ extension ObservableType {
         Reduce(source: self.asObservable(), seed: seed, accumulator: accumulator, mapResult: mapResult)
     }
     
-    /**
-     Applies an `accumulator` function over an observable sequence, returning the result of the aggregation as a single element in the result sequence. The specified `seed` value is used as the initial accumulator value.
-     
-     For aggregation behavior with incremental intermediate results, see `scan`.
-     
-     - seealso: [reduce operator on reactivex.io](http://reactivex.io/documentation/operators/reduce.html)
-     
-     - parameter seed: The initial accumulator value.
-     - parameter accumulator: A accumulator function to be invoked on each element.
-     - returns: An observable sequence containing a single element with the final accumulator value.
-     */
     public func reduce<A>(_ seed: A, accumulator: @escaping (A, Element) throws -> A)
     -> Observable<A> {
         Reduce(source: self.asObservable(), seed: seed, accumulator: accumulator, mapResult: { $0 })
@@ -68,7 +54,7 @@ final private class ReduceSink<SourceType, AccumulateType, Observer: ObserverTyp
         case .completed:
             do {
                 // 在, 最终接收到上游的 complete 事件之后, 将结果发送给下游, 然后发送 complete 事件.
-                // 然后 dispose. 
+                // 然后 dispose.
                 let result = try self.parent.mapResult(self.accumulation)
                 self.forwardOn(.next(result))
                 self.forwardOn(.completed)

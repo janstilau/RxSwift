@@ -7,27 +7,10 @@
 //
 
 extension ObservableType {
-    /**
-     Returns an observable sequence that contains a single element.
-     
-     - seealso: [just operator on reactivex.io](http://reactivex.io/documentation/operators/just.html)
-     
-     - parameter element: Single element in the resulting observable sequence.
-     - returns: An observable sequence containing the single specified element.
-     */
     public static func just(_ element: Element) -> Observable<Element> {
         Just(element: element)
     }
     
-    /**
-     Returns an observable sequence that contains a single element.
-     
-     - seealso: [just operator on reactivex.io](http://reactivex.io/documentation/operators/just.html)
-     
-     - parameter element: Single element in the resulting observable sequence.
-     - parameter scheduler: Scheduler to send the single element on.
-     - returns: An observable sequence containing the single specified element.
-     */
     public static func just(_ element: Element, scheduler: ImmediateSchedulerType) -> Observable<Element> {
         JustScheduled(element: element, scheduler: scheduler)
     }
@@ -44,6 +27,7 @@ final private class JustScheduledSink<Observer: ObserverType>: Sink<Observer> {
     }
     
     func run() -> Disposable {
+        // 为什么, 这个地方, 要使用 scheduler 进行两次的 schedule 操作. 
         let scheduler = self.parent.scheduler
         return scheduler.schedule(self.parent.element) { element in
             self.forwardOn(.next(element))

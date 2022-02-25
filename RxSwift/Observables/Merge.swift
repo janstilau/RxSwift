@@ -8,14 +8,8 @@
 
 extension ObservableType {
     
-    /**
-     Projects each element of an observable sequence to an observable sequence and merges the resulting observable sequences into one observable sequence.
-     
-     - seealso: [flatMap operator on reactivex.io](http://reactivex.io/documentation/operators/flatmap.html)
-     
-     - parameter selector: A transform function to apply to each element.
-     - returns: An observable sequence whose elements are the result of invoking the one-to-many transform function on each element of the input sequence.
-     */
+    // 一个信号, 产生一个事件序列.
+    // 这是异步操作可以链式的基础 Operator.
     public func flatMap<Source: ObservableConvertibleType>(_ selector: @escaping (Element) throws -> Source)
     -> Observable<Source.Element> {
         return FlatMap(source: self.asObservable(), selector: selector)

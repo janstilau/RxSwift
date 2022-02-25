@@ -7,23 +7,16 @@
 //
 
 extension ObservableType {
-    /**
-     Bypasses elements in an observable sequence as long as a specified condition is true and then returns the remaining elements.
-
-     - seealso: [skipWhile operator on reactivex.io](http://reactivex.io/documentation/operators/skipwhile.html)
-
-     - parameter predicate: A function to test each element for a condition.
-     - returns: An observable sequence that contains the elements from the input sequence starting at the first element in the linear series that does not pass the test specified by predicate.
-     */
+    
     public func skip(while predicate: @escaping (Element) throws -> Bool) -> Observable<Element> {
         SkipWhile(source: self.asObservable(), predicate: predicate)
     }
-
+    
     /**
      Bypasses elements in an observable sequence as long as a specified condition is true and then returns the remaining elements.
-
+     
      - seealso: [skipWhile operator on reactivex.io](http://reactivex.io/documentation/operators/skipwhile.html)
-
+     
      - parameter predicate: A function to test each element for a condition.
      - returns: An observable sequence that contains the elements from the input sequence starting at the first element in the linear series that does not pass the test specified by predicate.
      */
@@ -34,17 +27,21 @@ extension ObservableType {
 }
 
 final private class SkipWhileSink<Observer: ObserverType>: Sink<Observer>, ObserverType {
-    typealias Element = Observer.Element 
+    typealias Element = Observer.Element
     typealias Parent = SkipWhile<Element>
-
+    
     private let parent: Parent
     private var running = false
-
+    
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
         super.init(observer: observer, cancel: cancel)
     }
-
+    
+    /*
+     当新的 Event 到达之后, 判断当前自己的状态. 只有达到了要求之后, 才可以修改自己的状态.
+     只要修改过, 就不会再次判断了.
+     */
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
@@ -57,7 +54,7 @@ final private class SkipWhileSink<Observer: ObserverType>: Sink<Observer>, Obser
                     return
                 }
             }
-
+            
             if self.running {
                 self.forwardOn(.next(value))
             }
@@ -70,15 +67,15 @@ final private class SkipWhileSink<Observer: ObserverType>: Sink<Observer>, Obser
 
 final private class SkipWhile<Element>: Producer<Element> {
     typealias Predicate = (Element) throws -> Bool
-
+    
     private let source: Observable<Element>
     fileprivate let predicate: Predicate
-
+    
     init(source: Observable<Element>, predicate: @escaping Predicate) {
         self.source = source
         self.predicate = predicate
     }
-
+    
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         let sink = SkipWhileSink(parent: self, observer: observer, cancel: cancel)
         let subscription = self.source.subscribe(sink)

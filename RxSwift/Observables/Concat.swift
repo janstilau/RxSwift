@@ -7,15 +7,7 @@
 //
 
 extension ObservableType {
-
-    /**
-     Concatenates the second observable sequence to `self` upon successful termination of `self`.
-
-     - seealso: [concat operator on reactivex.io](http://reactivex.io/documentation/operators/concat.html)
-
-     - parameter second: Second observable sequence.
-     - returns: An observable sequence that contains the elements of `self`, followed by those of the second sequence.
-     */
+    
     public func concat<Source: ObservableConvertibleType>(_ second: Source) -> Observable<Element> where Source.Element == Element {
         Observable.concat([self.asObservable(), second.asObservable()])
     }
@@ -24,51 +16,51 @@ extension ObservableType {
 extension ObservableType {
     /**
      Concatenates all observable sequences in the given sequence, as long as the previous observable sequence terminated successfully.
-
+     
      This operator has tail recursive optimizations that will prevent stack overflow.
-
+     
      Optimizations will be performed in cases equivalent to following:
-
+     
      [1, [2, [3, .....].concat()].concat].concat()
-
+     
      - seealso: [concat operator on reactivex.io](http://reactivex.io/documentation/operators/concat.html)
-
+     
      - returns: An observable sequence that contains the elements of each given sequence, in sequential order.
      */
     public static func concat<Sequence: Swift.Sequence>(_ sequence: Sequence) -> Observable<Element>
-        where Sequence.Element == Observable<Element> {
-            return Concat(sources: sequence, count: nil)
+    where Sequence.Element == Observable<Element> {
+        return Concat(sources: sequence, count: nil)
     }
-
+    
     /**
      Concatenates all observable sequences in the given collection, as long as the previous observable sequence terminated successfully.
-
+     
      This operator has tail recursive optimizations that will prevent stack overflow.
-
+     
      Optimizations will be performed in cases equivalent to following:
-
+     
      [1, [2, [3, .....].concat()].concat].concat()
-
+     
      - seealso: [concat operator on reactivex.io](http://reactivex.io/documentation/operators/concat.html)
-
+     
      - returns: An observable sequence that contains the elements of each given sequence, in sequential order.
      */
     public static func concat<Collection: Swift.Collection>(_ collection: Collection) -> Observable<Element>
-        where Collection.Element == Observable<Element> {
-            return Concat(sources: collection, count: Int64(collection.count))
+    where Collection.Element == Observable<Element> {
+        return Concat(sources: collection, count: Int64(collection.count))
     }
-
+    
     /**
      Concatenates all observable sequences in the given collection, as long as the previous observable sequence terminated successfully.
-
+     
      This operator has tail recursive optimizations that will prevent stack overflow.
-
+     
      Optimizations will be performed in cases equivalent to following:
-
+     
      [1, [2, [3, .....].concat()].concat].concat()
-
+     
      - seealso: [concat operator on reactivex.io](http://reactivex.io/documentation/operators/concat.html)
-
+     
      - returns: An observable sequence that contains the elements of each given sequence, in sequential order.
      */
     public static func concat(_ sources: Observable<Element> ...) -> Observable<Element> {
@@ -77,9 +69,9 @@ extension ObservableType {
 }
 
 final private class ConcatSink<Sequence: Swift.Sequence, Observer: ObserverType>
-    : TailRecursiveSink<Sequence, Observer>
-    , ObserverType where Sequence.Element: ObservableConvertibleType, Sequence.Element.Element == Observer.Element {
-    typealias Element = Observer.Element 
+: TailRecursiveSink<Sequence, Observer>
+, ObserverType where Sequence.Element: ObservableConvertibleType, Sequence.Element.Element == Observer.Element {
+    typealias Element = Observer.Element
     
     override init(observer: Observer, cancel: Cancelable) {
         super.init(observer: observer, cancel: cancel)
@@ -96,7 +88,7 @@ final private class ConcatSink<Sequence: Swift.Sequence, Observer: ObserverType>
             self.schedule(.moveNext)
         }
     }
-
+    
     override func subscribeToNext(_ source: Observable<Element>) -> Disposable {
         source.subscribe(self)
     }
@@ -116,7 +108,7 @@ final private class Concat<Sequence: Swift.Sequence>: Producer<Sequence.Element.
     
     fileprivate let sources: Sequence
     fileprivate let count: IntMax?
-
+    
     init(sources: Sequence, count: IntMax?) {
         self.sources = sources
         self.count = count

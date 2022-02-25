@@ -7,16 +7,9 @@
 //
 
 extension ObservableType where Element: Equatable {
-
-    /**
-     Returns an observable sequence that contains only distinct contiguous elements according to equality operator.
-
-     - seealso: [distinct operator on reactivex.io](http://reactivex.io/documentation/operators/distinct.html)
-
-     - returns: An observable sequence only containing the distinct contiguous elements, based on equality operator, from the source sequence.
-     */
+    
     public func distinctUntilChanged()
-        -> Observable<Element> {
+    -> Observable<Element> {
         self.distinctUntilChanged({ $0 }, comparer: { ($0 == $1) })
     }
 }
@@ -24,59 +17,60 @@ extension ObservableType where Element: Equatable {
 extension ObservableType {
     /**
      Returns an observable sequence that contains only distinct contiguous elements according to the `keySelector`.
-
+     
      - seealso: [distinct operator on reactivex.io](http://reactivex.io/documentation/operators/distinct.html)
-
+     
      - parameter keySelector: A function to compute the comparison key for each element.
      - returns: An observable sequence only containing the distinct contiguous elements, based on a computed key value, from the source sequence.
      */
     public func distinctUntilChanged<Key: Equatable>(_ keySelector: @escaping (Element) throws -> Key)
-        -> Observable<Element> {
+    -> Observable<Element> {
         self.distinctUntilChanged(keySelector, comparer: { $0 == $1 })
     }
-
+    
     /**
      Returns an observable sequence that contains only distinct contiguous elements according to the `comparer`.
-
+     
      - seealso: [distinct operator on reactivex.io](http://reactivex.io/documentation/operators/distinct.html)
-
+     
      - parameter comparer: Equality comparer for computed key values.
      - returns: An observable sequence only containing the distinct contiguous elements, based on `comparer`, from the source sequence.
      */
     public func distinctUntilChanged(_ comparer: @escaping (Element, Element) throws -> Bool)
-        -> Observable<Element> {
+    -> Observable<Element> {
+        // key selector 就是 返回 自己.
         self.distinctUntilChanged({ $0 }, comparer: comparer)
     }
-
+    
     /**
      Returns an observable sequence that contains only distinct contiguous elements according to the keySelector and the comparer.
-
+     
      - seealso: [distinct operator on reactivex.io](http://reactivex.io/documentation/operators/distinct.html)
-
+     
      - parameter keySelector: A function to compute the comparison key for each element.
      - parameter comparer: Equality comparer for computed key values.
      - returns: An observable sequence only containing the distinct contiguous elements, based on a computed key value and the comparer, from the source sequence.
      */
     public func distinctUntilChanged<K>(_ keySelector: @escaping (Element) throws -> K, comparer: @escaping (K, K) throws -> Bool)
-        -> Observable<Element> {
-            return DistinctUntilChanged(source: self.asObservable(), selector: keySelector, comparer: comparer)
+    -> Observable<Element> {
+        return DistinctUntilChanged(source: self.asObservable(), selector: keySelector, comparer: comparer)
     }
-
+    
     /**
-    Returns an observable sequence that contains only contiguous elements with distinct values in the provided key path on each object.
-
-    - seealso: [distinct operator on reactivex.io](http://reactivex.io/documentation/operators/distinct.html)
-
-    - returns: An observable sequence only containing the distinct contiguous elements, based on equality operator on the provided key path
-    */
+     Returns an observable sequence that contains only contiguous elements with distinct values in the provided key path on each object.
+     
+     - seealso: [distinct operator on reactivex.io](http://reactivex.io/documentation/operators/distinct.html)
+     
+     - returns: An observable sequence only containing the distinct contiguous elements, based on equality operator on the provided key path
+     */
     public func distinctUntilChanged<Property: Equatable>(at keyPath: KeyPath<Element, Property>) ->
-        Observable<Element> {
+    Observable<Element> {
         self.distinctUntilChanged { $0[keyPath: keyPath] == $1[keyPath: keyPath] }
     }
 }
 
 final private class DistinctUntilChangedSink<Observer: ObserverType, Key>: Sink<Observer>, ObserverType {
-    typealias Element = Observer.Element 
+    typealias Element = Observer.Element
     
     private let parent: DistinctUntilChanged<Element, Key>
     private var currentKey: Key?
@@ -86,6 +80,7 @@ final private class DistinctUntilChangedSink<Observer: ObserverType, Key>: Sink<
         super.init(observer: observer, cancel: cancel)
     }
     
+    // On 里面的逻辑就很简单, 比对不相等, 才会发射新的信号. 
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
@@ -120,8 +115,8 @@ final private class DistinctUntilChanged<Element, Key>: Producer<Element> {
     typealias EqualityComparer = (Key, Key) throws -> Bool
     
     private let source: Observable<Element>
-    fileprivate let selector: KeySelector
-    fileprivate let comparer: EqualityComparer
+    fileprivate let selector: KeySelector // 这个存储的, 如何从 Value 里面, 抽取要比较的 Property
+    fileprivate let comparer: EqualityComparer // 这个存储的, 如何比较 Property
     
     init(source: Observable<Element>, selector: @escaping KeySelector, comparer: @escaping EqualityComparer) {
         self.source = source

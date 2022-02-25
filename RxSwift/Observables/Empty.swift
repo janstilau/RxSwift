@@ -23,7 +23,7 @@ extension ObservableType {
     }
 }
 
-// EmptyProducer 直接复写了 subscribe 方法, 在 subscribe 的时候, 直接给 observer 发送 complete event.
+// 这里就没有什么
 final private class EmptyProducer<Element>: Producer<Element> {
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         observer.on(.completed)

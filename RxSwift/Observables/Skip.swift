@@ -8,14 +8,6 @@
 
 extension ObservableType {
     
-    /**
-     Bypasses a specified number of elements in an observable sequence and then returns the remaining elements.
-     
-     - seealso: [skip operator on reactivex.io](http://reactivex.io/documentation/operators/skip.html)
-     
-     - parameter count: The number of elements to skip before returning the remaining elements.
-     - returns: An observable sequence that contains the elements that occur after the specified index in the input sequence.
-     */
     public func skip(_ count: Int)
     -> Observable<Element> {
         SkipCount(source: self.asObservable(), count: count)
@@ -24,15 +16,6 @@ extension ObservableType {
 
 extension ObservableType {
     
-    /**
-     Skips elements for the specified duration from the start of the observable source sequence, using the specified scheduler to run timers.
-     
-     - seealso: [skip operator on reactivex.io](http://reactivex.io/documentation/operators/skip.html)
-     
-     - parameter duration: Duration for skipping elements from the start of the sequence.
-     - parameter scheduler: Scheduler to run the timer on.
-     - returns: An observable sequence with the elements skipped during the specified duration from the start of the source sequence.
-     */
     public func skip(_ duration: RxTimeInterval, scheduler: SchedulerType)
     -> Observable<Element> {
         SkipTime(source: self.asObservable(), duration: duration, scheduler: scheduler)
@@ -50,7 +33,6 @@ final private class SkipCountSink<Observer: ObserverType>: Sink<Observer>, Obser
     
     var remaining: Int
     
-    // 没太明白, 这个 Parent 存储的意义.
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
         self.remaining = parent.count
@@ -112,6 +94,8 @@ final private class SkipTimeSink<Element, Observer: ObserverType>: Sink<Observer
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 当新的信号发送过来的时候, 如果自己状态不对, 就不处理.
+    // 这个状态, 是在特定时间之后才会触发.
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
@@ -131,6 +115,8 @@ final private class SkipTimeSink<Element, Observer: ObserverType>: Sink<Observer
         self.open = true
     }
     
+    
+    // 对于 SkipTime 来说, 它除了取消 parent.source.subscribe 订阅外, 还需要取消定时器.
     func run() -> Disposable {
         let disposeTimer = self.parent.scheduler.scheduleRelative((), dueTime: self.parent.duration) { _ in
             self.tick()
@@ -138,7 +124,6 @@ final private class SkipTimeSink<Element, Observer: ObserverType>: Sink<Observer
         }
         
         let disposeSubscription = self.parent.source.subscribe(self)
-        
         return Disposables.create(disposeTimer, disposeSubscription)
     }
 }

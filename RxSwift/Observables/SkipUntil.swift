@@ -7,63 +7,53 @@
 //
 
 extension ObservableType {
-    /**
-     Returns the elements from the source observable sequence that are emitted after the other observable sequence produces an element.
-
-     - seealso: [skipUntil operator on reactivex.io](http://reactivex.io/documentation/operators/skipuntil.html)
-
-     - parameter other: Observable sequence that starts propagation of elements of the source sequence.
-     - returns: An observable sequence containing the elements of the source sequence that are emitted after the other sequence emits an item.
-     */
     public func skip<Source: ObservableType>(until other: Source)
-        -> Observable<Element> {
+    -> Observable<Element> {
         SkipUntil(source: self.asObservable(), other: other.asObservable())
     }
-
+    
     /**
      Returns the elements from the source observable sequence that are emitted after the other observable sequence produces an element.
-
+     
      - seealso: [skipUntil operator on reactivex.io](http://reactivex.io/documentation/operators/skipuntil.html)
-
+     
      - parameter other: Observable sequence that starts propagation of elements of the source sequence.
      - returns: An observable sequence containing the elements of the source sequence that are emitted after the other sequence emits an item.
      */
     @available(*, deprecated, renamed: "skip(until:)")
     public func skipUntil<Source: ObservableType>(_ other: Source)
-        -> Observable<Element> {
+    -> Observable<Element> {
         skip(until: other)
     }
 }
 
 final private class SkipUntilSinkOther<Other, Observer: ObserverType>
-    : ObserverType
-    , LockOwnerType
-    , SynchronizedOnType {
+: ObserverType
+, LockOwnerType
+, SynchronizedOnType {
     typealias Parent = SkipUntilSink<Other, Observer>
     typealias Element = Other
     
     private let parent: Parent
-
+    
     var lock: RecursiveLock {
         self.parent.lock
     }
     
     let subscription = SingleAssignmentDisposable()
-
+    
     init(parent: Parent) {
         self.parent = parent
-        #if TRACE_RESOURCES
-            _ = Resources.incrementTotal()
-        #endif
     }
-
+    
     func on(_ event: Event<Element>) {
         self.synchronizedOn(event)
     }
-
+    
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next:
+            // 在这里, 对于另外的一个, 实际进行 Source 监听的 Sink 进行了状态改变. 
             self.parent.forwardElements = true
             self.subscription.dispose()
         case .error(let e):
@@ -73,22 +63,15 @@ final private class SkipUntilSinkOther<Other, Observer: ObserverType>
             self.subscription.dispose()
         }
     }
-    
-    #if TRACE_RESOURCES
-    deinit {
-        _ = Resources.decrementTotal()
-    }
-    #endif
-
 }
 
 
 final private class SkipUntilSink<Other, Observer: ObserverType>
-    : Sink<Observer>
-    , ObserverType
-    , LockOwnerType
-    , SynchronizedOnType {
-    typealias Element = Observer.Element 
+: Sink<Observer>
+, ObserverType
+, LockOwnerType
+, SynchronizedOnType {
+    typealias Element = Observer.Element
     typealias Parent = SkipUntil<Element, Other>
     
     let lock = RecursiveLock()
@@ -96,7 +79,7 @@ final private class SkipUntilSink<Other, Observer: ObserverType>
     fileprivate var forwardElements = false
     
     private let sourceSubscription = SingleAssignmentDisposable()
-
+    
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
         super.init(observer: observer, cancel: cancel)
@@ -105,7 +88,7 @@ final private class SkipUntilSink<Other, Observer: ObserverType>
     func on(_ event: Event<Element>) {
         self.synchronizedOn(event)
     }
-
+    
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next:
@@ -124,7 +107,7 @@ final private class SkipUntilSink<Other, Observer: ObserverType>
     }
     
     func run() -> Disposable {
-        // 引入了一个中间层, 这个中间层, 来进行控制变量的值进行变化. 
+        // 引入了一个中间层, 这个中间层, 来进行控制变量的值进行变化.
         let sourceSubscription = self.parent.source.subscribe(self)
         let otherObserver = SkipUntilSinkOther(parent: self)
         let otherSubscription = self.parent.other.subscribe(otherObserver)

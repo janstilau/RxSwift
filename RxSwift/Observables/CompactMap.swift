@@ -8,9 +8,6 @@
 
 extension ObservableType {
     
-    /*
-     Projects each element of an observable sequence into an optional form and filters all optional results.
-     */
     public func compactMap<Result>(_ transform: @escaping (Element) throws -> Result?)
     -> Observable<Result> {
         CompactMap(source: self.asObservable(), transform: transform)
@@ -34,7 +31,7 @@ final private class CompactMapSink<SourceType, Observer: ObserverType>: Sink<Obs
         switch event {
         case .next(let element):
             do {
-                // 只会, forward 不是 nil 的事件.
+                // 去除了返回值是 nil 的元素. 对于下游来说, 并不知道, 存在着 value == nil 的信号被发送过来了.
                 if let mappedElement = try self.transform(element) {
                     self.forwardOn(.next(mappedElement))
                 }

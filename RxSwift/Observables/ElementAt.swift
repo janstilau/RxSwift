@@ -7,30 +7,14 @@
 //
 
 extension ObservableType {
-    /**
-     Returns a sequence emitting only element _n_ emitted by an Observable
-
-     - seealso: [elementAt operator on reactivex.io](http://reactivex.io/documentation/operators/elementat.html)
-
-     - parameter index: The index of the required element (starting from 0).
-     - returns: An observable sequence that emits the desired element as its own sole emission.
-     */
     @available(*, deprecated, renamed: "element(at:)")
     public func elementAt(_ index: Int)
-        -> Observable<Element> {
+    -> Observable<Element> {
         element(at: index)
     }
-
-    /**
-     Returns a sequence emitting only element _n_ emitted by an Observable
-
-     - seealso: [elementAt operator on reactivex.io](http://reactivex.io/documentation/operators/elementat.html)
-
-     - parameter index: The index of the required element (starting from 0).
-     - returns: An observable sequence that emits the desired element as its own sole emission.
-     */
+    
     public func element(at index: Int)
-        -> Observable<Element> {
+    -> Observable<Element> {
         ElementAt(source: self.asObservable(), index: index, throwOnEmpty: true)
     }
 }
@@ -49,10 +33,11 @@ final private class ElementAtSink<Observer: ObserverType>: Sink<Observer>, Obser
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 在 on 中, 进行了 times 的判断. 
     func on(_ event: Event<SourceType>) {
         switch event {
         case .next:
-
+            
             if self.i == 0 {
                 self.forwardOn(event)
                 self.forwardOn(.completed)
@@ -91,7 +76,7 @@ final private class ElementAt<SourceType>: Producer<SourceType> {
         if index < 0 {
             rxFatalError("index can't be negative")
         }
-
+        
         self.source = source
         self.index = index
         self.throwOnEmpty = throwOnEmpty

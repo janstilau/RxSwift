@@ -7,17 +7,8 @@
 //
 
 extension ObservableType {
-    /**
-    Converts an Observable into a Single that emits the whole sequence as a single array and then terminates.
-    
-    For aggregation behavior see `reduce`.
-
-    - seealso: [toArray operator on reactivex.io](http://reactivex.io/documentation/operators/to.html)
-    
-    - returns: A Single sequence containing all the emitted elements as array.
-    */
     public func toArray()
-        -> Single<[Element]> {
+    -> Single<[Element]> {
         PrimitiveSequence(raw: ToArray(source: self.asObservable()))
     }
 }
@@ -34,6 +25,7 @@ final private class ToArraySink<SourceType, Observer: ObserverType>: Sink<Observ
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 在 On 方法里面不断的收集, 直到 complete 事件的时候, 一次性将所有的数据发送出去.
     func on(_ event: Event<SourceType>) {
         switch event {
         case .next(let value):
@@ -51,7 +43,7 @@ final private class ToArraySink<SourceType, Observer: ObserverType>: Sink<Observ
 
 final private class ToArray<SourceType>: Producer<[SourceType]> {
     let source: Observable<SourceType>
-
+    
     init(source: Observable<SourceType>) {
         self.source = source
     }

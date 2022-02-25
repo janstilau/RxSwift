@@ -7,7 +7,6 @@
 //
 
 extension ObservableType {
-    // MARK: of
 
     public static func of(_ elements: Element ..., scheduler: ImmediateSchedulerType = CurrentThreadScheduler.instance) -> Observable<Element> {
         ObservableSequence(elements: elements, scheduler: scheduler)
@@ -15,13 +14,7 @@ extension ObservableType {
 }
 
 extension ObservableType {
-    /**
-     Converts an array to an observable sequence.
-
-     - seealso: [from operator on reactivex.io](http://reactivex.io/documentation/operators/from.html)
-
-     - returns: The observable sequence whose elements are pulled from the given enumerable sequence.
-     */
+    
     public static func from(_ array: [Element], scheduler: ImmediateSchedulerType = CurrentThreadScheduler.instance) -> Observable<Element> {
         ObservableSequence(elements: array, scheduler: scheduler)
     }
@@ -33,7 +26,9 @@ extension ObservableType {
 
      - returns: The observable sequence whose elements are pulled from the given enumerable sequence.
      */
-    public static func from<Sequence: Swift.Sequence>(_ sequence: Sequence, scheduler: ImmediateSchedulerType = CurrentThreadScheduler.instance) -> Observable<Element> where Sequence.Element == Element {
+    public static func from<Sequence: Swift.Sequence>(_ sequence: Sequence,
+                                                      scheduler: ImmediateSchedulerType = CurrentThreadScheduler.instance)
+    -> Observable<Element> where Sequence.Element == Element {
         ObservableSequence(elements: sequence, scheduler: scheduler)
     }
 }

@@ -137,7 +137,18 @@ class NumbersViewController: ViewController {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        testLife()
+        testEmpty()
+    }
+    
+    func testEmpty() {
+        
+        Observable.from([1, 2, 3])
+        
+//        Observable
+//            .from([1, 2, 3, 4, 5])
+//            .subscribe { event in
+//            print(event)
+//        }
     }
     
     func testLife() {
