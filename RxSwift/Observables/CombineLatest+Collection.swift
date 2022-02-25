@@ -7,42 +7,32 @@
 //
 
 extension ObservableType {
-    /**
-     Merges the specified observable sequences into one observable sequence by using the selector function whenever any of the observable sequences produces an element.
-
-     - seealso: [combinelatest operator on reactivex.io](http://reactivex.io/documentation/operators/combinelatest.html)
-
-     - parameter resultSelector: Function to invoke whenever any of the sources produces an element.
-     - returns: An observable sequence containing the result of combining elements of the sources using the specified result selector function.
-     */
-    public static func combineLatest<Collection: Swift.Collection>(_ collection: Collection, resultSelector: @escaping ([Collection.Element.Element]) throws -> Element) -> Observable<Element>
-        where Collection.Element: ObservableType {
+    
+    public static func combineLatest<Collection: Swift.Collection>(
+        _ collection: Collection,
+        resultSelector: @escaping ([Collection.Element.Element]) throws -> Element)
+    -> Observable<Element>
+    // 非常重要的限制, Collection 里面, 必须要是一个 Publisher 才可以 .
+    where Collection.Element: ObservableType {
         CombineLatestCollectionType(sources: collection, resultSelector: resultSelector)
     }
-
-    /**
-     Merges the specified observable sequences into one observable sequence whenever any of the observable sequences produces an element.
-
-     - seealso: [combinelatest operator on reactivex.io](http://reactivex.io/documentation/operators/combinelatest.html)
-
-     - returns: An observable sequence containing the result of combining elements of the sources.
-     */
+    
     public static func combineLatest<Collection: Swift.Collection>(_ collection: Collection) -> Observable<[Element]>
-        where Collection.Element: ObservableType, Collection.Element.Element == Element {
+    where Collection.Element: ObservableType, Collection.Element.Element == Element {
         CombineLatestCollectionType(sources: collection, resultSelector: { $0 })
     }
 }
 
 final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection, Observer: ObserverType>
-    : Sink<Observer> where Collection.Element: ObservableConvertibleType {
-    typealias Result = Observer.Element 
+: Sink<Observer> where Collection.Element: ObservableConvertibleType {
+    typealias Result = Observer.Element
     typealias Parent = CombineLatestCollectionType<Collection, Result>
     typealias SourceElement = Collection.Element.Element
     
     let parent: Parent
     
     let lock = RecursiveLock()
-
+    
     // state
     var numberOfValues = 0
     var values: [SourceElement?]
@@ -66,6 +56,7 @@ final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection
     
     func on(_ event: Event<SourceElement>, atIndex: Int) {
         self.lock.lock(); defer { self.lock.unlock() }
+        
         switch event {
         case .next(let element):
             if self.values[atIndex] == nil {
@@ -121,12 +112,12 @@ final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection
             let disposable = source.subscribe(AnyObserver { event in
                 self.on(event, atIndex: index)
             })
-
-            self.subscriptions[j].setDisposable(disposable)
             
+            self.subscriptions[j].setDisposable(disposable)
             j += 1
         }
-
+        
+        // 和其他的 Combine Lastes 的逻辑, 没有任何的区别. 在这里, 使用了 Collection 的相关函数, 
         if self.parent.sources.isEmpty {
             do {
                 let result = try self.parent.resultSelector([])
@@ -145,12 +136,13 @@ final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection
 }
 
 final private class CombineLatestCollectionType<Collection: Swift.Collection, Result>: Producer<Result> where Collection.Element: ObservableConvertibleType {
+    
     typealias ResultSelector = ([Collection.Element.Element]) throws -> Result
     
     let sources: Collection
     let resultSelector: ResultSelector
     let count: Int
-
+    
     init(sources: Collection, resultSelector: @escaping ResultSelector) {
         self.sources = sources
         self.resultSelector = resultSelector

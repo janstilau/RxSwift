@@ -1,25 +1,24 @@
 // 2
 extension ObservableType {
-    /*
-     Merges the specified observable sequences into one observable sequence by using the selector function whenever any of the observable sequences produces an element.
-     */
     public static func combineLatest<O1: ObservableType, O2: ObservableType>
     (_ source1: O1, _ source2: O2, resultSelector: @escaping (O1.Element, O2.Element) throws -> Element)
     -> Observable<Element> {
         return CombineLatest2(
-            source1: source1.asObservable(), source2: source2.asObservable(),
+            source1: source1.asObservable(),
+            source2: source2.asObservable(),
             resultSelector: resultSelector
         )
     }
 }
 
+// 对于, 没有传递 resultSelector, 提供一个默认 resultSelector 就是形成一个元组.
 extension ObservableType where Element == Any {
-    // 这个方法, 没有提供 resultSelector, 而是将这两个值, 变为了一个元组.
     public static func combineLatest<O1: ObservableType, O2: ObservableType>
     (_ source1: O1, _ source2: O2)
     -> Observable<(O1.Element, O2.Element)> {
         return CombineLatest2(
-            source1: source1.asObservable(), source2: source2.asObservable(),
+            source1: source1.asObservable(),
+            source2: source2.asObservable(),
             resultSelector: { ($0, $1) }
         )
     }
@@ -31,6 +30,7 @@ final class CombineLatestSink2_<E1, E2, Observer: ObserverType> : CombineLatestS
     
     let parent: Parent
     
+    // 每个 CombineLatestObserver 的值, 其实是存储到对应的 Sink 里面了.
     var latestElement1: E1! = nil
     var latestElement2: E2! = nil
     
@@ -46,9 +46,12 @@ final class CombineLatestSink2_<E1, E2, Observer: ObserverType> : CombineLatestS
         let observer1 = CombineLatestObserver(lock: self.lock, parent: self, index: 0, setLatestValue: { (e: E1) -> Void in self.latestElement1 = e }, this: subscription1)
         let observer2 = CombineLatestObserver(lock: self.lock, parent: self, index: 1, setLatestValue: { (e: E2) -> Void in self.latestElement2 = e }, this: subscription2)
         
+        // 真正的 subscribe, 其实在这里完成的.
+        // 将所有的 subscribe 进行记录, 然后返回一个集合的 Disposable 对象.
         subscription1.setDisposable(self.parent.source1.subscribe(observer1))
         subscription2.setDisposable(self.parent.source2.subscribe(observer2))
         
+        // 返回的
         return Disposables.create([
             subscription1,
             subscription2
@@ -155,7 +158,7 @@ final class CombineLatestSink3_<E1, E2, E3, Observer: ObserverType> : CombineLat
     }
     
     override func getResult() throws -> Result {
-        // 调用存储的 transform 闭包, 将存储的值传递过去, 返回一个新的结果. 
+        // 调用存储的 transform 闭包, 将存储的值传递过去, 返回一个新的结果.
         try self.parent.resultSelector(self.latestElement1, self.latestElement2, self.latestElement3)
     }
 }

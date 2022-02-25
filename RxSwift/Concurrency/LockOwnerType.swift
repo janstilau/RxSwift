@@ -6,7 +6,10 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
-// 
+/*
+ LockOwnerType 的唯一要求, 就是自己要有一把锁.
+ */
+
 protocol LockOwnerType: AnyObject, Lock {
     var lock: RecursiveLock { get }
 }

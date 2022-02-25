@@ -11,7 +11,6 @@ protocol Lock {
     func unlock()
 }
 
-// https://lists.swift.org/pipermail/swift-dev/Week-of-Mon-20151214/000321.html
 typealias SpinLock = RecursiveLock
 
 extension RecursiveLock : Lock {

@@ -6,7 +6,7 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
-/// Represents a disposable resource whose underlying disposable resource can be replaced by another disposable resource, causing automatic disposal of the previous underlying disposable resource.
+// Represents a disposable resource whose underlying disposable resource can be replaced by another disposable resource, causing automatic disposal of the previous underlying disposable resource.
 public final class SerialDisposable : DisposeBase, Cancelable {
     private var lock = SpinLock()
     
@@ -48,7 +48,7 @@ public final class SerialDisposable : DisposeBase, Cancelable {
                     return toDispose
                 }
             }
-            
+            // 在替换的时候, 原来的要进行 dispose.
             if let disposable = disposable {
                 disposable.dispose()
             }
