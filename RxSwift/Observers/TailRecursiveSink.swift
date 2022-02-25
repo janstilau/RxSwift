@@ -33,7 +33,6 @@ Sequence.Element.Element == Observer.Element {
     
     func run(_ sources: SequenceGenerator) -> Disposable {
         self.generators.append(sources)
-        
         self.schedule(.moveNext)
         
         return self.subscription

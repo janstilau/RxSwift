@@ -27,9 +27,7 @@ extension ImmediateSchedulerType {
                                          action: @escaping (_ state: State, _ recurse: (State) -> Void) -> Void)
     -> Disposable {
         let recursiveScheduler = RecursiveImmediateScheduler(action: action, scheduler: self)
-        
         recursiveScheduler.schedule(state)
-        
         return Disposables.create(with: recursiveScheduler.dispose)
     }
 }

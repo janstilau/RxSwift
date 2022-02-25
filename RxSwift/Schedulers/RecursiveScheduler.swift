@@ -143,8 +143,9 @@ final class AnyRecursiveScheduler<State> {
     }
 }
 
-/// Type erased recursive scheduler.
+
 final class RecursiveImmediateScheduler<State> {
+    
     typealias Action =  (_ state: State, _ recurse: (State) -> Void) -> Void
     
     private var lock = SpinLock()
@@ -158,11 +159,6 @@ final class RecursiveImmediateScheduler<State> {
         self.scheduler = scheduler
     }
     
-    // immediate scheduling
-    
-    /// Schedules an action to be executed recursively.
-    ///
-    /// - parameter state: State passed to the action to be executed.
     func schedule(_ state: State) {
         var scheduleState: ScheduleState = .initial
         
@@ -173,6 +169,7 @@ final class RecursiveImmediateScheduler<State> {
             }
             
             let action = self.lock.performLocked { () -> Action? in
+                // 状态变化.
                 switch scheduleState {
                 case let .added(removeKey):
                     self.group.remove(for: removeKey)
@@ -181,7 +178,6 @@ final class RecursiveImmediateScheduler<State> {
                 case .done:
                     break
                 }
-                
                 scheduleState = .done
                 
                 return self.action
@@ -201,8 +197,7 @@ final class RecursiveImmediateScheduler<State> {
             case .initial:
                 if let removeKey = self.group.insert(d) {
                     scheduleState = .added(removeKey)
-                }
-                else {
+                } else {
                     scheduleState = .done
                 }
             case .done:

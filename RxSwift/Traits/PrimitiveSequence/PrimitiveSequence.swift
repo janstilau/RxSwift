@@ -6,7 +6,8 @@
 //  Copyright © 2017 Krunoslav Zaher. All rights reserved.
 //
 
-/// Observable sequences containing 0 or 1 element.
+// Observable sequences containing 0 or 1 element.
+
 public struct PrimitiveSequence<Trait, Element> {
     let source: Observable<Element>
     
@@ -125,12 +126,12 @@ extension PrimitiveSequence {
     }
     
     /**
-     Wraps the source sequence in order to run its subscription and unsubscription logic on the specified 
-     scheduler. 
+     Wraps the source sequence in order to run its subscription and unsubscription logic on the specified
+     scheduler.
      
      This operation is not commonly used.
      
-     This only performs the side-effects of subscription and unsubscription on the specified scheduler. 
+     This only performs the side-effects of subscription and unsubscription on the specified scheduler.
      
      In order to invoke observer callbacks on a `scheduler`, use `observeOn`.
      

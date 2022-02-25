@@ -32,18 +32,8 @@ extension ObservableType {
         return Concat(sources: sequence, count: nil)
     }
     
-    /**
+    /*
      Concatenates all observable sequences in the given collection, as long as the previous observable sequence terminated successfully.
-     
-     This operator has tail recursive optimizations that will prevent stack overflow.
-     
-     Optimizations will be performed in cases equivalent to following:
-     
-     [1, [2, [3, .....].concat()].concat].concat()
-     
-     - seealso: [concat operator on reactivex.io](http://reactivex.io/documentation/operators/concat.html)
-     
-     - returns: An observable sequence that contains the elements of each given sequence, in sequential order.
      */
     public static func concat<Collection: Swift.Collection>(_ collection: Collection) -> Observable<Element>
     where Collection.Element == Observable<Element> {
@@ -102,6 +92,8 @@ final private class ConcatSink<Sequence: Swift.Sequence, Observer: ObserverType>
         }
     }
 }
+
+
 
 final private class Concat<Sequence: Swift.Sequence>: Producer<Sequence.Element.Element> where Sequence.Element: ObservableConvertibleType {
     typealias Element = Sequence.Element.Element

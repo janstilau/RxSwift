@@ -11,6 +11,7 @@ extension ObservableType {
         Just(element: element)
     }
     
+    // 在特定的 scheduler 上, 进行 Element 的 Emit
     public static func just(_ element: Element, scheduler: ImmediateSchedulerType) -> Observable<Element> {
         JustScheduled(element: element, scheduler: scheduler)
     }
@@ -27,7 +28,7 @@ final private class JustScheduledSink<Observer: ObserverType>: Sink<Observer> {
     }
     
     func run() -> Disposable {
-        // 为什么, 这个地方, 要使用 scheduler 进行两次的 schedule 操作. 
+        
         let scheduler = self.parent.scheduler
         return scheduler.schedule(self.parent.element) { element in
             self.forwardOn(.next(element))
