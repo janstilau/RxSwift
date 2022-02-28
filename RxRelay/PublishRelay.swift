@@ -11,6 +11,7 @@ import RxSwift
 /// PublishRelay is a wrapper for `PublishSubject`.
 ///
 /// Unlike `PublishSubject` it can't terminate with error or completed.
+
 public final class PublishRelay<Element>: ObservableType {
     private let subject: PublishSubject<Element>
     

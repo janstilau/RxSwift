@@ -1,4 +1,4 @@
-/**
+/*
  Use `Reactive` proxy as customization point for constrained protocol extensions.
  
  General pattern would be:
@@ -34,9 +34,6 @@ public struct Reactive<Base> {
         self.base = base
     }
     
-    // 这种写法, 仅仅在实现 Wrapper 的方式下出现过.
-    /// Automatically synthesized binder for a key path between the reactive
-    /// base and one of its properties
     public subscript<Property>(dynamicMember keyPath: ReferenceWritableKeyPath<Base, Property>) -> Binder<Property>
     where Base: AnyObject {
         Binder(self.base) { base, value in

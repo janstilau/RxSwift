@@ -6,7 +6,7 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
-/**
+/*
 In case nobody holds this lock, the work will be queued and executed immediately
 on thread that is requesting lock.
 

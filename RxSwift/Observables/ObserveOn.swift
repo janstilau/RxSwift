@@ -167,7 +167,7 @@ final private class ObserveOnSerialDispatchQueueSink<Observer: ObserverType>: Ob
         self.cachedScheduleLambda = { pair in
             guard !cancel.isDisposed else { return Disposables.create() }
             
-            // 传递 event 的过程.
+            // 在调度器的函数里面, 直接就是将 Event 传递过去.
             pair.sink.observer.on(pair.event)
             
             if pair.event.isStopEvent {

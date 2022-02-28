@@ -60,6 +60,7 @@ public final class SerialDisposable : DisposeBase, Cancelable {
         self._dispose()?.dispose()
     }
     
+    // 不好的写法, get 函数有副作用
     private func _dispose() -> Disposable? {
         self.lock.performLocked {
             guard !self.isDisposed else { return nil }

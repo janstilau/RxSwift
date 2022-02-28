@@ -7,50 +7,47 @@
 //
 
 extension ObservableType {
-    /**
+    /*
      Wraps the source sequence in order to run its subscription and unsubscription logic on the specified
      scheduler.
-
+     
      This operation is not commonly used.
-
+     
      This only performs the side-effects of subscription and unsubscription on the specified scheduler.
-
+     
      In order to invoke observer callbacks on a `scheduler`, use `observeOn`.
-
-     - seealso: [subscribeOn operator on reactivex.io](http://reactivex.io/documentation/operators/subscribeon.html)
-
-     - parameter scheduler: Scheduler to perform subscription and unsubscription actions on.
-     - returns: The source sequence whose subscriptions and unsubscriptions happen on the specified scheduler.
      */
+    // SubscribeOn 表示的是, 注册这个行为, 应该被 scheduler 调度.
+    // ObserverOn 表示的是, 事件的后续处理, 应该被 scheduler 调度.
     public func subscribe(on scheduler: ImmediateSchedulerType)
-        -> Observable<Element> {
+    -> Observable<Element> {
         SubscribeOn(source: self, scheduler: scheduler)
     }
-
+    
     /**
      Wraps the source sequence in order to run its subscription and unsubscription logic on the specified
      scheduler.
-
+     
      This operation is not commonly used.
-
+     
      This only performs the side-effects of subscription and unsubscription on the specified scheduler.
-
+     
      In order to invoke observer callbacks on a `scheduler`, use `observeOn`.
-
+     
      - seealso: [subscribeOn operator on reactivex.io](http://reactivex.io/documentation/operators/subscribeon.html)
-
+     
      - parameter scheduler: Scheduler to perform subscription and unsubscription actions on.
      - returns: The source sequence whose subscriptions and unsubscriptions happen on the specified scheduler.
      */
     @available(*, deprecated, renamed: "subscribe(on:)")
     public func subscribeOn(_ scheduler: ImmediateSchedulerType)
-        -> Observable<Element> {
+    -> Observable<Element> {
         subscribe(on: scheduler)
     }
 }
 
 final private class SubscribeOnSink<Ob: ObservableType, Observer: ObserverType>: Sink<Observer>, ObserverType where Ob.Element == Observer.Element {
-    typealias Element = Observer.Element 
+    typealias Element = Observer.Element
     typealias Parent = SubscribeOn<Ob>
     
     let parent: Parent
@@ -79,9 +76,9 @@ final private class SubscribeOnSink<Ob: ObservableType, Observer: ObserverType>:
             disposeEverything.disposable = ScheduledDisposable(scheduler: self.parent.scheduler, disposable: subscription)
             return Disposables.create()
         }
-
+        
         cancelSchedule.setDisposable(disposeSchedule)
-    
+        
         return disposeEverything
     }
 }

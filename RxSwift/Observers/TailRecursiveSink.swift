@@ -18,7 +18,8 @@ Sequence.Element.Element == Observer.Element {
     
     typealias Value = TailRecursiveSinkCommand
     typealias Element = Observer.Element
-    typealias SequenceGenerator = (generator: Sequence.Iterator, remaining: IntMax?)
+    typealias SequenceGenerator = (generator: Sequence.Iterator,
+                                   remaining: IntMax?)
     
     var generators: [SequenceGenerator] = []
     var disposed = false
@@ -34,7 +35,6 @@ Sequence.Element.Element == Observer.Element {
     func run(_ sources: SequenceGenerator) -> Disposable {
         self.generators.append(sources)
         self.schedule(.moveNext)
-        
         return self.subscription
     }
     
@@ -96,8 +96,7 @@ Sequence.Element.Element == Observer.Element {
                 if knownOriginalLeft - 1 >= 1 {
                     self.generators.append((e, knownOriginalLeft - 1))
                 }
-            }
-            else {
+            } else {
                 self.generators.append((e, nil))
             }
             
@@ -105,8 +104,7 @@ Sequence.Element.Element == Observer.Element {
             
             if let nextGenerator = nextGenerator {
                 self.generators.append(nextGenerator)
-            }
-            else {
+            } else {
                 next = nextCandidate
             }
         } while next == nil

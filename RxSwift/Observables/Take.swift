@@ -68,6 +68,7 @@ final private class TakeCountSink<Observer: ObserverType>: Sink<Observer>, Obser
                 
                 self.forwardOn(.next(value))
                 
+                // 在取得特定个数的 event 之后, 直接进行 Complete 事件的发送, 直接 dispose
                 if self.remaining == 0 {
                     self.forwardOn(.completed)
                     self.dispose()

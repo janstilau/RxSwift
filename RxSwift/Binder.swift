@@ -7,19 +7,20 @@
 //
 
 /*
- Binder, 传入一个对象, 以及当数据发送过来的时候, 应该如何处理这个数据, 一般来说, 是利用这个数据进行 Target 的操作. 这也就是 Bind 的命名的含义.
+    Binder 传入一个对象, 以及当数据发送过来的时候, 应该如何处理这个数据, 一般来说, 是利用这个数据进行 Target 的操作. 这也就是 Bind 的命名的含义.
  */
 public struct Binder<Value>: ObserverType {
     public typealias Element = Value
     
     private let binding: (Event<Value>) -> Void
-
-    /// - parameter binding: Binding logic.
+    
+    // Binding 的逻辑, 一般来说和 UI 相关. 所以, 这里的 scheduler 使用的是 MainScheduler
+    // Binding 的真正调用, 是包含在了 Scheduler 的 schedule 逻辑里面的
     public init<Target: AnyObject>(_ target: Target,
                                    scheduler: ImmediateSchedulerType = MainScheduler(),
                                    binding: @escaping (Target, Value) -> Void) {
         weak var weakTarget = target
-
+        
         self.binding = { event in
             switch event {
             case .next(let element):
@@ -37,12 +38,12 @@ public struct Binder<Value>: ObserverType {
             }
         }
     }
-
+    
     /// Binds next element to owner view as described in `binding`.
     public func on(_ event: Event<Value>) {
         self.binding(event)
     }
-
+    
     /// Erases type of observer.
     ///
     /// - returns: type erased observer.
