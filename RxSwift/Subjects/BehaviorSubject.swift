@@ -1,14 +1,6 @@
-//
-//  BehaviorSubject.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 5/23/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
-
 /// Represents a value that changes over time.
-///
 /// Observers can subscribe to the subject to receive the last (or initial) value and all subsequent notifications.
+
 public final class BehaviorSubject<Element>
 : Observable<Element>
 , SubjectType
@@ -30,7 +22,10 @@ public final class BehaviorSubject<Element>
     
     // state
     private var disposed = false
-    // 这个类存在的意义就在于此, 它保存了一个值在内部. 作为 Publisher, 他要将存储的这个值, 以及这个值的变化, 发送给自己存储的所有观察者
+    /*
+     这个类, 会保留一下上次 on 传递过来的值, 然后在下一个 Observer 到来时, 先对齐发送一个上次存储的信号.
+     所以, 一定要对他进行初始化.
+     */
     private var element: Element
     private var observers = Observers()
     private var stoppedEvent: Event<Element>?
@@ -52,7 +47,7 @@ public final class BehaviorSubject<Element>
     
     /// Gets the current value or throws an error.
     ///
-    /// - returns: Latest value.
+    // 提供了一个向外传输值的接口.
     public func value() throws -> Element {
         self.lock.lock(); defer { self.lock.unlock() }
         
@@ -126,6 +121,7 @@ public final class BehaviorSubject<Element>
         }
         
         // 保存新的 Observer.
+        // 实际上, 这里进行了强引用.
         let key = self.observers.insert(observer.on)
         // 每个新的 Observer, 接受缓存的 element 的值.
         observer.on(.next(self.element))

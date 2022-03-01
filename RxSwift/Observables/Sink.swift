@@ -17,6 +17,7 @@
  */
 class Sink<Observer: ObserverType>: Disposable {
     
+    // 实际上, 在这里, Sink 是保存了它的一下个节点的生命周期的.
     fileprivate let observer: Observer // Sink 操作后数据后, 应该传递数据的去向
     fileprivate let cancel: Cancelable
     

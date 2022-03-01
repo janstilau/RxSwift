@@ -12,18 +12,13 @@ import RxSwift
 
 // 自循环引用的一个对象.
 // 只有明确的调用 dispose 的时候, 才会去释放.
-class RxTarget : NSObject
-               , Disposable {
+class RxTarget : NSObject, Disposable {
     
     private var retainSelf: RxTarget?
     
     override init() {
         super.init()
         self.retainSelf = self
-
-#if DEBUG
-        MainScheduler.ensureRunningOnMainThread()
-#endif
     }
     
     func dispose() {

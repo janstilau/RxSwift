@@ -7,7 +7,8 @@
 //
 
 /*
-    Binder 传入一个对象, 以及当数据发送过来的时候, 应该如何处理这个数据, 一般来说, 是利用这个数据进行 Target 的操作. 这也就是 Bind 的命名的含义.
+    Binder 是用来当做 Observer 的.
+    它的 On 就是使用调用传递过来的闭包, 一般来说, 就是将数据, 设置到 Base 的某个值上. 
  */
 public struct Binder<Value>: ObserverType {
     public typealias Element = Value

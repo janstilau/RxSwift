@@ -8,7 +8,8 @@
 
 import RxSwift
 
-/// A protocol that extends `ControlEvent`.
+// ControlEvent 是用来充当 Publisher 的.
+// 获取之后, 该 Control 在触发某个事件的时候, 就会发送信号.
 public protocol ControlEventType : ObservableType {
 
     /// - returns: `ControlEvent` interface
@@ -20,10 +21,10 @@ public protocol ControlEventType : ObservableType {
 
     Properties:
 
-    - it doesn’t send any initial value on subscription,
+    - it doesn’t send any initial value on subscription, 没有初始信号, 因为都是事件, 需要用户主动调用.
     - it `Complete`s the sequence when the control deallocates,
-    - it never errors out
-    - it delivers events on `MainScheduler.instance`.
+    - it never errors out // 用户操作不可能有错
+    - it delivers events on `MainScheduler.instance`. // UI 操作 .
 
     **The implementation of `ControlEvent` will ensure that sequence of events is being subscribed on main scheduler
      (`subscribe(on: ConcurrentMainScheduler.instance)` behavior).**
@@ -36,9 +37,10 @@ public protocol ControlEventType : ObservableType {
      properties, don’t use this trait.**
 */
 public struct ControlEvent<PropertyType> : ControlEventType {
+    
     public typealias Element = PropertyType
 
-    let events: Observable<PropertyType>
+    let events: Observable<PropertyType> // 传递一个 Publsiher 过来, 进行了在主线程调度的变化, 真正使用的是这个会在主线程传递数据给后续节点的 Event Publisher.
 
     /// Initializes control event with a observable sequence that represents events.
     ///
@@ -56,6 +58,9 @@ public struct ControlEvent<PropertyType> : ControlEventType {
         self.events.subscribe(observer)
     }
 
+    /*
+        各种 as 表示的是, 能够提供对应结构的对象. 至于是 self, 还是自己的属性, 还是自己新构建的, 其实不是太重要.
+     */
     /// - returns: `Observable` interface.
     public func asObservable() -> Observable<Element> {
         self.events

@@ -8,10 +8,10 @@
 
 import RxSwift
 
-/// Protocol that enables extension of `ControlProperty`.
+/*
+ 又能当做 Publisher, 又能当做 Observer
+ */
 public protocol ControlPropertyType : ObservableType, ObserverType {
-    
-    /// - returns: `ControlProperty` interface
     func asControlProperty() -> ControlProperty<Element>
 }
 

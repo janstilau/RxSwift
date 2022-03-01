@@ -11,75 +11,52 @@
 import RxSwift
 
 #if os(iOS) || os(tvOS)
-    import UIKit
+import UIKit
 
-    typealias Control = UIKit.UIControl
+typealias Control = UIKit.UIControl
 #elseif os(macOS)
-    import Cocoa
+import Cocoa
 
-    typealias Control = Cocoa.NSControl
+typealias Control = Cocoa.NSControl
 #endif
 
 // This should be only used from `MainScheduler`
 final class ControlTarget: RxTarget {
     typealias Callback = (Control) -> Void
-
+    
     let selector: Selector = #selector(ControlTarget.eventHandler(_:))
-
+    
     weak var control: Control?
 #if os(iOS) || os(tvOS)
     let controlEvents: UIControl.Event
 #endif
     var callback: Callback?
     
-    #if os(iOS) || os(tvOS)
+#if os(iOS) || os(tvOS)
     init(control: Control, controlEvents: UIControl.Event, callback: @escaping Callback) {
         self.control = control
         self.controlEvents = controlEvents
         self.callback = callback
-
+        
         super.init()
-
+        
         // 在构建方法里面, 进行了 target action 的监听.
         control.addTarget(self, action: selector, for: controlEvents)
-
-        let method = self.method(for: selector)
-        if method == nil {
-            rxFatalError("Can't find method")
-        }
-    }
-#elseif os(macOS)
-    init(control: Control, callback: @escaping Callback) {
-        self.control = control
-        self.callback = callback
-
-        super.init()
-
-        control.target = self
-        control.action = self.selector
-
-        let method = self.method(for: self.selector)
-        if method == nil {
-            rxFatalError("Can't find method")
-        }
     }
 #endif
-
+    
+    // 然后在 Control 的 Event 触发的时候, 进行 CallBack 的调用,
+    // 这在自己的公司的代码工具库里面, 也经常使用.
     @objc func eventHandler(_ sender: Control!) {
         if let callback = self.callback, let control = self.control {
             callback(control)
         }
     }
-
+    
     override func dispose() {
         super.dispose()
-#if os(iOS) || os(tvOS)
         // 在 dispose 的时候, 解除 target action 的监听状态.
         self.control?.removeTarget(self, action: self.selector, for: self.controlEvents)
-#elseif os(macOS)
-        self.control?.target = nil
-        self.control?.action = nil
-#endif
         self.callback = nil
     }
 }

@@ -64,6 +64,7 @@ final private class AnonymousObservableSink<Observer: ObserverType>: Sink<Observ
 }
 
 final private class AnonymousObservable<Element>: Producer<Element> {
+    
     typealias SubscribeHandler = (AnyObserver<Element>) -> Disposable
     
     let subscribeHandler: SubscribeHandler

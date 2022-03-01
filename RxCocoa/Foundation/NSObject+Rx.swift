@@ -131,6 +131,9 @@ extension Reactive where Base: AnyObject {
      
      - returns: Observable sequence of object deallocated events.
      */
+    
+    // 这是一个懒加载的机制, 如果调用, 才会生成 DeallocObservable 挂钩到 Obj 上.
+    // OBJ 消亡的时候, DeallocObservable 也会消亡. 然后它里面的 Subject 会发出信号来. 
     public var deallocated: Observable<Void> {
         return self.synchronized {
             if let deallocObservable = objc_getAssociatedObject(self.base, &deallocatedSubjectContext) as? DeallocObservable {
@@ -138,8 +141,8 @@ extension Reactive where Base: AnyObject {
             }
             
             let deallocObservable = DeallocObservable()
-            
             objc_setAssociatedObject(self.base, &deallocatedSubjectContext, deallocObservable, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            
             return deallocObservable.subject
         }
     }
@@ -336,10 +339,10 @@ private final class MessageSentProxy
 
 // 给, obj 挂钩一个关联对象. 这个关联对象在结束的时候, 会发送一个信号.
 private final class DeallocObservable {
+    
     let subject = ReplaySubject<Void>.create(bufferSize:1)
     
-    init() {
-    }
+    init() { }
     
     deinit {
         self.subject.on(.next(()))
@@ -539,8 +542,11 @@ private let deallocSelector = NSSelectorFromString("dealloc")
 
 // MARK: AnyObject + Reactive
 
+// 使用自身, 来进行所的绑定的机制.
+// 模拟传统的 @synchronize 的机制.
 extension Reactive where Base: AnyObject {
     func synchronized<T>( _ action: () -> T) -> T {
+        // objc_sync_enter 应该和传统的 @synchronize 是一个机制.
         objc_sync_enter(self.base)
         let result = action()
         objc_sync_exit(self.base)

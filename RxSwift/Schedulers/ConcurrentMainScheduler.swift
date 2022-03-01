@@ -16,6 +16,7 @@ This scheduler is optimized for `subscribeOn` operator. If you want to observe o
 `MainScheduler` is more suitable for that purpose.
 */
 public final class ConcurrentMainScheduler : SchedulerType {
+    
     public typealias TimeInterval = Foundation.TimeInterval
     public typealias Time = Date
 

@@ -1,10 +1,3 @@
-//
-//  PublishSubject.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 2/11/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
 
 public final class PublishSubject<Element>
 : Observable<Element>
@@ -27,9 +20,9 @@ public final class PublishSubject<Element>
     
     // state
     private var disposed = false // 标记, 是否已经结束.
-    private var observers = Observers()
-    private var stopped = false
-    private var stoppedEvent = nil as Event<Element>?
+    private var observers = Observers() // 存储, 所有的后续监听者.
+    private var stopped = false // 存储停止事件, 这样, 当新的监听者到来的时候, 如果已经停止, 会接收到停止信息.
+    private var stoppedEvent = nil as Event<Element>? // 存储停止事件, 这样, 当新的监听者到来的时候, 如果已经停止, 会接收到停止信息.
     
     /// Indicates whether the subject has been isDisposed.
     public var isDisposed: Bool {

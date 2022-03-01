@@ -15,7 +15,7 @@ struct DispatchQueueConfiguration {
     let leeway: DispatchTimeInterval
 }
 
-/*
+/*s
  DispatchQueueConfiguration 就是将 DispatchQueue 的对于 scheduleType 实现代码进行聚拢.
  */
 extension DispatchQueueConfiguration {

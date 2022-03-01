@@ -13,27 +13,27 @@ import Foundation
 
 import RxSwift
 #if os(iOS)
-    import UIKit
+import UIKit
 #endif
 
 /// RxCocoa errors.
 public enum RxCocoaError
-    : Swift.Error
-    , CustomDebugStringConvertible {
+: Swift.Error
+, CustomDebugStringConvertible {
     /// Unknown error has occurred.
-    case unknown
+case unknown
     /// Invalid operation was attempted.
-    case invalidOperation(object: Any)
+case invalidOperation(object: Any)
     /// Items are not yet bound to user interface but have been requested.
-    case itemsNotYetBound(object: Any)
+case itemsNotYetBound(object: Any)
     /// Invalid KVO Path.
-    case invalidPropertyName(object: Any, propertyName: String)
+case invalidPropertyName(object: Any, propertyName: String)
     /// Invalid object on key path.
-    case invalidObjectOnKeyPath(object: Any, sourceObject: AnyObject, propertyName: String)
+case invalidObjectOnKeyPath(object: Any, sourceObject: AnyObject, propertyName: String)
     /// Error during swizzling.
-    case errorDuringSwizzling
+case errorDuringSwizzling
     /// Casting error.
-    case castingError(object: Any, targetType: Any.Type)
+case castingError(object: Any, targetType: Any.Type)
 }
 
 
@@ -85,11 +85,11 @@ func rxFatalError(_ lastMessage: @autoclosure () -> String, file: StaticString =
 }
 
 func rxFatalErrorInDebug(_ lastMessage: @autoclosure () -> String, file: StaticString = #file, line: UInt = #line) {
-    #if DEBUG
-        fatalError(lastMessage(), file: file, line: line)
-    #else
-        print("\(file):\(line): \(lastMessage())")
-    #endif
+#if DEBUG
+    fatalError(lastMessage(), file: file, line: line)
+#else
+    print("\(file):\(line): \(lastMessage())")
+#endif
 }
 
 // MARK: casts or fatal error
@@ -107,7 +107,7 @@ func castOrThrow<T>(_ resultType: T.Type, _ object: Any) throws -> T {
     guard let returnValue = object as? T else {
         throw RxCocoaError.castingError(object: object, targetType: resultType)
     }
-
+    
     return returnValue
 }
 
@@ -115,11 +115,11 @@ func castOptionalOrThrow<T>(_ resultType: T.Type, _ object: AnyObject) throws ->
     if NSNull().isEqual(object) {
         return nil
     }
-
+    
     guard let returnValue = object as? T else {
         throw RxCocoaError.castingError(object: object, targetType: resultType)
     }
-
+    
     return returnValue
 }
 

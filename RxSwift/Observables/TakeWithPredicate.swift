@@ -179,6 +179,8 @@ final private class TakeUntilSink<Other, Observer: ObserverType>
         let otherObserver = TakeUntilSinkOther(parent: self)
         let otherSubscription = self.parent.other.subscribe(otherObserver)
         otherObserver.subscription.setDisposable(otherSubscription)
+        
+        // 然后, 原来的还是订阅自身. 自身将原来的信号, 原封不动的交给自己的下一个节点.
         let sourceSubscription = self.parent.source.subscribe(self)
         
         return Disposables.create(sourceSubscription, otherObserver.subscription)

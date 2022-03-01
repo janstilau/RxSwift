@@ -16,25 +16,29 @@ extension Reactive where Base: UIControl {
     ///
     /// - parameter controlEvents: Filter for observed event types.
     public func controlEvent(_ controlEvents: UIControl.Event) -> ControlEvent<()> {
+        
+        // 原来还能 [weak control = self.base] 这样的赋值.
+        // 在捕获列表里面, 标明了, 就是在使用值语义的捕获.
         let source: Observable<Void> = Observable.create { [weak control = self.base] observer in
-                MainScheduler.ensureRunningOnMainThread()
-
-                guard let control = control else {
-                    observer.on(.completed)
-                    return Disposables.create()
-                }
-
-                let controlTarget = ControlTarget(control: control, controlEvents: controlEvents) { _ in
-                    observer.on(.next(()))
-                }
-
-                return Disposables.create(with: controlTarget.dispose)
+            
+            guard let control = control else {
+                observer.on(.completed)
+                return Disposables.create()
             }
+            
+            // 在这里, 创建一个 ControlTarget. ControlTarget 的 target action 触发之后, 会触发 observer.on
+            // 而返回的 subscription, 则是进行 controlTarget 的取消注册. 和循环引用删除.
+            let controlTarget = ControlTarget(control: control, controlEvents: controlEvents) { _ in
+                observer.on(.next(()))
+            }
+            
+            return Disposables.create(with: controlTarget.dispose)
+        }
             .take(until: deallocated)
-
+        
         return ControlEvent(events: source)
     }
-
+    
     /// Creates a `ControlProperty` that is triggered by target/action pattern value updates.
     ///
     /// - parameter controlEvents: Events that trigger value update sequence elements.
@@ -45,37 +49,39 @@ extension Reactive where Base: UIControl {
         getter: @escaping (Base) -> T,
         setter: @escaping (Base, T) -> Void
     ) -> ControlProperty<T> {
-        // 创建一个 Publisher. 每次 Control 的 event 触发的时候, 会发送一个信号出来. 
+        
+        // 当, 事件发生是, 会发射一个信号. 这个信号里面的内容,  就是 get 函数提供的个.
         let source: Observable<T> = Observable.create { [weak weakControl = base] observer in
-                guard let control = weakControl else {
-                    observer.on(.completed)
-                    return Disposables.create()
+            guard let control = weakControl else {
+                observer.on(.completed)
+                return Disposables.create()
+            }
+            
+            // 在最开始的时候, 会发送一个信号, 将 Control 当前的数据传递过去.
+            observer.on(.next(getter(control)))
+            
+            // 创建一个 ControlTarget, 会在每次事件触发之后, 发射信号给后方. 
+            let controlTarget = ControlTarget(control: control, controlEvents: editingEvents) { _ in
+                if let control = weakControl {
+                    observer.on(.next(getter(control)))
                 }
-                
-                // 对于 controlProperty 来说, 会有一个默认值.
-                observer.on(.next(getter(control)))
-
-                let controlTarget = ControlTarget(control: control, controlEvents: editingEvents) { _ in
-                    if let control = weakControl {
-                        observer.on(.next(getter(control)))
-                    }
-                }
-                
-                return Disposables.create(with: controlTarget.dispose)
-            }.take(until: deallocated)
-
+            }
+            
+            return Disposables.create(with: controlTarget.dispose)
+        }.take(until: deallocated)
+        
         let bindingObserver = Binder(base, binding: setter)
-
+        
         return ControlProperty<T>(values: source, valueSink: bindingObserver)
     }
-
+    
     /// This is a separate method to better communicate to public consumers that
     /// an `editingEvent` needs to fire for control property to be updated.
     internal func controlPropertyWithDefaultEvents<T>(
         editingEvents: UIControl.Event = [.allEditingEvents, .valueChanged],
         getter: @escaping (Base) -> T,
         setter: @escaping (Base, T) -> Void
-        ) -> ControlProperty<T> {
+    ) -> ControlProperty<T> {
         return controlProperty(
             editingEvents: editingEvents,
             getter: getter,

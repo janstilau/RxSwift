@@ -1,14 +1,3 @@
-//
-//  ReplaySubject.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 4/14/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
-
-/// Represents an object that is both an observable sequence as well as an observer.
-///
-/// Each notification is broadcasted to all subscribed and future observers, subject to buffer trimming policies.
 
 // 大部分的逻辑, 和 PublishSubject 没有太大的区别.
 // 有了缓存管理的相关的策略.
@@ -87,16 +76,6 @@ public class ReplaySubject<Element>
     public static func createUnbounded() -> ReplaySubject<Element> {
         ReplayAll()
     }
-    
-#if TRACE_RESOURCES
-    override init() {
-        _ = Resources.incrementTotal()
-    }
-    
-    deinit {
-        _ = Resources.decrementTotal()
-    }
-#endif
 }
 
 private class ReplayBufferBase<Element>

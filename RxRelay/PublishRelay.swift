@@ -8,10 +8,8 @@
 
 import RxSwift
 
-/// PublishRelay is a wrapper for `PublishSubject`.
-///
-/// Unlike `PublishSubject` it can't terminate with error or completed.
-
+// 相当于, 限制了 PublishSubject 的能力.
+// 只能充当 ObservableType 了, 只能是通过 accept 来获取 next 的信号, 然后通知到后方节点.
 public final class PublishRelay<Element>: ObservableType {
     private let subject: PublishSubject<Element>
     

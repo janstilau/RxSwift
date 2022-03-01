@@ -12,6 +12,7 @@
  */
 
 final class AnonymousObserver<Element>: ObserverBase<Element> {
+    
     typealias EventHandler = (Event<Element>) -> Void
     
     private let eventHandler : EventHandler

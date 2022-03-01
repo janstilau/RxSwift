@@ -55,7 +55,7 @@ public struct AnyObserver<Element> : ObserverType {
 }
 
 extension AnyObserver {
-    /// Collection of `AnyObserver`s
+    // Bag 里面封装的, 是 Event 的处理函数.
     typealias s = Bag<(Event<Element>) -> Void>
 }
 

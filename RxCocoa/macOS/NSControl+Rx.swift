@@ -15,20 +15,19 @@ private var rx_value_key: UInt8 = 0
 private var rx_control_events_key: UInt8 = 0
 
 extension Reactive where Base: NSControl {
-
+    
     /// Reactive wrapper for control event.
     public var controlEvent: ControlEvent<()> {
-        MainScheduler.ensureRunningOnMainThread()
-
+        
         let source = self.lazyInstanceObservable(&rx_control_events_key) { () -> Observable<Void> in
             Observable.create { [weak control = self.base] observer in
                 MainScheduler.ensureRunningOnMainThread()
-
+                
                 guard let control = control else {
                     observer.on(.completed)
                     return Disposables.create()
                 }
-
+                
                 let observer = ControlTarget(control: control) { _ in
                     observer.on(.next(()))
                 }
@@ -36,12 +35,12 @@ extension Reactive where Base: NSControl {
                 return observer
             }
             .take(until: self.deallocated)
-			.share()
+            .share()
         }
-
+        
         return ControlEvent(events: source)
     }
-
+    
     /// Creates a `ControlProperty` that is triggered by target/action pattern value updates.
     ///
     /// - parameter getter: Property value getter.
@@ -51,34 +50,34 @@ extension Reactive where Base: NSControl {
         setter: @escaping (Base, T) -> Void
     ) -> ControlProperty<T> {
         MainScheduler.ensureRunningOnMainThread()
-
+        
         let source = self.base.rx.lazyInstanceObservable(&rx_value_key) { () -> Observable<()> in
-                return Observable.create { [weak weakControl = self.base] (observer: AnyObserver<()>) in
-                    guard let control = weakControl else {
-                        observer.on(.completed)
-                        return Disposables.create()
-                    }
-
-                    observer.on(.next(()))
-
-                    let observer = ControlTarget(control: control) { _ in
-                        if weakControl != nil {
-                            observer.on(.next(()))
-                        }
-                    }
-
-                    return observer
+            return Observable.create { [weak weakControl = self.base] (observer: AnyObserver<()>) in
+                guard let control = weakControl else {
+                    observer.on(.completed)
+                    return Disposables.create()
                 }
-                .take(until: self.deallocated)
-                .share(replay: 1, scope: .whileConnected)
+                
+                observer.on(.next(()))
+                
+                let observer = ControlTarget(control: control) { _ in
+                    if weakControl != nil {
+                        observer.on(.next(()))
+                    }
+                }
+                
+                return observer
             }
+            .take(until: self.deallocated)
+            .share(replay: 1, scope: .whileConnected)
+        }
             .flatMap { [weak base] _ -> Observable<T> in
                 guard let control = base else { return Observable.empty() }
                 return Observable.just(getter(control))
             }
-
+        
         let bindingObserver = Binder(self.base, binding: setter)
-
+        
         return ControlProperty(values: source, valueSink: bindingObserver)
     }
 }
