@@ -137,7 +137,21 @@ class NumbersViewController: ViewController {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        testEmpty()
+        testTapControlEvent()
+    }
+    
+    func testTapControlEvent() {
+        let btn = UIButton()
+        let _ = btn.rx.tap.subscribe { e in
+            print(e)
+        }
+        print(btn.allTargets)
+        
+        let _ = btn.rx.tap.subscribe { e in
+            print(e)
+        }
+        print(btn.allTargets)
+        print("End Line ------ ")
     }
     
     func testEmpty() {

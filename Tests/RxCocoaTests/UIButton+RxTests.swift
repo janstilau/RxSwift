@@ -71,6 +71,17 @@ extension UIButtonTests {
         func testButton_tapDeallocates() {
             let createView: () -> UIButton = { UIButton(frame: CGRect(x: 0, y: 0, width: 1, height: 1)) }
             ensureEventDeallocated(createView) { (view: UIButton) in view.rx.tap }
+            
+            let btn = UIButton()
+            btn.rx.tap.subscribe { e in
+                print(e)
+            }
+            print(btn.allTargets)
+            
+            btn.rx.tap.subscribe { e in
+                print(e)
+            }
+            print(btn.allTargets)
         }
 
         func testImageNormal() {

@@ -12,9 +12,15 @@ import RxSwift
 import UIKit
 
 extension Reactive where Base: UIControl {
-    /// Reactive wrapper for target action pattern.
-    ///
-    /// - parameter controlEvents: Filter for observed event types.
+    
+    
+    /*
+     一定要记住, 每个 Subscribe, 其实都是建立一条新的响应通道.
+     btn.rx.tap.subscribe
+     btn.rx.tap.subscribe
+     上面的两次调用, 每次都是完整的链条上 Producer 的 subscribe 方法的调用.
+     所以, 到最后 btn 的 allTargets 里面会有两个 Target 而不是一个.
+     */
     public func controlEvent(_ controlEvents: UIControl.Event) -> ControlEvent<()> {
         
         // 原来还能 [weak control = self.base] 这样的赋值.
