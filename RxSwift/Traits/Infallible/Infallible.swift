@@ -1,30 +1,14 @@
-//
-//  Infallible.swift
-//  RxSwift
-//
-//  Created by Shai Mishali on 27/08/2020.
-//  Copyright © 2020 Krunoslav Zaher. All rights reserved.
-//
+// 不会失败的序列.
+// 其实, 没有特定的限制. 只是少了 onError 的处理 .
+// 从下面的快捷方法来看, 也是没有了 error 的处理.
 
-/// `Infallible` is an `Observable`-like push-style interface
-/// which is guaranteed to not emit error events.
-///
-/// Unlike `SharedSequence`, it does not share its resources or
-/// replay its events, but acts as a standard `Observable`.
 public protocol InfallibleType: ObservableConvertibleType {}
 
-/// `Infallible` is an `Observable`-like push-style interface
-/// which is guaranteed to not emit error events.
-///
-/// Unlike `SharedSequence`, it does not share its resources or
-/// replay its events, but acts as a standard `Observable`.
 public struct Infallible<Element>: InfallibleType {
     private let source: Observable<Element>
-
     init(_ source: Observable<Element>) {
         self.source = source
     }
-
     public func asObservable() -> Observable<Element> { source }
 }
 

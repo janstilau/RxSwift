@@ -17,6 +17,8 @@ public struct Binder<Value>: ObserverType {
     
     // Binding 的逻辑, 一般来说和 UI 相关. 所以, 这里的 scheduler 使用的是 MainScheduler
     // Binding 的真正调用, 是包含在了 Scheduler 的 schedule 逻辑里面的
+    
+    // 这里, 和一个 OBJ 绑定的, 用到了 Reactive 中 keypath 的设计了.
     public init<Target: AnyObject>(_ target: Target,
                                    scheduler: ImmediateSchedulerType = MainScheduler(),
                                    binding: @escaping (Target, Value) -> Void) {
@@ -40,14 +42,10 @@ public struct Binder<Value>: ObserverType {
         }
     }
     
-    /// Binds next element to owner view as described in `binding`.
     public func on(_ event: Event<Value>) {
         self.binding(event)
     }
     
-    /// Erases type of observer.
-    ///
-    /// - returns: type erased observer.
     public func asObserver() -> AnyObserver<Value> {
         AnyObserver(eventHandler: self.on)
     }

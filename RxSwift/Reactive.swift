@@ -24,18 +24,17 @@
  */
 @dynamicMemberLookup
 public struct Reactive<Base> {
-    /// Base object to extend.
-    public let base: Base
     
-    /// Creates extensions with base object.
-    ///
-    /// - parameter base: Base object.
+    public let base: Base
     public init(_ base: Base) {
         self.base = base
     }
     
     public subscript<Property>(dynamicMember keyPath: ReferenceWritableKeyPath<Base, Property>) -> Binder<Property>
     where Base: AnyObject {
+        // Binder 封装的是一个 On 方法.
+        // 而这个 On 方法, 就是使用前方信号的数据, 进行 base[keyPath: keyPath] = value 的赋值操作.
+        // 这就是 bind(to: label.rx.text) 能成功的原因. Binder 是一个 Observer
         Binder(self.base) { base, value in
             base[keyPath: keyPath] = value
         }

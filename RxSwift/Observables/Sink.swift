@@ -7,7 +7,7 @@
 //
 
 /*
- 大部分的 Sink, 都是 Observer, 接受上游的信号, 完成自己的业务逻辑处理后, 将信号 forward 给自己的下游. 
+ 大部分的 Sink, 都是 Observer, 接受上游的信号, 完成自己的业务逻辑处理后, 将信号 forward 给自己的下游.
  */
 
 /*
@@ -15,17 +15,15 @@
  这些小的工具类, 就如同 Sequence 的各种函数式方法一样, 具有组合的能力.
  它们的作用, 是通用的, 方便他人阅读, 颗粒度小, 具有良好架构能力的人, 可以使用这些, 写出流式清晰的代码.
  */
+
 class Sink<Observer: ObserverType>: Disposable {
     
-    // 实际上, 在这里, Sink 是保存了它的一下个节点的生命周期的.
+    
+    // Sink 和 自己的
     fileprivate let observer: Observer // Sink 操作后数据后, 应该传递数据的去向
     fileprivate let cancel: Cancelable
     
     private let disposed = AtomicInt(0)
-    
-#if DEBUG
-    private let synchronizationTracker = SynchronizationTracker()
-#endif
     
     // 这个传递过来的 cancel, 一般是一个 SinkDisposer.
     // 在这里会引起循环引用, 保证了 Sink 的生命周期, 这是特意设计出来的循环引用.
@@ -69,7 +67,7 @@ class Sink<Observer: ObserverType>: Disposable {
         // 将自身的状态, 设置为 disposed
         fetchOr(self.disposed, 1)
         // Sink 的 dispose, 仅仅是状态的改变.
-        // 真正的取消操作, 是 cancel 的 dispose 进行的. 
+        // 真正的取消操作, 是 cancel 的 dispose 进行的.
         self.cancel.dispose()
     }
 }

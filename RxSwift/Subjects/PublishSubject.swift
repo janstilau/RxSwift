@@ -1,4 +1,11 @@
 
+
+/*
+ Subject 的意义在于, 这是一个从指令式编码模块, 到响应式编码模块的交接点.
+ 我们可以使用原有的指令式的代码, 来计算出值, 然后使用 Subject 进行信号的发射.
+ 而 Subject 的内部, 其实是保存了各个 Observers 的.
+ 这一点很重要, 就是向 Subject 进行注册, 是真正的监听者模式, Subject 是信号的起点, 后面连接了各样不同的响应链条.
+ */
 public final class PublishSubject<Element>
 : Observable<Element>
 , SubjectType

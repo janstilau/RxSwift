@@ -18,6 +18,7 @@ extension ObservableType {
 }
 
 final private class MapSink<SourceType, Observer: ObserverType>: Sink<Observer>, ObserverType {
+    
     // 各种 typealias 让类内部的处理, 变得简单.
     // 这是一个值的学习的编码技巧.
     typealias Transform = (SourceType) throws -> ResultType
@@ -31,6 +32,7 @@ final private class MapSink<SourceType, Observer: ObserverType>: Sink<Observer>,
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 处理上方信号, 得到值之后, map 进行 transform, 然后 forward
     func on(_ event: Event<SourceType>) {
         switch event {
         case .next(let element):
@@ -64,8 +66,10 @@ final private class Map<SourceType, ResultType>: Producer<ResultType> {
     }
     
     // 各种 Sink 类里面, run 的逻辑, 几乎是一样的.
-    override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == ResultType {
+    override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable)
+    -> (sink: Disposable, subscription: Disposable) where Observer.Element == ResultType {
         let sink = MapSink(transform: self.transform, observer: observer, cancel: cancel)
+        // 真正的 Subscribe 的时候, 构建处理链条, 是从后向前的.
         let subscription = self.source.subscribe(sink)
         return (sink: sink, subscription: subscription)
     }
