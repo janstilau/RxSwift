@@ -183,7 +183,6 @@ extension SharedSequenceConvertibleType where SharingStrategy == DriverSharingSt
         onCompleted: (() -> Void)? = nil,
         onDisposed: (() -> Void)? = nil
     ) -> Disposable {
-        MainScheduler.ensureRunningOnMainThread(errorMessage: errorMessage)
         return self.asObservable().subscribe(onNext: onNext, onCompleted: onCompleted, onDisposed: onDisposed)
     }
 

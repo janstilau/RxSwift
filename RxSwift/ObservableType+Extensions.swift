@@ -88,6 +88,7 @@ extension ObservableType {
             }
         }
         
+        // disposable 是用来触发, 额外的用户传入的 dispose 事件的响应.
         return Disposables.create( self.asObservable().subscribe(observer), disposable )
     }
 }

@@ -7,17 +7,6 @@
 //
 
 extension ObservableType {
-    // MARK: create
-    
-    /**
-     Creates an observable sequence from a specified subscribe method implementation.
-     
-     - seealso: [create operator on reactivex.io](http://reactivex.io/documentation/operators/create.html)
-     
-     - parameter subscribe: Implementation of the resulting observable sequence's `subscribe` method.
-     - returns: The observable sequence with the specified implementation for the `subscribe` method.
-     */
-    
     // 这个返回的 Disposable 对象, 也不是实际获取使用的. 他会存储到最后的 Disposable 对象的内部.
     // 当最后一个 Disposable 对象调用 dispose 的时候, 会触发 create 返回的 Disposable 对象 .
     public static func create(_ subscribe: @escaping (AnyObserver<Element>) -> Disposable) -> Observable<Element> {
@@ -30,19 +19,12 @@ final private class AnonymousObservableSink<Observer: ObserverType>: Sink<Observ
     typealias Element = Observer.Element
     typealias Parent = AnonymousObservable<Element>
     
-    // state
     private let isStopped = AtomicInt(0)
-    
-#if DEBUG
-    private let synchronizationTracker = SynchronizationTracker()
-#endif
     
     override init(observer: Observer, cancel: Cancelable) {
         super.init(observer: observer, cancel: cancel)
     }
-    
-    // 这里, 实现 on 的意义就在于, parent.subscribeHandler(AnyObserver(self))
-    // 也就是 create 传入的闭包, 是作用到了 AnonymousObservableSink 上面了, 只不过他把所有的 event, forward 给了自己记录的 Observer 了.
+   
     func on(_ event: Event<Element>) {
         switch event {
         case .next:
@@ -58,6 +40,11 @@ final private class AnonymousObservableSink<Observer: ObserverType>: Sink<Observ
         }
     }
     
+    /*
+     这样传入了之后, self 的生命周期, 就交给了 subscribeHandler 中的逻辑保存了.
+     这个 Sink, 只会在 on 中进行 dispose 的调用, 结束自己的生命周期.
+     返回的 subscription 方法, 是提早触发 on 方法. 
+     */
     func run(_ parent: Parent) -> Disposable {
         parent.subscribeHandler(AnyObserver(self))
     }

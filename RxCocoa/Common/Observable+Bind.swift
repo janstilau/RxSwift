@@ -15,6 +15,8 @@ extension ObservableType {
     
     public func bind<Observer: ObserverType>(to observers: Observer...) -> Disposable where Observer.Element == Element {
         self.subscribe { event in
+            // 各个 observers 并没有直接和信号源联系, 而是找了一个中间层.
+            // 中间层对象在响应链条中, 分发给各个 Subscriber.
             observers.forEach { $0.on(event) }
         }
     }
