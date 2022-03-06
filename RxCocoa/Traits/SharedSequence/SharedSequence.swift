@@ -30,18 +30,6 @@ public struct SharedSequence<SharingStrategy: SharingStrategyProtocol, Element> 
         self.source = raw
     }
     
-#if EXPANDABLE_SHARED_SEQUENCE
-    /**
-     This method is extension hook in case this unit needs to extended from outside the library.
-     
-     By defining `EXPANDABLE_SHARED_SEQUENCE` one agrees that it's up to them to ensure shared sequence
-     properties are preserved after extension.
-     */
-    public static func createUnsafe<Source: ObservableType>(source: Source) -> SharedSequence<SharingStrategy, Source.Element> {
-        SharedSequence<SharingStrategy, Source.Element>(raw: source.asObservable())
-    }
-#endif
-    
     /**
      - returns: Built observable sequence.
      */

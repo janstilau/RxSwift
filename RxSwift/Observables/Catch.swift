@@ -16,24 +16,12 @@ extension ObservableType {
         Catch(source: self.asObservable(), handler: handler)
     }
     
-    @available(*, deprecated, renamed: "catch(_:)")
-    public func catchError(_ handler: @escaping (Swift.Error) throws -> Observable<Element>)
-    -> Observable<Element> {
-        `catch`(handler)
-    }
-    
     /*
      Continues an observable sequence that is terminated by an error with a single element.
      */
     public func catchAndReturn(_ element: Element)
     -> Observable<Element> {
         Catch(source: self.asObservable(), handler: { _ in Observable.just(element) })
-    }
-    
-    @available(*, deprecated, renamed: "catchAndReturn(_:)")
-    public func catchErrorJustReturn(_ element: Element)
-    -> Observable<Element> {
-        catchAndReturn(element)
     }
 }
 
@@ -132,9 +120,11 @@ final private class CatchSink<Observer: ObserverType>: Sink<Observer>, ObserverT
         case .completed:
             self.forwardOn(event)
             self.dispose()
-            // 当发生了错误之后, 新产生一个 Publisher, 然后新产生的 Publisher 的信号, 继续作用到下游的节点.
         case .error(let error):
+            // 当发生错误之后, 不会将错误, 传递给自己的下游节点.
             do {
+                // 发生了错误, 原来的监测链条也就打断了
+                // 所以原来的注册, 还是消失了. 
                 let catchSequence = try self.parent.handler(error)
                 let observer = CatchSinkProxy(parent: self)
                 self.subscription.disposable = catchSequence.subscribe(observer)
@@ -230,8 +220,8 @@ final private class CatchSequence<Sequence: Swift.Sequence>: Producer<Sequence.E
     override func run<Observer: ObserverType>(
         _ observer: Observer,
         cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
-        let sink = CatchSequenceSink<Sequence, Observer>(observer: observer, cancel: cancel)
-        let subscription = sink.run((self.sources.makeIterator(), nil))
-        return (sink: sink, subscription: subscription)
-    }
+            let sink = CatchSequenceSink<Sequence, Observer>(observer: observer, cancel: cancel)
+            let subscription = sink.run((self.sources.makeIterator(), nil))
+            return (sink: sink, subscription: subscription)
+        }
 }

@@ -251,6 +251,7 @@ private final class ReplayAll<Element> : ReplayManyBase<Element> {
         super.init(queueSize: 0)
     }
     
+    // 从来不做 Trim 操作. 
     override func trim() {
         
     }

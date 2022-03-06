@@ -13,6 +13,11 @@ import RxCocoa
 private let minimalUsernameLength = 5
 private let minimalPasswordLength = 5
 
+enum State {
+    case play
+    case stop(Int, String)
+}
+
 class SimpleValidationViewController : ViewController {
     
     @IBOutlet weak var usernameOutlet: UITextField!
@@ -62,6 +67,18 @@ class SimpleValidationViewController : ViewController {
         doSomethingOutlet.rx.tap
             .subscribe(onNext: { [weak self] _ in self?.showAlert() })
             .disposed(by: disposeBag)
+        
+        let state = State.stop(2, "2")
+        if case .stop = state {
+            print("\(state)")
+        }
+        
+        switch state {
+        case .play:
+            print("Play")
+        case .stop:
+            print("\(state)")
+        }
     }
     
     func showAlert() {
