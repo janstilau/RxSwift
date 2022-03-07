@@ -117,9 +117,6 @@ class CombineLatestSink<Observer: ObserverType> : Sink<Observer> , CombineLatest
     }
 }
 
-/*
- 
- */
 final class CombineLatestObserver<Element>
 : ObserverType
 , LockOwnerType

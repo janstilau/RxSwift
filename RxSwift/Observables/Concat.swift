@@ -1,13 +1,4 @@
-//
-//  Concat.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 3/21/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
-
 extension ObservableType {
-    
     public func concat<Source: ObservableConvertibleType>(_ second: Source) -> Observable<Element> where Source.Element == Element {
         Observable.concat([self.asObservable(), second.asObservable()])
     }
