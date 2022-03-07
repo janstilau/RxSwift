@@ -16,12 +16,6 @@ extension ObservableType {
         return ObserveOnSerialDispatchQueue(source: self.asObservable(),
                                             scheduler: serialScheduler)
     }
-    
-    @available(*, deprecated, renamed: "observe(on:)")
-    public func observeOn(_ scheduler: ImmediateSchedulerType)
-    -> Observable<Element> {
-        observe(on: scheduler)
-    }
 }
 
 final private class ObserveOn<Element>: Producer<Element> {
@@ -69,6 +63,7 @@ final private class ObserveOnSink<Observer: ObserverType>: ObserverBase<Observer
         self.cancel = cancel
     }
     
+    
     override func onCore(_ event: Event<Element>) {
         let shouldStart = self.lock.performLocked { () -> Bool in
             self.queue.enqueue(event)
@@ -83,6 +78,7 @@ final private class ObserveOnSink<Observer: ObserverType>: ObserverBase<Observer
         }
         
         if shouldStart {
+            // 在这里, 开启了调度器, 调度器的动作, 就是自己的 run 函数. 
             self.scheduleDisposable.disposable = self.scheduler.scheduleRecursive((), action: self.run)
         }
     }

@@ -6,9 +6,9 @@
 //  Copyright © 2017 Krunoslav Zaher. All rights reserved.
 //
 
-/// Subject lifetime scope
+
 public enum SubjectLifetimeScope {
-    /**
+    /*
      **Each connection will have it's own subject instance to store replay events.**
      **Connections will be isolated from each another.**
      
@@ -60,7 +60,7 @@ public enum SubjectLifetimeScope {
      */
     case whileConnected
     
-    /**
+    /*
      **One subject will store replay events for all connections to source.**
      **Connections won't be isolated from each another.**
      
@@ -130,13 +130,6 @@ extension ObservableType {
      ```
      
      It uses optimized versions of the operators for most common operations.
-     
-     - parameter replay: Maximum element count of the replay buffer.
-     - parameter scope: Lifetime scope of sharing subject. For more information see `SubjectLifetimeScope` enum.
-     
-     - seealso: [shareReplay operator on reactivex.io](http://reactivex.io/documentation/operators/replay.html)
-     
-     - returns: An observable sequence that contains the elements of a sequence produced by multicasting the source sequence.
      */
     public func share(replay: Int = 0, scope: SubjectLifetimeScope = .whileConnected)
     -> Observable<Element> {
@@ -146,6 +139,7 @@ extension ObservableType {
             case 0: return self.multicast(PublishSubject()).refCount()
             default: return self.multicast(ReplaySubject.create(bufferSize: replay)).refCount()
             }
+            
         case .whileConnected:
             switch replay {
             case 0: return ShareWhileConnected(source: self.asObservable())
@@ -156,8 +150,6 @@ extension ObservableType {
     }
 }
 
-// Share 的实现就是, 在这一层进行拦截.
-// 之后的注册,
 private final class ShareReplay1WhileConnectedConnection<Element>
 : ObserverType
 , SynchronizedUnsubscribeType {
@@ -171,6 +163,7 @@ private final class ShareReplay1WhileConnectedConnection<Element>
     private let lock: RecursiveLock
     private var disposed: Bool = false
     fileprivate var observers = Observers()
+    
     // 这里就是 relay One 实现的逻辑, 就存一个.
     private var element: Element?
     
@@ -206,7 +199,7 @@ private final class ShareReplay1WhileConnectedConnection<Element>
     
     final func synchronized_subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         self.lock.performLocked {
-            // 如果, 当前已经存了值, 就在注册的时候, 将这个值传递给新加入的 Observer
+            // 如果, 已经存储了值, 就在下一个 Observer 进行注册的时候, 传递该值.
             if let element = self.element {
                 observer.on(.next(element))
             }
@@ -229,9 +222,7 @@ private final class ShareReplay1WhileConnectedConnection<Element>
         }
     }
     
-    @inline(__always)
     final private func synchronized_unsubscribe(_ disposeKey: DisposeKey) -> Bool {
-        // if already unsubscribed, just return
         if self.observers.removeKey(disposeKey) == nil {
             return false
         }
@@ -298,8 +289,8 @@ final private class ShareReplay1WhileConnected<Element>
 }
 
 private final class ShareWhileConnectedConnection<Element>
-: ObserverType
-, SynchronizedUnsubscribeType {
+: ObserverType, SynchronizedUnsubscribeType {
+    
     typealias Observers = AnyObserver<Element>.s
     typealias DisposeKey = Observers.KeyType
     
@@ -309,17 +300,17 @@ private final class ShareWhileConnectedConnection<Element>
     
     private let lock: RecursiveLock
     private var disposed: Bool = false
+    /*
+     Shared 的可以实现的基础, 就是和 Subject 一样, 使用了一个数据结构, 将所有的 Observer 都记录了下来.
+     */
     fileprivate var observers = Observers()
     
     init(parent: Parent, lock: RecursiveLock) {
         self.parent = parent
         self.lock = lock
-        
-#if TRACE_RESOURCES
-        _ = Resources.incrementTotal()
-#endif
     }
     
+    // Connection 充当上游的监听者, 在自己的 On 里面, 将所有的事件, 交给自己记录的所有的 observers 进行处理.
     final func on(_ event: Event<Element>) {
         let observers = self.lock.performLocked { self.synchronized_on(event) }
         dispatch(observers, event)
@@ -347,7 +338,6 @@ private final class ShareWhileConnectedConnection<Element>
     final func synchronized_subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         self.lock.performLocked {
             let disposeKey = self.observers.insert(observer.on)
-            
             return SubscriptionDisposable(owner: self, key: disposeKey)
         }
     }
@@ -366,9 +356,7 @@ private final class ShareWhileConnectedConnection<Element>
         }
     }
     
-    @inline(__always)
     final private func synchronized_unsubscribe(_ disposeKey: DisposeKey) -> Bool {
-        // if already unsubscribed, just return
         if self.observers.removeKey(disposeKey) == nil {
             return false
         }
@@ -380,12 +368,6 @@ private final class ShareWhileConnectedConnection<Element>
         
         return false
     }
-    
-#if TRACE_RESOURCES
-    deinit {
-        _ = Resources.decrementTotal()
-    }
-#endif
 }
 
 // optimized version of share replay for most common case
@@ -397,7 +379,6 @@ final private class ShareWhileConnected<Element>
     fileprivate let source: Observable<Element>
     
     private let lock = RecursiveLock()
-    
     fileprivate var connection: Connection?
     
     init(source: Observable<Element>) {
@@ -409,9 +390,11 @@ final private class ShareWhileConnected<Element>
         let connection = self.synchronized_subscribe(observer)
         let count = connection.observers.count
         
+        // 实际上, 是 connection 完成了记录的工作 .
         let disposable = connection.synchronized_subscribe(observer)
         self.lock.unlock()
         
+        // 如果, 之前 connection 没有成为上游的监听者, 在这个时候才进行了监听的注册.
         if count == 0 {
             connection.connect()
         }
@@ -419,17 +402,16 @@ final private class ShareWhileConnected<Element>
         return disposable
     }
     
-    @inline(__always)
+    /*
+     非常非常烂的命名方式, 使用 createConnectionIfNeed 不更好吗?
+     */
     private func synchronized_subscribe<Observer: ObserverType>(_ observer: Observer) -> Connection where Observer.Element == Element {
         let connection: Connection
         
         if let existingConnection = self.connection {
             connection = existingConnection
-        }
-        else {
-            connection = ShareWhileConnectedConnection<Element>(
-                parent: self,
-                lock: self.lock)
+        } else {
+            connection = ShareWhileConnectedConnection<Element>( parent: self, lock: self.lock)
             self.connection = connection
         }
         

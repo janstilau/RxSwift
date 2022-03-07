@@ -109,9 +109,11 @@ final private class CatchSink<Observer: ObserverType>: Sink<Observer>, ObserverT
         case .completed:
             self.forwardOn(event)
             self.dispose()
-            // 当发生了错误之后, 新产生一个 Publisher, 然后新产生的 Publisher 的信号, 继续作用到下游的节点.
         case .error(let error):
+            // 当发生错误之后, 不会将错误, 传递给自己的下游节点.
             do {
+                // 发生了错误, 原来的监测链条也就打断了
+                // 所以原来的注册, 还是消失了. 
                 let catchSequence = try self.parent.handler(error)
                 let observer = CatchSinkProxy(parent: self)
                 // 原本的链条在这已经断掉了, 使用新生成的 Sequence 来发射信号.
