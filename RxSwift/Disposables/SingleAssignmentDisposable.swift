@@ -12,13 +12,15 @@
  If an underlying disposable resource has already been set, future attempts to set the underlying disposable resource will throw an exception.
  */
 
-// 不太明白, 设计这么复杂的原因.
-// 不过, 就是存了一个 dispose 对象. 可以进行 dispose.
+/*
+ 这个类, 拥有管理一个 disposable 的能力.
+ 这个类在 Schdule 的时候被使用了, Schedule 是一个延时操作, 可能在对应的 Action 被触发之前, 就进行了 dispose. 这个时候, 直接就是 DisposeState 的改变.
+ 也可能在 Action 触发之后进行 dispose, 这个时候 private var disposable = nil as Disposable 已经有值了, 就需要进行 DisposeState 的改变, 外加存储的 private var disposable 调用 dispose()
+ */
 public final class SingleAssignmentDisposable : DisposeBase, Cancelable {
     
     private struct DisposeState: OptionSet {
         let rawValue: Int32
-        
         static let disposed = DisposeState(rawValue: 1 << 0)
         static let disposableSet = DisposeState(rawValue: 1 << 1)
     }

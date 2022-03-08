@@ -9,9 +9,12 @@
 import Dispatch
 import Foundation
 
+/*
+ DispatchQueueConfiguration
+ 这个类就是是使用 DispatchQueue 进行 Schedule 的逻辑的封装处理.
+ */
 struct DispatchQueueConfiguration {
     let queue: DispatchQueue
-    // 余地
     let leeway: DispatchTimeInterval
 }
 
@@ -23,21 +26,20 @@ extension DispatchQueueConfiguration {
     // 这里的实现思路, 和 OperationQueue 的没有区别.
     func schedule<StateType>(_ state: StateType, action: @escaping (StateType) -> Disposable) -> Disposable {
         let cancel = SingleAssignmentDisposable()
-
         self.queue.async {
+            // 这是一个异步操作, 所以有可能, queue 中的任务没有执行之前, cancel 已经被 dispose 了
+            // 如果在任务开始的时候, cancel 已经被触发, 就不进行 action 的触发.
+            // 否则, 触发 action, cancel 中存储返回的 subscription.
             if cancel.isDisposed {
                 return
             }
             cancel.setDisposable(action(state))
         }
-
         return cancel
     }
 
     // 延时执行.
-    // 不太明白, 为什么不用 dispatchAfter.
-    // 这里就是起了一个定时器, 定时器触发前, 可以进行取消, 定时器触发后, 取消的是 action 对象的返回值.
-    // 感觉可以使用上面函数的思路.
+    // 实现的思路和上面的函数, 没有区别, 只不过是使用定时触发的逻辑了.
     func scheduleRelative<StateType>(_ state: StateType, dueTime: RxTimeInterval, action: @escaping (StateType) -> Disposable) -> Disposable {
         let deadline = DispatchTime.now() + dueTime
 
@@ -46,12 +48,8 @@ extension DispatchQueueConfiguration {
         let timer = DispatchSource.makeTimerSource(queue: self.queue)
         timer.schedule(deadline: deadline, leeway: self.leeway)
 
-        // TODO:
-        // This looks horrible, and yes, it is.
-        // It looks like Apple has made a conceptual change here, and I'm unsure why.
-        // Need more info on this.
-        // It looks like just setting timer to fire and not holding a reference to it
-        // until deadline causes timer cancellation.
+        // 这里会有一个循环引用.
+        // 在 timer fire 的时候可以打破这个循环引用. 在 subscription dispose 的时候, 也可以打破这个循环引用.
         var timerReference: DispatchSourceTimer? = timer
         let cancelTimer = Disposables.create {
             timerReference?.cancel()
@@ -63,6 +61,7 @@ extension DispatchQueueConfiguration {
                 return
             }
             _ = compositeDisposable.insert(action(state))
+            // cancelTimer 还是在 compositeDisposable 里面, 这是没有问题的, 因为在 cancelTimer dispose 之后, 里面的资源就释放了. 重复调用, 没有副作用.
             cancelTimer.dispose()
         })
         timer.resume()
@@ -84,22 +83,14 @@ extension DispatchQueueConfiguration {
         let timer = DispatchSource.makeTimerSource(queue: self.queue)
         timer.schedule(deadline: initial, repeating: period, leeway: self.leeway)
         
-        // TODO:
-        // This looks horrible, and yes, it is.
-        // It looks like Apple has made a conceptual change here, and I'm unsure why.
-        // Need more info on this.
-        // It looks like just setting timer to fire and not holding a reference to it
-        // until deadline causes timer cancellation.
         var timerReference: DispatchSourceTimer? = timer
-        // timer 的声明周期, 被 cancelTimer 保持着.
-        // 只有, cancelTimer 明确的调用 dispose, 才能解除.
         let cancelTimer = Disposables.create {
             timerReference?.cancel()
             timerReference = nil
         }
 
-        // cancelTimer 的生命周期, 又让 timer 进行保持着.
-        // cancelTimer 保持着 timer, timer 保持着 cancelTimer. 只有明确的进行 dispose 的调用, 才能打破这层循环引用环.
+        // 和上面相比, timer 触发的时候, 取消了 timer 取消的操作.
+        // 只能通过 cancelTimer 进行定时器的取消. 
         timer.setEventHandler(handler: {
             if cancelTimer.isDisposed {
                 return

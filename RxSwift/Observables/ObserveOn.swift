@@ -13,8 +13,7 @@ extension ObservableType {
         guard let serialScheduler = scheduler as? SerialDispatchQueueScheduler else {
             return ObserveOn(source: self.asObservable(), scheduler: scheduler)
         }
-        return ObserveOnSerialDispatchQueue(source: self.asObservable(),
-                                            scheduler: serialScheduler)
+        return ObserveOnSerialDispatchQueue(source: self.asObservable(), scheduler: serialScheduler)
     }
 }
 
@@ -141,9 +140,6 @@ extension Resources {
 }
 #endif
 
-/*
- 
- */
 final private class ObserveOnSerialDispatchQueueSink<Observer: ObserverType>: ObserverBase<Observer.Element> {
     
     let scheduler: SerialDispatchQueueScheduler
@@ -154,10 +150,13 @@ final private class ObserveOnSerialDispatchQueueSink<Observer: ObserverType>: Ob
     // 在定义成员变量的时候, 编写 Tuple 的 name, 可以直接在定义的时候使用.
     var cachedScheduleLambda: (((sink: ObserveOnSerialDispatchQueueSink<Observer>, event: Event<Element>)) -> Disposable)!
     
-    init(scheduler: SerialDispatchQueueScheduler, observer: Observer, cancel: Cancelable) {
-        self.scheduler = scheduler
-        self.observer = observer
-        self.cancel = cancel
+    init(scheduler: SerialDispatchQueueScheduler,
+         observer: Observer,
+         cancel: Cancelable) {
+        
+        self.scheduler = scheduler // 存储 Scheduler
+        self.observer = observer // 存储 Observer
+        self.cancel = cancel // 存储 SinkDisposer
         super.init()
         
         self.cachedScheduleLambda = { pair in
@@ -181,7 +180,6 @@ final private class ObserveOnSerialDispatchQueueSink<Observer: ObserverType>: Ob
     
     override func dispose() {
         super.dispose()
-        
         self.cancel.dispose()
     }
 }
@@ -197,10 +195,8 @@ final private class ObserveOnSerialDispatchQueue<Element>: Producer<Element> {
     
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         /*
-         source subscribe ObserveOnSerialDispatchQueueSink
-         ObserveOnSerialDispatchQueueSink 内部, 会将信号中的数据处理, 进行调度.
-         然后在调度后的代码块里面, 是将数据 forward 到自己存储的 Observer 上.
-         这样, 数据处理就从原来的线程, 或者时间点, 到了新的线程或者时间了.
+         ObserveOnSerialDispatchQueueSink 中, 做了一个调度的工作.
+         到底调度如何实现, 则是传入的 scheduler 的责任.
          */
         let sink = ObserveOnSerialDispatchQueueSink(scheduler: self.scheduler, observer: observer, cancel: cancel)
         let subscription = self.source.subscribe(sink)
