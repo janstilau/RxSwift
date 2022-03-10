@@ -38,6 +38,7 @@ public final class SerialDisposable : DisposeBase, Cancelable {
             }
         }
         set (newDisposable) {
+            // 替换的动作, 是在多线程环境下, 所以进行了保护. 
             let disposable: Disposable? = self.lock.performLocked {
                 if self.isDisposed {
                     return newDisposable

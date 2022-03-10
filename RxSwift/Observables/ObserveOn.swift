@@ -140,6 +140,10 @@ extension Resources {
 }
 #endif
 
+/*
+ ObserverOn 这个 Operator 的内部实现就是, 当一个信号发射回来之后, 进行 schedule 调度, 在被调度的任务里面, 将信号发送给自己的下游节点.
+ 这个调度可能是线程调度, 也可能是延时调度. 不管如何, 下游节点接受到上游信号的环境, 都已经发生了改变. 
+ */
 final private class ObserveOnSerialDispatchQueueSink<Observer: ObserverType>: ObserverBase<Observer.Element> {
     
     let scheduler: SerialDispatchQueueScheduler

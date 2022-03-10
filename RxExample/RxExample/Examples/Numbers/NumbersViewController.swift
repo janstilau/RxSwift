@@ -137,7 +137,14 @@ class NumbersViewController: ViewController {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        testTapControlEvent()
+        openYami()
+    }
+    
+    func openYami() {
+        if let url = URL.init(string: "yami://shopdetail/123123"),
+            UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
+        }
     }
     
     func testTapControlEvent() {

@@ -9,9 +9,7 @@ extension ObservableType {
         Catch(source: self.asObservable(), handler: handler)
     }
     
-    /*
-     Continues an observable sequence that is terminated by an error with a single element.
-     */
+    // 当发生错误之后, 直接使用 element 产生一个新的队列.
     public func catchAndReturn(_ element: Element)
     -> Observable<Element> {
         // 当, 发生了错误之后, 产生一个 element 的 next 信号, 然后整个信号序列结束了.
@@ -82,6 +80,7 @@ final private class CatchSinkProxy<Observer: ObserverType>: ObserverType {
 }
 
 final private class CatchSink<Observer: ObserverType>: Sink<Observer>, ObserverType {
+    
     // Rx 里面, 大量使用了 typealias.
     typealias Element = Observer.Element
     typealias Parent = Catch<Element>
