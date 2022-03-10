@@ -12,8 +12,8 @@ enum TailRecursiveSinkCommand {
 }
 
 class TailRecursiveSink<Sequence: Swift.Sequence, Observer: ObserverType>
-: Sink<Observer>
-, InvocableWithValueType where Sequence.Element: ObservableConvertibleType,
+: Sink<Observer>, InvocableWithValueType where
+Sequence.Element: ObservableConvertibleType,
 Sequence.Element.Element == Observer.Element {
     
     typealias Value = TailRecursiveSinkCommand
@@ -38,6 +38,11 @@ Sequence.Element.Element == Observer.Element {
         return self.subscription
     }
     
+    // simple implementation for now
+    func schedule(_ command: TailRecursiveSinkCommand) {
+        self.gate.invoke(InvocableScheduledItem(invocable: self, state: command))
+    }
+    
     func invoke(_ command: TailRecursiveSinkCommand) {
         switch command {
         case .dispose:
@@ -45,11 +50,6 @@ Sequence.Element.Element == Observer.Element {
         case .moveNext:
             self.moveNextCommand()
         }
-    }
-    
-    // simple implementation for now
-    func schedule(_ command: TailRecursiveSinkCommand) {
-        self.gate.invoke(InvocableScheduledItem(invocable: self, state: command))
     }
     
     func done() {
@@ -61,12 +61,11 @@ Sequence.Element.Element == Observer.Element {
         rxAbstractMethod()
     }
     
-    // should be done on gate locked
-    
     private func moveNextCommand() {
         var next: Observable<Element>?
         
         repeat {
+            // 取值, 获取 Sequence 的 Iter. 以及 RemainTimes
             guard let (g, left) = self.generators.last else {
                 break
             }
@@ -110,12 +109,14 @@ Sequence.Element.Element == Observer.Element {
         } while next == nil
         
         guard let existingNext = next else {
+            // 如果没有任务了, 直接执行 Done.
             self.done()
             return
         }
         
         let disposable = SingleAssignmentDisposable()
         self.subscription.disposable = disposable
+        // 每次都切换. self.subscription.disposable 里面的值. 
         disposable.setDisposable(self.subscribeToNext(existingNext))
     }
     

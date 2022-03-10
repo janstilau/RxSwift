@@ -43,8 +43,8 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
     
     public typealias Element = PropertyType
     
-    let values: Observable<PropertyType>
-    let valueSink: AnyObserver<PropertyType>
+    let values: Observable<PropertyType> // Publisher. 
+    let valueSink: AnyObserver<PropertyType> // Binder
     
     /// Initializes control property with a observable sequence that represents property values and observer that enables
     /// binding values to property.

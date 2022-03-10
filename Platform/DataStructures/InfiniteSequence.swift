@@ -6,7 +6,9 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
-/// Sequence that repeats `repeatedValue` infinite number of times.
+/*
+ Repeat 一定次数的 Sequence.
+ */
 struct InfiniteSequence<Element> : Sequence {
     
     typealias Iterator = AnyIterator<Element>

@@ -36,7 +36,7 @@ extension ObservableType {
 
 extension ObservableType where Element: ObservableConvertibleType {
     
-    /**
+    /*
      Merges elements from all observable sequences in the given enumerable sequence into a single observable sequence.
      
      - seealso: [merge operator on reactivex.io](http://reactivex.io/documentation/operators/merge.html)
@@ -368,6 +368,7 @@ private final class FlatMapFirstSink<SourceElement, SourceSequence: ObservableCo
     }
 }
 
+// 每一个 Sequence, 都注册给一个 MergeSinkIter 对象, 这个对象, 直接将数据传递给 MergeSink 对象.
 private final class MergeSinkIter<SourceElement, SourceSequence: ObservableConvertibleType, Observer: ObserverType> : ObserverType where Observer.Element == SourceSequence.Element {
     typealias Parent = MergeSink<SourceElement, SourceSequence, Observer>
     typealias DisposeKey = CompositeDisposable.DisposeKey

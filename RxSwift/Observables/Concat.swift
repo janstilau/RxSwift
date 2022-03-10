@@ -1,3 +1,5 @@
+
+
 extension ObservableType {
     public func concat<Source: ObservableConvertibleType>(_ second: Source) -> Observable<Element> where Source.Element == Element {
         Observable.concat([self.asObservable(), second.asObservable()])
@@ -5,7 +7,7 @@ extension ObservableType {
 }
 
 extension ObservableType {
-    /**
+    /*
      Concatenates all observable sequences in the given sequence, as long as the previous observable sequence terminated successfully.
      
      This operator has tail recursive optimizations that will prevent stack overflow.
@@ -66,6 +68,8 @@ final private class ConcatSink<Sequence: Swift.Sequence, Observer: ObserverType>
             self.forwardOn(event)
             self.dispose()
         case .completed:
+            // 前一个 Publisher 结束了, 就向存储的 Sources 里面, 读取下一个 Publisher, 然后注册给自己.
+            // 如果都结束了, 才会发送 Complete 事件给后方.
             self.schedule(.moveNext)
         }
     }

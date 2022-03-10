@@ -10,6 +10,7 @@ extension ObservableType {
     }
     
     // 当发生错误之后, 直接使用 element 产生一个新的队列.
+    // ReplaceError
     public func catchAndReturn(_ element: Element)
     -> Observable<Element> {
         // 当, 发生了错误之后, 产生一个 element 的 next 信号, 然后整个信号序列结束了.
@@ -26,7 +27,7 @@ extension ObservableType {
 
 extension ObservableType {
     
-    /**
+    /*
      Repeats the source observable sequence until it successfully terminates.
      
      **This could potentially create an infinite sequence.**
@@ -39,15 +40,9 @@ extension ObservableType {
         CatchSequence(sources: InfiniteSequence(repeatedValue: self.asObservable()))
     }
     
-    /**
+    /*
      Repeats the source observable sequence the specified number of times in case of an error or until it successfully terminates.
-     
      If you encounter an error and want it to retry once, then you must use `retry(2)`
-     
-     - seealso: [retry operator on reactivex.io](http://reactivex.io/documentation/operators/retry.html)
-     
-     - parameter maxAttemptCount: Maximum number of times to repeat the sequence.
-     - returns: An observable sequence producing the elements of the given sequence repeatedly until it terminates successfully.
      */
     public func retry(_ maxAttemptCount: Int)
     -> Observable<Element> {
@@ -111,11 +106,13 @@ final private class CatchSink<Observer: ObserverType>: Sink<Observer>, ObserverT
         case .error(let error):
             // 当发生错误之后, 不会将错误, 传递给自己的下游节点.
             do {
-                // 发生了错误, 原来的监测链条也就打断了
-                // 所以原来的注册, 还是消失了. 
+                // 使用之前存储的根据 Error 生成 Sequence 的 Handler, 生成一个新的 Publisher
                 let catchSequence = try self.parent.handler(error)
                 let observer = CatchSinkProxy(parent: self)
-                // 原本的链条在这已经断掉了, 使用新生成的 Sequence 来发射信号.
+                /*
+                 原来的上游节点, 在 error 之后, 应该自己进行 dispsoe.
+                 CatchSink 当前节点的上游, 替换成为了新生成的 catchSequence Publisher.
+                 */
                 self.subscription.disposable = catchSequence.subscribe(observer)
             } catch let e {
                 self.forwardOn(.error(e))
@@ -166,6 +163,7 @@ final private class CatchSequenceSink<Sequence: Swift.Sequence, Observer: Observ
             self.forwardOn(event)
         case .error(let error):
             self.lastError = error
+            // 当, 发生了错误之后, 开始注册下一个序列中的下一个 Source, 当做自己节点的源头.
             self.schedule(.moveNext)
         case .completed:
             self.forwardOn(event)
@@ -174,6 +172,8 @@ final private class CatchSequenceSink<Sequence: Swift.Sequence, Observer: Observ
     }
     
     override func subscribeToNext(_ source: Observable<Element>) -> Disposable {
+        // source, 是从 Sequence Iter 中, 获取新的 Publisher, 将这个 Publisher 挂钩到 Self 上, Self 接受新的事件
+        // 如果发生了错误, self.schedule(.moveNext) 会从 Sequence Iter 获取新的 Publisher, 再次挂钩.
         source.subscribe(self)
     }
     
