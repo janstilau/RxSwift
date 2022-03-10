@@ -11,6 +11,7 @@ enum TailRecursiveSinkCommand {
     case dispose
 }
 
+// Sequence 里面的数据, 必须是一个序列对象.
 class TailRecursiveSink<Sequence: Swift.Sequence, Observer: ObserverType>
 : Sink<Observer>, InvocableWithValueType where
 Sequence.Element: ObservableConvertibleType,
@@ -23,6 +24,7 @@ Sequence.Element.Element == Observer.Element {
     
     var generators: [SequenceGenerator] = []
     var disposed = false
+    // SerialDisposable, 为了达到不断的替换 Publisher 的效果.
     var subscription = SerialDisposable()
     
     // this is thread safe object
@@ -43,6 +45,7 @@ Sequence.Element.Element == Observer.Element {
         self.gate.invoke(InvocableScheduledItem(invocable: self, state: command))
     }
     
+    // 真正的调度行为.
     func invoke(_ command: TailRecursiveSinkCommand) {
         switch command {
         case .dispose:
@@ -90,6 +93,7 @@ Sequence.Element.Element == Observer.Element {
             // there is no memory leak in case this operator is used to generate non terminating
             // sequence.
             
+            // 在这里, 进行了最大次数的更新. 
             if let knownOriginalLeft = left {
                 // `- 1` because generator.next() has just been called
                 if knownOriginalLeft - 1 >= 1 {
@@ -116,7 +120,7 @@ Sequence.Element.Element == Observer.Element {
         
         let disposable = SingleAssignmentDisposable()
         self.subscription.disposable = disposable
-        // 每次都切换. self.subscription.disposable 里面的值. 
+        // 每次都切换. self.subscription.disposable 里面的值.
         disposable.setDisposable(self.subscribeToNext(existingNext))
     }
     

@@ -6,8 +6,13 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
-// 有一个数据, 以及对于这个数据的操作, 调度这个操作, 而不是立马进行触发.
-// 调度这个动作, 本身可以取消. 如果动作执行了, 那么执行后的返回值, 可以取消这个动作产生的序列.
+/*
+ 调度, 就是在 on 接收到信号之后, 保存状态, 在另外的一个运行环境, 进行操作, 然后将结果移交给后续节点.
+ 一般来说, 都是直接交给了后续节点.
+ 
+ 调度本身可以取消, 指定操作也可以进行取消.
+ 所以, 这个函数的返回值, subscription 会有一个 cancel 替换的过程.
+ */
 public protocol ImmediateSchedulerType {
     /**
     Schedules an action to be executed immediately.
@@ -16,7 +21,8 @@ public protocol ImmediateSchedulerType {
 }
 
 extension ImmediateSchedulerType {
-    /**
+    // Rx 里面, 有些设计的很栏, 一点不利于思考. 
+    /*
     Schedules an action to be executed recursively.
     
     - parameter state: State passed to the action to be executed.

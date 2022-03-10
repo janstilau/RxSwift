@@ -9,7 +9,11 @@
 let RxErrorDomain       = "RxErrorDomain"
 let RxCompositeFailures = "RxCompositeFailures"
 
-/// Generic Rx error codes.
+/*
+ 应该多多定义自己的 Error 类型.
+ 使用 Enum 来代表 Error, 和使用 Code 代表 Error 没有太大的区别.
+ 但是, 这是一个类型, 所以就能够添加各种相关的方法在内. 
+ */
 public enum RxError
     : Swift.Error
     , CustomDebugStringConvertible {

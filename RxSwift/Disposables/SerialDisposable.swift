@@ -7,6 +7,8 @@
 //
 
 // Represents a disposable resource whose underlying disposable resource can be replaced by another disposable resource, causing automatic disposal of the previous underlying disposable resource.
+
+// 存储的 Disposable 可以替换, 每次替换, 自动引起被替换的进行 dispose 的调用.
 public final class SerialDisposable : DisposeBase, Cancelable {
     private var lock = SpinLock()
     
@@ -14,7 +16,6 @@ public final class SerialDisposable : DisposeBase, Cancelable {
     private var current = nil as Disposable?
     private var disposed = false
     
-    /// - returns: Was resource disposed.
     public var isDisposed: Bool {
         self.disposed
     }
@@ -24,11 +25,9 @@ public final class SerialDisposable : DisposeBase, Cancelable {
         super.init()
     }
     
-    /**
+    /*
      Gets or sets the underlying disposable.
-     
      Assigning this property disposes the previous disposable object.
-     
      If the `SerialDisposable` has already been disposed, assignment to this property causes immediate disposal of the given disposable object.
      */
     public var disposable: Disposable {

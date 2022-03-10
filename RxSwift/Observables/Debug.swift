@@ -8,9 +8,6 @@
 
 import Foundation
 
-/*
- 这应该是 Do 的改名.
- */
 extension ObservableType {
     
     /**
@@ -50,6 +47,8 @@ final private class DebugSink<Source: ObservableType, Observer: ObserverType>: S
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 完全 forward, 在之前进行 Log
+    // Operator 的作用, 就是操作信号中的数据, debug 没有任何的 transform, 仅仅是打印 event 的值. 
     func on(_ event: Event<Element>) {
         let maxEventTextLength = 40
         let eventText = "\(event)"

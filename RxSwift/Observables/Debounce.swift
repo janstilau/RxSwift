@@ -8,7 +8,7 @@
 
 extension ObservableType {
 
-    /**
+    /*
      Ignores elements from an observable sequence which are followed by another element within a specified relative time duration, using the specified scheduler to run throttling timers.
 
      - seealso: [debounce operator on reactivex.io](http://reactivex.io/documentation/operators/debounce.html)
@@ -37,7 +37,7 @@ final private class DebounceSink<Observer: ObserverType>
 
     // state
     private var id = 0 as UInt64
-    private var value: Element?
+    private var value: Element? // 存储的 value 值.
 
     let cancellable = SerialDisposable()
 
@@ -49,7 +49,6 @@ final private class DebounceSink<Observer: ObserverType>
 
     func run() -> Disposable {
         let subscription = self.parent.source.subscribe(self)
-
         return Disposables.create(subscription, cancellable)
     }
 
@@ -70,6 +69,7 @@ final private class DebounceSink<Observer: ObserverType>
 
             let d = SingleAssignmentDisposable()
             self.cancellable.disposable = d
+            // self.propagate, 使用这种方法, 将引用了 self 的闭包传递了过去.
             d.setDisposable(scheduler.scheduleRelative(currentId, dueTime: dueTime, action: self.propagate))
         case .error:
             self.value = nil
@@ -89,6 +89,7 @@ final private class DebounceSink<Observer: ObserverType>
         self.lock.performLocked {
             let originalValue = self.value
 
+            // 如果 id 没变, 则是没有在其中有新的数据过来了. 就可以 forward 了.
             if let value = originalValue, self.id == currentId {
                 self.value = nil
                 self.forwardOn(.next(value))

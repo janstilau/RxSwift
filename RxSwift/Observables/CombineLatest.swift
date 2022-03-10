@@ -19,10 +19,10 @@ protocol CombineLatestProtocol: AnyObject {
  然后, 每个异步操作的最后, 都进行这个 check 函数.
  */
 class CombineLatestSink<Observer: ObserverType> : Sink<Observer> , CombineLatestProtocol {
-        
+    
     // 在 RX 里面, 使用了大量的 typealias
     typealias Element = Observer.Element
-    // 这个值, 是被共享的. Sink 生成的每个 CombineLatestObserver 都使用了同样的一个 lock. 这样保证了线程安全. 
+    // 这个值, 是被共享的. Sink 生成的每个 CombineLatestObserver 都使用了同样的一个 lock. 这样保证了线程安全.
     let lock = RecursiveLock()
     
     // arity 参数的个数.
@@ -39,6 +39,7 @@ class CombineLatestSink<Observer: ObserverType> : Sink<Observer> , CombineLatest
      不过, 使用这些节点的前提, 是需要明确的记忆各个方法的作用是什么, 如果能够知道实现原理, 更加会对代码胸有成竹.
      */
     
+    // 参数数量
     init(arity: Int, observer: Observer, cancel: Cancelable) {
         /*
          arity 就代表着, 当前有多少个需要被 Combine 的 Publisher. 每种 Publisher 的当前状态, 使用一个数组来进行记录.
@@ -78,7 +79,6 @@ class CombineLatestSink<Observer: ObserverType> : Sink<Observer> , CombineLatest
         } else {
             // 没太理解, 为什么会到这里.
             var allOthersDone = true
-            
             for i in 0 ..< self.arity {
                 if i != index && !self.isDone[i] {
                     allOthersDone = false

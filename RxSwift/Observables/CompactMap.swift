@@ -25,6 +25,7 @@ final private class CompactMapSink<SourceType, Observer: ObserverType>: Sink<Obs
         case .next(let element):
             do {
                 // 去除了返回值是 nil 的元素. 对于下游来说, 并不知道, 存在着 value == nil 的信号被发送过来了.
+                // 这就是这个类, 最主要的逻辑. 
                 if let mappedElement = try self.transform(element) {
                     self.forwardOn(.next(mappedElement))
                 }

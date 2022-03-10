@@ -1,11 +1,3 @@
-//
-//  InfiniteSequence.swift
-//  Platform
-//
-//  Created by Krunoslav Zaher on 6/13/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
-
 /*
  Repeat 一定次数的 Sequence.
  */
@@ -21,6 +13,8 @@ struct InfiniteSequence<Element> : Sequence {
     
     func makeIterator() -> Iterator {
         let repeatedValue = self.repeatedValue
+        // AnyIterator, 存储一个 Block. 在 next 的时候, 使用 Block 来获取值.
+        // Block 内, 应该有对应的更新 Index 和 返回相应位置值的操作.
         return AnyIterator { repeatedValue }
     }
 }

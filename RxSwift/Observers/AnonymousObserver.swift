@@ -21,6 +21,7 @@ final class AnonymousObserver<Element>: ObserverBase<Element> {
         self.eventHandler = eventHandler
     }
     
+    // On 的处理, 就是调用自己的存储的 eventHandler.
     override func onCore(_ event: Event<Element>) {
         self.eventHandler(event)
     }

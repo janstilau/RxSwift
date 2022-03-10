@@ -15,7 +15,6 @@ extension ObservableType where Element: EventConvertible {
     public func dematerialize() -> Observable<Element.Element> {
         Dematerialize(source: self.asObservable())
     }
-
 }
 
 private final class DematerializeSink<T: EventConvertible, Observer: ObserverType>: Sink<Observer>, ObserverType where Observer.Element == T.Element {

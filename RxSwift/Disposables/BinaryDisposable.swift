@@ -1,5 +1,6 @@
 
-// 一个两个数据的盒子.
+// 很简单的意见事情, 但是还是要用一个盒子来进行包装.
+// 因为, 实际用到流程里面的, 不是具体的类型, 而是一个抽象数据类型, 就是 Cancelable. 所以, 使用盒子装起来, 然后在接口函数里面, 完成盒子里面数据的 dispose .
 private final class BinaryDisposable : DisposeBase, Cancelable {
     
     private let disposed = AtomicInt(0)

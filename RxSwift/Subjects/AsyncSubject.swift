@@ -10,6 +10,7 @@
 /// and only after that source Observable completes.
 ///
 /// (If the source Observable does not emit any values, the AsyncSubject also completes without emitting any values.)
+
 public final class AsyncSubject<Element>
 : Observable<Element>
 , SubjectType

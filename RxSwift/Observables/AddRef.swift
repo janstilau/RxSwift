@@ -7,7 +7,7 @@
 //
 
 final class AddRefSink<Observer: ObserverType> : Sink<Observer>, ObserverType {
-    typealias Element = Observer.Element 
+    typealias Element = Observer.Element
     
     override init(observer: Observer, cancel: Cancelable) {
         super.init(observer: observer, cancel: cancel)
@@ -38,7 +38,7 @@ final class AddRef<Element> : Producer<Element> {
         let releaseDisposable = self.refCount.retain()
         let sink = AddRefSink(observer: observer, cancel: cancel)
         let subscription = Disposables.create(releaseDisposable, self.source.subscribe(sink))
-
+        
         return (sink: sink, subscription: subscription)
     }
 }

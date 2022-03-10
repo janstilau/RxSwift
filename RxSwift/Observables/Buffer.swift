@@ -36,6 +36,7 @@ final private class BufferTimeCount<Element>: Producer<[Element]> {
     }
 }
 
+// 真正在响应链条的 Sink 值.
 final private class BufferTimeCountSink<Element, Observer: ObserverType>
 : Sink<Observer>
 , LockOwnerType
@@ -63,6 +64,7 @@ final private class BufferTimeCountSink<Element, Observer: ObserverType>
     }
     
     func startNewWindowAndSendCurrentOne() {
+        // 根据 ID 来判断当前的 Version 环境.
         self.windowID = self.windowID &+ 1
         let windowID = self.windowID
         
@@ -70,7 +72,6 @@ final private class BufferTimeCountSink<Element, Observer: ObserverType>
         self.buffer = []
         // 发送缓存的数据出去.
         self.forwardOn(.next(buffer))
-        
         self.createTimer(windowID)
     }
     
@@ -82,7 +83,6 @@ final private class BufferTimeCountSink<Element, Observer: ObserverType>
         switch event {
         case .next(let element):
             self.buffer.append(element)
-            
             if self.buffer.count == self.parent.count {
                 self.startNewWindowAndSendCurrentOne()
             }
@@ -99,6 +99,7 @@ final private class BufferTimeCountSink<Element, Observer: ObserverType>
         }
     }
     
+    // 建立, 定义清空的 Timer.
     func createTimer(_ windowID: Int) {
         if self.timerD.isDisposed {
             return

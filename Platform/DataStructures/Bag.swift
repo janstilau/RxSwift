@@ -11,26 +11,10 @@ import Swift
 let arrayDictionaryMaxSize = 30
 
 struct BagKey {
-    /**
-    Unique identifier for object added to `Bag`.
-     
-    It's underlying type is UInt64. If we assume there in an idealized CPU that works at 4GHz,
-     it would take ~150 years of continuous running time for it to overflow.
-    */
-    
     // 直接使用的 Int64 作为 Key. 理论上, 不会出问题.
     fileprivate let rawValue: UInt64
 }
 
-/**
-Data structure that represents a bag of elements typed `T`.
-
-Single element can be stored multiple times.
-
-Time and space complexity of insertion and deletion is O(n). 
-
-It is suitable for storing small number of elements.
-*/
 /*
  Bag 是一个复合的数据结构.
  先是一个特殊的位置.
@@ -42,52 +26,54 @@ struct Bag<T> : CustomDebugStringConvertible {
     typealias KeyType = BagKey
     
     typealias Entry = (key: BagKey, value: T)
- 
+    
     private var _nextKey: BagKey = BagKey(rawValue: 0)
-
+    
+    // 不太明白, 为什么使用 _ 开头进行命名.
     // data
-
-    // first fill inline variables
+    // 单值的存储, 使用了一个 key 进行绑定.
     var _key0: BagKey?
     var _value0: T?
-
-    // then fill "array dictionary"
+    
+    // 数组存储, 利用数组, 进行遍历查询.
     var _pairs = ContiguousArray<Entry>()
-
-    // last is sparse dictionary
+    
+    // Map 值存储, 最后的存储.
     var _dictionary: [BagKey: T]?
-
+    
     var _onlyFastPath = true
-
+    
     /// Creates new empty `Bag`.
     init() { }
     
     /**
-    Inserts `value` into bag.
-    
-    - parameter element: Element to insert.
-    - returns: Key that can be used to remove element from bag.
-    */
+     Inserts `value` into bag.
+     
+     - parameter element: Element to insert.
+     - returns: Key that can be used to remove element from bag.
+     */
     mutating func insert(_ element: T) -> BagKey {
         let key = _nextKey
-
+        
         _nextKey = BagKey(rawValue: _nextKey.rawValue &+ 1)
-
+        
         // 如果, 还没有占用那个特殊的位置, 占用了
         if _key0 == nil {
             _key0 = key
             _value0 = element
             return key
         }
-
+        
+        // 一次性属性, 只要量多过, 就没有单值存储了.
+        // 这个值, 仅仅在 Get 的时候使用过.
         _onlyFastPath = false
-
+        
         // 如果, 已经使用了 Dict, 那么就直接 Dict 插入.
         if _dictionary != nil {
             _dictionary![key] = element
             return key
         }
-
+        
         // 如果, 数组还没有填满, 添加
         if _pairs.count < arrayDictionaryMaxSize {
             // 数组里面, 存储的是 key value 的 pair.
@@ -110,17 +96,17 @@ struct Bag<T> : CustomDebugStringConvertible {
     mutating func removeAll() {
         _key0 = nil
         _value0 = nil
-
+        
         _pairs.removeAll(keepingCapacity: false)
         _dictionary?.removeAll(keepingCapacity: false)
     }
     
     /**
-    Removes element with a specific `key` from bag.
-    
-    - parameter key: Key that identifies element to remove from bag.
-    - returns: Element that bag contained, or nil in case element was already removed.
-    */
+     Removes element with a specific `key` from bag.
+     
+     - parameter key: Key that identifies element to remove from bag.
+     - returns: Element that bag contained, or nil in case element was already removed.
+     */
     mutating func removeKey(_ key: BagKey) -> T? {
         if _key0 == key {
             _key0 = nil
@@ -128,23 +114,22 @@ struct Bag<T> : CustomDebugStringConvertible {
             _value0 = nil
             return value
         }
-
+        
         if let existingObject = _dictionary?.removeValue(forKey: key) {
             return existingObject
         }
-
+        
         for i in 0 ..< _pairs.count where _pairs[i].key == key {
             let value = _pairs[i].value
             _pairs.remove(at: i)
             return value
         }
-
+        
         return nil
     }
 }
 
 extension Bag {
-    /// A textual representation of `self`, suitable for debugging.
     var debugDescription : String {
         "\(self.count) elements in Bag"
     }
@@ -161,18 +146,18 @@ extension Bag {
             }
             return
         }
-
+        
         let value0 = _value0
         let dictionary = _dictionary
-
+        
         if let value0 = value0 {
             action(value0)
         }
-
+        
         for i in 0 ..< _pairs.count {
             action(_pairs[i].value)
         }
-
+        
         if dictionary?.count ?? 0 > 0 {
             for element in dictionary!.values {
                 action(element)

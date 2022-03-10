@@ -7,12 +7,12 @@
 //
 
 extension ObservableType {
-
-    /**
+    
+    /*
      Emits elements from the source observable sequence, or a default element if the source observable sequence is empty.
-
+     
      - seealso: [DefaultIfEmpty operator on reactivex.io](http://reactivex.io/documentation/operators/defaultifempty.html)
-
+     
      - parameter default: Default element to be sent if the source does not emit any elements
      - returns: An observable sequence which emits default element end completes in case the original sequence is empty
      */
@@ -22,7 +22,7 @@ extension ObservableType {
 }
 
 final private class DefaultIfEmptySink<Observer: ObserverType>: Sink<Observer>, ObserverType {
-    typealias Element = Observer.Element 
+    typealias Element = Observer.Element
     private let `default`: Element
     private var isEmpty = true
     

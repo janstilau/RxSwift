@@ -19,8 +19,7 @@ public final class CompositeDisposable : DisposeBase, Cancelable {
         self.lock.performLocked { self.disposables == nil }
     }
     
-    public override init() {
-    }
+    public override init() { }
     
     /// Initializes a new instance of composite disposable with the specified number of disposables.
     public init(_ disposable1: Disposable, _ disposable2: Disposable) {

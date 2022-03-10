@@ -23,8 +23,13 @@ extension ObservableType {
     }
 }
 
+/*
+ 这个类, 当做 CombineLast 的实现.
+ 上面的几个, 不通用.
+ */
 final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection, Observer: ObserverType>
 : Sink<Observer> where Collection.Element: ObservableConvertibleType {
+    
     typealias Result = Observer.Element
     typealias Parent = CombineLatestCollectionType<Collection, Result>
     typealias SourceElement = Collection.Element.Element
@@ -59,12 +64,14 @@ final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection
         
         switch event {
         case .next(let element):
+            // 只在第一次, 进行 numberOfValues 的更新.
             if self.values[atIndex] == nil {
                 self.numberOfValues += 1
             }
             
             self.values[atIndex] = element
             
+            // 没太明白这段逻辑.
             if self.numberOfValues < self.parent.count {
                 let numberOfOthersThatAreDone = self.numberOfDone - (self.isDone[atIndex] ? 1 : 0)
                 if numberOfOthersThatAreDone == self.parent.count - 1 {
@@ -77,8 +84,7 @@ final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection
             do {
                 let result = try self.parent.resultSelector(self.values.map { $0! })
                 self.forwardOn(.next(result))
-            }
-            catch let error {
+            } catch let error {
                 self.forwardOn(.error(error))
                 self.dispose()
             }
@@ -97,8 +103,7 @@ final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection
             if self.numberOfDone == self.parent.count {
                 self.forwardOn(.completed)
                 self.dispose()
-            }
-            else {
+            } else {
                 self.subscriptions[atIndex].dispose()
             }
         }
@@ -117,7 +122,7 @@ final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection
             j += 1
         }
         
-        // 和其他的 Combine Lastes 的逻辑, 没有任何的区别. 在这里, 使用了 Collection 的相关函数, 
+        // 和其他的 Combine Lastes 的逻辑, 没有任何的区别. 在这里, 使用了 Collection 的相关函数,
         if self.parent.sources.isEmpty {
             do {
                 let result = try self.parent.resultSelector([])

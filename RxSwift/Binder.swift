@@ -17,7 +17,6 @@ public struct Binder<Value>: ObserverType {
     
     // Binding 的逻辑, 一般来说和 UI 相关. 所以, 这里的 scheduler 使用的是 MainScheduler
     // Binding 的真正调用, 是包含在了 Scheduler 的 schedule 逻辑里面的
-    
     // 这里, 和一个 OBJ 绑定的, 用到了 Reactive 中 keypath 的设计了.
     public init<Target: AnyObject>(_ target: Target,
                                    scheduler: ImmediateSchedulerType = MainScheduler(),
@@ -31,7 +30,7 @@ public struct Binder<Value>: ObserverType {
                     if let target = weakTarget {
                         binding(target, element)
                     }
-                    // 仅仅是做事件调度, 没有必要进行取消, 直接返回一个 FakeCancle 对象.
+                    // 这里仅仅是调度执行环境, 没有必要取消. 
                     return Disposables.create()
                 }
             case .error(let error):

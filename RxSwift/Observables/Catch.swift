@@ -1,3 +1,8 @@
+/*
+ 当, error 数据来临之后, 之前的节点都已经 dispsoe 掉了
+ 使用一个 handler, 创建一个新的数据源头, 继续保持响应链条.
+ */
+
 extension ObservableType {
     
     /*
@@ -18,38 +23,6 @@ extension ObservableType {
     }
 }
 
-extension ObservableType {
-    public static func `catch`<Sequence: Swift.Sequence>(sequence: Sequence) -> Observable<Element>
-    where Sequence.Element == Observable<Element> {
-        CatchSequence(sources: sequence)
-    }
-}
-
-extension ObservableType {
-    
-    /*
-     Repeats the source observable sequence until it successfully terminates.
-     
-     **This could potentially create an infinite sequence.**
-     
-     - seealso: [retry operator on reactivex.io](http://reactivex.io/documentation/operators/retry.html)
-     
-     - returns: Observable sequence to repeat until it successfully terminates.
-     */
-    public func retry() -> Observable<Element> {
-        CatchSequence(sources: InfiniteSequence(repeatedValue: self.asObservable()))
-    }
-    
-    /*
-     Repeats the source observable sequence the specified number of times in case of an error or until it successfully terminates.
-     If you encounter an error and want it to retry once, then you must use `retry(2)`
-     */
-    public func retry(_ maxAttemptCount: Int)
-    -> Observable<Element> {
-        CatchSequence(sources: Swift.repeatElement(self.asObservable(), count: maxAttemptCount))
-    }
-}
-
 // catch with callback
 
 final private class CatchSinkProxy<Observer: ObserverType>: ObserverType {
@@ -63,6 +36,7 @@ final private class CatchSinkProxy<Observer: ObserverType>: ObserverType {
     }
     
     // 无论是接收到什么样的信号, Parent 都转交给自己的下游节点.
+    // 通过在里面增加一层, 确保了, 不能再次进行 catch 了
     func on(_ event: Event<Element>) {
         self.parent.forwardOn(event)
         switch event {
@@ -99,8 +73,10 @@ final private class CatchSink<Observer: ObserverType>: Sink<Observer>, ObserverT
     func on(_ event: Event<Element>) {
         switch event {
         case .next:
+            // 正常的数据, 直接 forward.
             self.forwardOn(event)
         case .completed:
+            // 结束事件, 直接 forward 然后 dispose.
             self.forwardOn(event)
             self.dispose()
         case .error(let error):
@@ -109,10 +85,6 @@ final private class CatchSink<Observer: ObserverType>: Sink<Observer>, ObserverT
                 // 使用之前存储的根据 Error 生成 Sequence 的 Handler, 生成一个新的 Publisher
                 let catchSequence = try self.parent.handler(error)
                 let observer = CatchSinkProxy(parent: self)
-                /*
-                 原来的上游节点, 在 error 之后, 应该自己进行 dispsoe.
-                 CatchSink 当前节点的上游, 替换成为了新生成的 catchSequence Publisher.
-                 */
                 self.subscription.disposable = catchSequence.subscribe(observer)
             } catch let e {
                 self.forwardOn(.error(e))
@@ -139,6 +111,40 @@ final private class Catch<Element>: Producer<Element> {
         let sink = CatchSink(parent: self, observer: observer, cancel: cancel)
         let subscription = sink.run()
         return (sink: sink, subscription: subscription)
+    }
+}
+
+extension ObservableType {
+    public static func `catch`<Sequence: Swift.Sequence>(sequence: Sequence) -> Observable<Element>
+    where Sequence.Element == Observable<Element> {
+        CatchSequence(sources: sequence)
+    }
+}
+
+extension ObservableType {
+    
+    // 如果, 失败了, 那么使用原来的 Publisher 再次生成响应链条. 直到正常的 Complete.
+    /*
+     Repeats the source observable sequence until it successfully terminates.
+     
+     **This could potentially create an infinite sequence.**
+     
+     - seealso: [retry operator on reactivex.io](http://reactivex.io/documentation/operators/retry.html)
+     
+     - returns: Observable sequence to repeat until it successfully terminates.
+     */
+    public func retry() -> Observable<Element> {
+        CatchSequence(sources: InfiniteSequence(repeatedValue: self.asObservable()))
+    }
+    
+    /*
+     Repeats the source observable sequence the specified number of times in case of an error or until it successfully terminates.
+     If you encounter an error and want it to retry once, then you must use `retry(2)`
+     */
+    // 如果失败了, 使用原来的 Publisher 再次生成响应链条. 有最大的重复次数.
+    public func retry(_ maxAttemptCount: Int)
+    -> Observable<Element> {
+        CatchSequence(sources: Swift.repeatElement(self.asObservable(), count: maxAttemptCount))
     }
 }
 
@@ -172,8 +178,7 @@ final private class CatchSequenceSink<Sequence: Swift.Sequence, Observer: Observ
     }
     
     override func subscribeToNext(_ source: Observable<Element>) -> Disposable {
-        // source, 是从 Sequence Iter 中, 获取新的 Publisher, 将这个 Publisher 挂钩到 Self 上, Self 接受新的事件
-        // 如果发生了错误, self.schedule(.moveNext) 会从 Sequence Iter 获取新的 Publisher, 再次挂钩.
+        // 获取下一个 Publisher, 然后 Publisher 构建原有的响应链条的源头.
         source.subscribe(self)
     }
     

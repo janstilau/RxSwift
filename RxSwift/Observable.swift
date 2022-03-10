@@ -6,9 +6,6 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
-/*
- 
- */
 /// A type-erased `ObservableType`.
 
 

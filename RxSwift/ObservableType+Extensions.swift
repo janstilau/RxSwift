@@ -16,6 +16,7 @@ import Foundation
  */
 extension ObservableType {
     
+    // 提交了一个闭包, 来完成 event 的处理. 将这个闭包存储到 AnonymousObserver 中, 将 AnonymousObserver 对象, 纳入到响应链条里面.
     public func subscribe(_ on: @escaping (Event<Element>) -> Void) -> Disposable {
         let observer = AnonymousObserver { e in
             on(e)
@@ -53,6 +54,8 @@ extension ObservableType {
     
     /*
      实际上, 经常使用的方法.
+     使用者, 提供了各个不同的场景应该调用的方法, 但是其实他们都是 event 的 switch 处理分支逻辑.
+     所以, 还是构建一个 AnonymousObserver, 将所有的这些分支处理逻辑, 合并到一个 Block 里面.
      */
     public func subscribe(
         onNext: ((Element) -> Void)? = nil,
@@ -79,7 +82,6 @@ extension ObservableType {
             case .error(let error):
                 if let onError = onError {
                     onError(error)
-                } else {
                 }
                 disposable.dispose()
             case .completed:

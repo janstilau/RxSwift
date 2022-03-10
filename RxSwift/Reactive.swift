@@ -20,7 +20,7 @@
  struct Reactive<Base>  是一个 warpper. 并且是 @dynamicMemberLookup 标记的.
  如果, 使用的 property 是 Reactive 没有定义的属性, 就会走 subscript<Property>(dynamicMember 的逻辑.
  其中, 就有判断是否是所包装对象属性的 keyPath 的判断逻辑在.
- 如果是, 就生成一个 Binder. Binder 里面的闭包逻辑就是, 使用 keyPath, 将新的信号发送的过来的值, 赋值到 target 对应的属性上. 
+ 如果是, 就生成一个 Binder. Binder 里面的闭包逻辑就是, 使用 keyPath, 将新的信号发送的过来的值, 赋值到 target 对应的属性上.
  */
 @dynamicMemberLookup
 public struct Reactive<Base> {
@@ -73,5 +73,4 @@ extension ReactiveCompatible {
 
 import Foundation
 
-/// Extend NSObject with `rx` proxy.
 extension NSObject: ReactiveCompatible { }
