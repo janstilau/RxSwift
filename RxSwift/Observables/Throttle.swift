@@ -10,7 +10,7 @@ import Foundation
 
 extension ObservableType {
 
-    /**
+    /*
      Returns an Observable that emits the first and the latest item emitted by the source Observable during sequential time windows of a specified duration.
 
      This operator makes sure that no two elements are emitted in less then dueTime.

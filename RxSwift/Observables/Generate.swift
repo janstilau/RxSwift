@@ -7,19 +7,22 @@
 //
 
 extension ObservableType {
-    /**
+    /*
      Generates an observable sequence by running a state-driven loop producing the sequence's elements, using the specified scheduler
      to run the loop send out observer messages.
-
+     
      - seealso: [create operator on reactivex.io](http://reactivex.io/documentation/operators/create.html)
-
+     
      - parameter initialState: Initial state.
      - parameter condition: Condition to terminate generation (upon returning `false`).
      - parameter iterate: Iteration step function.
      - parameter scheduler: Scheduler on which to run the generator loop.
      - returns: The generated sequence.
      */
-    public static func generate(initialState: Element, condition: @escaping (Element) throws -> Bool, scheduler: ImmediateSchedulerType = CurrentThreadScheduler.instance, iterate: @escaping (Element) throws -> Element) -> Observable<Element> {
+    public static func generate(initialState: Element,
+                                condition: @escaping (Element) throws -> Bool,
+                                scheduler: ImmediateSchedulerType = CurrentThreadScheduler.instance,
+                                iterate: @escaping (Element) throws -> Element) -> Observable<Element> {
         Generate(initialState: initialState, condition: condition, iterate: iterate, resultSelector: { $0 }, scheduler: scheduler)
     }
 }
@@ -49,13 +52,11 @@ final private class GenerateSink<Sequence, Observer: ObserverType>: Sink<Observe
                     self.forwardOn(.next(result))
                     
                     recurse(false)
-                }
-                else {
+                } else {
                     self.forwardOn(.completed)
                     self.dispose()
                 }
-            }
-            catch let error {
+            } catch let error {
                 self.forwardOn(.error(error))
                 self.dispose()
             }
@@ -70,7 +71,11 @@ final private class Generate<Sequence, Element>: Producer<Element> {
     fileprivate let resultSelector: (Sequence) throws -> Element
     fileprivate let scheduler: ImmediateSchedulerType
     
-    init(initialState: Sequence, condition: @escaping (Sequence) throws -> Bool, iterate: @escaping (Sequence) throws -> Sequence, resultSelector: @escaping (Sequence) throws -> Element, scheduler: ImmediateSchedulerType) {
+    init(initialState: Sequence,
+         condition: @escaping (Sequence) throws -> Bool,
+         iterate: @escaping (Sequence) throws -> Sequence,
+         resultSelector: @escaping (Sequence) throws -> Element,
+         scheduler: ImmediateSchedulerType) {
         self.initialState = initialState
         self.condition = condition
         self.iterate = iterate
