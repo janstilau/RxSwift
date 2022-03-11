@@ -115,6 +115,18 @@ struct Container {
     }
 }
 
+class Animal: NSObject {
+    @objc var name: String
+    
+    init(name: String) {
+        self.name = name
+    }
+}
+
+
+
+
+
 
 class NumbersViewController: ViewController {
     @IBOutlet weak var number1: UITextField!
@@ -337,15 +349,4 @@ class NumbersViewController: ViewController {
         print(firstInteger)
     }
 }
-
-class Animal: NSObject {
-    @objc var name: String
-    
-    init(name: String) {
-        self.name = name
-    }
-}
-
-
-
 

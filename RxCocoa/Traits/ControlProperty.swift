@@ -15,7 +15,7 @@ public protocol ControlPropertyType : ObservableType, ObserverType {
     func asControlProperty() -> ControlProperty<Element>
 }
 
-/**
+/*
  Trait for `Observable`/`ObservableType` that represents property of UI element.
  
  Sequence of values only represents initial control value and user initiated value changes.
@@ -43,6 +43,7 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
     
     public typealias Element = PropertyType
     
+    //
     let values: Observable<PropertyType> // Publisher. 
     let valueSink: AnyObserver<PropertyType> // Binder
     
