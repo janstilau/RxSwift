@@ -11,24 +11,25 @@ import RxSwift
 import RxCocoa
 
 class ImagePickerController: ViewController {
-
+    
     @IBOutlet var imageView: UIImageView!
     @IBOutlet var cameraButton: UIButton!
     @IBOutlet var galleryButton: UIButton!
     @IBOutlet var cropButton: UIButton!
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
-
+        
+        
         cameraButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
-
+        
         cameraButton.rx.tap
             .flatMapLatest { [weak self] _ in
                 return UIImagePickerController.rx.createWithParent(self) { picker in
                     picker.sourceType = .camera
                     picker.allowsEditing = false
                 }
+                // 这个时候, 发射出来的信号, 是 UIImagePickerController 的数据.
                 .flatMap { $0.rx.didFinishPickingMediaWithInfo }
                 .take(1)
             }
@@ -37,7 +38,7 @@ class ImagePickerController: ViewController {
             }
             .bind(to: imageView.rx.image)
             .disposed(by: disposeBag)
-
+        
         galleryButton.rx.tap
             .flatMapLatest { [weak self] _ in
                 return UIImagePickerController.rx.createWithParent(self) { picker in
@@ -54,7 +55,7 @@ class ImagePickerController: ViewController {
             }
             .bind(to: imageView.rx.image)
             .disposed(by: disposeBag)
-
+        
         cropButton.rx.tap
             .flatMapLatest { [weak self] _ in
                 return UIImagePickerController.rx.createWithParent(self) { picker in

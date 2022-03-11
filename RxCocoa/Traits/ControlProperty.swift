@@ -54,7 +54,8 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
     /// - parameter valueSink: Observer that enables binding values to control property.
     /// - returns: Control property created with a observable sequence of values and an observer that enables binding values
     /// to property.
-    public init<Values: ObservableType, Sink: ObserverType>(values: Values, valueSink: Sink) where Element == Values.Element, Element == Sink.Element {
+    public init<Values: ObservableType, Sink: ObserverType>(values: Values,
+                                                            valueSink: Sink) where Element == Values.Element, Element == Sink.Element {
         self.values = values.subscribe(on: ConcurrentMainScheduler.instance)
         self.valueSink = valueSink.asObserver()
     }
@@ -114,7 +115,6 @@ extension ControlPropertyType where Element == String? {
     /// Transforms control property of type `String?` into control property of type `String`.
     public var orEmpty: ControlProperty<String> {
         let original: ControlProperty<String?> = self.asControlProperty()
-        
         // 如果, 原有序列是 nil, 直接这里转化一次, 变为 ""
         let values: Observable<String> = original.values.map { $0 ?? "" }
         let valueSink: AnyObserver<String> = original.valueSink.mapObserver { $0 }

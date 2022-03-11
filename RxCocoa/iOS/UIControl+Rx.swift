@@ -23,8 +23,6 @@ extension Reactive where Base: UIControl {
      */
     public func controlEvent(_ controlEvents: UIControl.Event) -> ControlEvent<()> {
         
-        // 原来还能 [weak control = self.base] 这样的赋值.
-        // 在捕获列表里面, 标明了, 就是在使用值语义的捕获.
         let source: Observable<Void> = Observable.create { [weak control = self.base] observer in
             
             guard let control = control else {
@@ -63,7 +61,7 @@ extension Reactive where Base: UIControl {
                 return Disposables.create()
             }
             
-            // 在最开始的时候, 会发送一个信号, 将 Control 当前的数据传递过去.
+            // getter 在这里发生了作用, 使用 getter 从 control 身上进行了取值. 
             observer.on(.next(getter(control)))
             
             // 创建一个 ControlTarget, 会在每次事件触发之后, 发射信号给后方. 

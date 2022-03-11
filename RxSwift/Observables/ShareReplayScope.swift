@@ -252,6 +252,10 @@ final private class ShareReplay1WhileConnected<Element>
         self.source = source
     }
     
+    /*
+     找了一个中间层, 这个中间层, 是真正 Source 的 Observer.
+     然后下游节点存储在中间层中, 中间层接受上游节点的数据, 分发到所有的下游节点中, 
+     */
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         self.lock.lock()
         let connection = self.synchronized_subscribe(observer)
@@ -261,10 +265,6 @@ final private class ShareReplay1WhileConnected<Element>
         self.lock.unlock()
         
         if count == 0 {
-            // 当第一次进行 subscribe 的时候, 要由 connection 进行 connect.
-            // 其实就是将 source subscibe conenction.
-            // 这样, source 的信号就可以发送给 conenction 对象了.
-            // 而后续的注册, 仅仅是将后续的 Observer 添加到 conenction 内部进行存储. 不会引发上游的重新 subscribe 的逻辑.
             connection.connect()
         }
         

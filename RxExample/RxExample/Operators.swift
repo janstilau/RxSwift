@@ -40,7 +40,8 @@ func nonMarkedText(_ textInput: UITextInput) -> String? {
     return (textInput.text(in: startRange) ?? "") + (textInput.text(in: endRange) ?? "")
 }
 
-func <-> <Base>(textInput: TextInput<Base>, relay: BehaviorRelay<String>) -> Disposable {
+func <-> <Base>(textInput: TextInput<Base>,
+                relay: BehaviorRelay<String>) -> Disposable {
     let bindToUIDisposable = relay.bind(to: textInput.text)
 
     let bindToRelay = textInput.text
