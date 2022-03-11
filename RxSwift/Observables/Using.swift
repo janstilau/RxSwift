@@ -8,13 +8,8 @@
 
 extension ObservableType {
     /**
-     Constructs an observable sequence that depends on a resource object, whose lifetime is tied to the resulting observable sequence's lifetime.
-
-     - seealso: [using operator on reactivex.io](http://reactivex.io/documentation/operators/using.html)
-
-     - parameter resourceFactory: Factory function to obtain a resource object.
-     - parameter observableFactory: Factory function to obtain an observable sequence that depends on the obtained resource.
-     - returns: An observable sequence whose lifetime controls the lifetime of the dependent resource object.
+     Constructs an observable sequence that depends on a resource object,
+     whose lifetime is tied to the resulting observable sequence's lifetime.
      */
     public static func using<Resource: Disposable>(_ resourceFactory: @escaping () throws -> Resource, observableFactory: @escaping (Resource) throws -> Observable<Element>) -> Observable<Element> {
         Using(resourceFactory: resourceFactory, observableFactory: observableFactory)
@@ -52,6 +47,7 @@ final private class UsingSink<ResourceType: Disposable, Observer: ObserverType>:
         }
     }
     
+    // 最最原始的 On 方法.
     func on(_ event: Event<SourceType>) {
         switch event {
         case let .next(value):

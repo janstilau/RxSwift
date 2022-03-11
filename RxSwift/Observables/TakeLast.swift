@@ -7,29 +7,28 @@
 //
 
 extension ObservableType {
-
-    /**
+    
+    // 只发最后的几个.
+    /*
+     You can emit only the final n items emitted by an Observable and ignore those items that come before them, by modifying the Observable with the TakeLast operator.
+     */
+    /*
      Returns a specified number of contiguous elements from the end of an observable sequence.
-
-     This operator accumulates a buffer with a length enough to store elements count elements. Upon completion of the source sequence, this buffer is drained on the result sequence. This causes the elements to be delayed.
-
-     - seealso: [takeLast operator on reactivex.io](http://reactivex.io/documentation/operators/takelast.html)
-
-     - parameter count: Number of elements to take from the end of the source sequence.
-     - returns: An observable sequence containing the specified number of elements from the end of the source sequence.
      */
     public func takeLast(_ count: Int)
-        -> Observable<Element> {
+    -> Observable<Element> {
         TakeLast(source: self.asObservable(), count: count)
     }
 }
 
 final private class TakeLastSink<Observer: ObserverType>: Sink<Observer>, ObserverType {
-    typealias Element = Observer.Element 
+    
+    typealias Element = Observer.Element
     typealias Parent = TakeLast<Element>
     
     private let parent: Parent
     
+    // Queue, 用来缓存.
     private var elements: Queue<Element>
     
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
@@ -42,6 +41,7 @@ final private class TakeLastSink<Observer: ObserverType>: Sink<Observer>, Observ
         switch event {
         case .next(let value):
             self.elements.enqueue(value)
+            // 如果, 超过了 Buffer 的个数, 会有一个置换的处理. 
             if self.elements.count > self.parent.count {
                 _ = self.elements.dequeue()
             }
@@ -72,6 +72,7 @@ final private class TakeLast<Element>: Producer<Element> {
     
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         let sink = TakeLastSink(parent: self, observer: observer, cancel: cancel)
+        // 没有特殊的操作, 直接进行 subscribe.
         let subscription = self.source.subscribe(sink)
         return (sink: sink, subscription: subscription)
     }

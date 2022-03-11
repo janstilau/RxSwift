@@ -1,19 +1,12 @@
-//
-//  Take.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 6/12/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
-
+/*
+ Take 表示, 仅仅相应前面的几个事件.
+ */
 extension ObservableType {
-    
     public func take(_ count: Int)
     -> Observable<Element> {
         if count == 0 {
             return Observable.empty()
-        }
-        else {
+        } else {
             return TakeCount(source: self.asObservable(), count: count)
         }
     }
@@ -21,28 +14,13 @@ extension ObservableType {
 
 extension ObservableType {
     
-    public func take(for duration: RxTimeInterval, scheduler: SchedulerType)
+    // Takes elements for the specified duration from the start of the observable source sequence, using the specified scheduler to run timers.
+    public func take(for duration: RxTimeInterval,
+                     scheduler: SchedulerType)
     -> Observable<Element> {
         TakeTime(source: self.asObservable(), duration: duration, scheduler: scheduler)
     }
-    
-    /**
-     Takes elements for the specified duration from the start of the observable source sequence, using the specified scheduler to run timers.
-     
-     - seealso: [take operator on reactivex.io](http://reactivex.io/documentation/operators/take.html)
-     
-     - parameter duration: Duration for taking elements from the start of the sequence.
-     - parameter scheduler: Scheduler to run the timer on.
-     - returns: An observable sequence with the elements taken during the specified duration from the start of the source sequence.
-     */
-    @available(*, deprecated, renamed: "take(for:scheduler:)")
-    public func take(_ duration: RxTimeInterval, scheduler: SchedulerType)
-    -> Observable<Element> {
-        take(for: duration, scheduler: scheduler)
-    }
 }
-
-// count version
 
 final private class TakeCountSink<Observer: ObserverType>: Sink<Observer>, ObserverType {
     typealias Element = Observer.Element
@@ -62,12 +40,11 @@ final private class TakeCountSink<Observer: ObserverType>: Sink<Observer>, Obser
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
-            
+            // Take 就是处理前几个信号, 如果已经到底, 直接输出 complete.
             if self.remaining > 0 {
                 self.remaining -= 1
-                
+                // 直接给后续的节点, 转交信号数据.
                 self.forwardOn(.next(value))
-                
                 // 在取得特定个数的 event 之后, 直接进行 Complete 事件的发送, 直接 dispose
                 if self.remaining == 0 {
                     self.forwardOn(.completed)
@@ -82,7 +59,6 @@ final private class TakeCountSink<Observer: ObserverType>: Sink<Observer>, Obser
             self.dispose()
         }
     }
-    
 }
 
 final private class TakeCount<Element>: Producer<Element> {
@@ -96,18 +72,19 @@ final private class TakeCount<Element>: Producer<Element> {
     
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         let sink = TakeCountSink(parent: self, observer: observer, cancel: cancel)
+        // 没有复杂的逻辑, 直接 subscribe
         let subscription = self.source.subscribe(sink)
         return (sink: sink, subscription: subscription)
     }
 }
 
-// time version
-
+// Time
 final private class TakeTimeSink<Element, Observer: ObserverType>
 : Sink<Observer>
 , LockOwnerType
 , ObserverType
 , SynchronizedOnType where Observer.Element == Element {
+    
     typealias Parent = TakeTime<Element>
     
     private let parent: Parent
@@ -123,6 +100,7 @@ final private class TakeTimeSink<Element, Observer: ObserverType>
         self.synchronizedOn(event)
     }
     
+    // 这里, 也是完全的转交.
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
@@ -136,7 +114,7 @@ final private class TakeTimeSink<Element, Observer: ObserverType>
         }
     }
     
-    // 这里不设置一个 Deadline, 主要是想要到时了, 主动地进行 dispsoe 调用. 
+    // 到时间了, 直接进行 complete 信号的发送.
     func tick() {
         self.lock.performLocked {
             self.forwardOn(.completed)
@@ -146,12 +124,11 @@ final private class TakeTimeSink<Element, Observer: ObserverType>
     
     func run() -> Disposable {
         let disposeTimer = self.parent.scheduler.scheduleRelative((), dueTime: self.parent.duration) { _ in
+            // tick 就是取消 timer.
             self.tick()
             return Disposables.create()
         }
-        
         let disposeSubscription = self.parent.source.subscribe(self)
-        
         return Disposables.create(disposeTimer, disposeSubscription)
     }
 }
@@ -171,6 +148,10 @@ final private class TakeTime<Element>: Producer<Element> {
     
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         let sink = TakeTimeSink(parent: self, observer: observer, cancel: cancel)
+        /*
+         如果, Sink 有复杂的逻辑, 专门写一个 run 函数.
+         如果, 没有, 直接在这里进行进行 source subscribe sink 就可以了.
+         */
         let subscription = sink.run()
         return (sink: sink, subscription: subscription)
     }

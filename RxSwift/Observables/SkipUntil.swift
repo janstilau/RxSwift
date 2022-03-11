@@ -7,23 +7,11 @@
 //
 
 extension ObservableType {
+    
+    // Returns the elements from the source observable sequence that are emitted after the other observable sequence produces an element.
     public func skip<Source: ObservableType>(until other: Source)
     -> Observable<Element> {
         SkipUntil(source: self.asObservable(), other: other.asObservable())
-    }
-    
-    /**
-     Returns the elements from the source observable sequence that are emitted after the other observable sequence produces an element.
-     
-     - seealso: [skipUntil operator on reactivex.io](http://reactivex.io/documentation/operators/skipuntil.html)
-     
-     - parameter other: Observable sequence that starts propagation of elements of the source sequence.
-     - returns: An observable sequence containing the elements of the source sequence that are emitted after the other sequence emits an item.
-     */
-    @available(*, deprecated, renamed: "skip(until:)")
-    public func skipUntil<Source: ObservableType>(_ other: Source)
-    -> Observable<Element> {
-        skip(until: other)
     }
 }
 
@@ -53,7 +41,7 @@ final private class SkipUntilSinkOther<Other, Observer: ObserverType>
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next:
-            // 在这里, 对于另外的一个, 实际进行 Source 监听的 Sink 进行了状态改变. 
+            // 在这里, 对于另外的一个, 实际进行 Source 监听的 Sink 进行了状态改变.
             self.parent.forwardElements = true
             self.subscription.dispose()
         case .error(let e):

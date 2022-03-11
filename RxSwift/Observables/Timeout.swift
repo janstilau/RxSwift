@@ -7,45 +7,38 @@
 //
 
 extension ObservableType {
-
-    /**
+    
+    /*
      Applies a timeout policy for each element in the observable sequence. If the next element isn't received within the specified timeout duration starting from its predecessor, a TimeoutError is propagated to the observer.
-
-     - seealso: [timeout operator on reactivex.io](http://reactivex.io/documentation/operators/timeout.html)
-
-     - parameter dueTime: Maximum duration between values before a timeout occurs.
-     - parameter scheduler: Scheduler to run the timeout timer on.
-     - returns: An observable sequence with a `RxError.timeout` in case of a timeout.
      */
-    public func timeout(_ dueTime: RxTimeInterval, scheduler: SchedulerType)
-        -> Observable<Element> {
-            return Timeout(source: self.asObservable(), dueTime: dueTime, other: Observable.error(RxError.timeout), scheduler: scheduler)
+    public func timeout(_ dueTime: RxTimeInterval,
+                        scheduler: SchedulerType)
+    -> Observable<Element> {
+        return Timeout(source: self.asObservable(),
+                       dueTime: dueTime,
+                       other: Observable.error(RxError.timeout),
+                       scheduler: scheduler)
     }
-
-    /**
+    
+    /*
      Applies a timeout policy for each element in the observable sequence, using the specified scheduler to run timeout timers. If the next element isn't received within the specified timeout duration starting from its predecessor, the other observable sequence is used to produce future messages from that point on.
-
-     - seealso: [timeout operator on reactivex.io](http://reactivex.io/documentation/operators/timeout.html)
-
-     - parameter dueTime: Maximum duration between values before a timeout occurs.
-     - parameter other: Sequence to return in case of a timeout.
-     - parameter scheduler: Scheduler to run the timeout timer on.
-     - returns: The source sequence switching to the other sequence in case of a timeout.
      */
-    public func timeout<Source: ObservableConvertibleType>(_ dueTime: RxTimeInterval, other: Source, scheduler: SchedulerType)
-        -> Observable<Element> where Element == Source.Element {
-            return Timeout(source: self.asObservable(), dueTime: dueTime, other: other.asObservable(), scheduler: scheduler)
+    public func timeout<Source: ObservableConvertibleType>(_ dueTime: RxTimeInterval,
+                                                           other: Source,
+                                                           scheduler: SchedulerType)
+    -> Observable<Element> where Element == Source.Element {
+        return Timeout(source: self.asObservable(), dueTime: dueTime, other: other.asObservable(), scheduler: scheduler)
     }
 }
 
 final private class TimeoutSink<Observer: ObserverType>: Sink<Observer>, LockOwnerType, ObserverType {
-    typealias Element = Observer.Element 
+    typealias Element = Observer.Element
     typealias Parent = Timeout<Element>
     
     private let parent: Parent
     
     let lock = RecursiveLock()
-
+    
     private let timerD = SerialDisposable()
     private let subscription = SerialDisposable()
     
@@ -60,14 +53,11 @@ final private class TimeoutSink<Observer: ObserverType>: Sink<Observer>, LockOwn
     func run() -> Disposable {
         let original = SingleAssignmentDisposable()
         self.subscription.disposable = original
-        
         self.createTimeoutTimer()
-        
         original.setDisposable(self.parent.source.subscribe(self))
-        
         return Disposables.create(subscription, timerD)
     }
-
+    
     func on(_ event: Event<Element>) {
         switch event {
         case .next:
@@ -82,6 +72,7 @@ final private class TimeoutSink<Observer: ObserverType>: Sink<Observer>, LockOwn
             
             if onNextWins {
                 self.forwardOn(event)
+                // 时间节点内, 直接替换 Timer.
                 self.createTimeoutTimer()
             }
         case .error, .completed:
@@ -115,21 +106,23 @@ final private class TimeoutSink<Observer: ObserverType>: Sink<Observer>, LockOwn
             
             self.lock.performLocked {
                 self.switched = (state == self.id)
+                // 相同, 就是超时了.
                 timerWins = self.switched
             }
             
             if timerWins {
+                // 时间到了, 就替换 Sourcer, 在这个替换过程中, 会有 dispose 的调用.
                 self.subscription.disposable = self.parent.other.subscribe(self.forwarder())
             }
             
             return Disposables.create()
         }
-
+        
         nextTimer.setDisposable(disposeSchedule)
     }
 }
 
-
+// Producer 仅仅是做记录的工作, 真正的在响应链条里面起作用的, 是 Sink 各个节点.
 final private class Timeout<Element>: Producer<Element> {
     fileprivate let source: Observable<Element>
     fileprivate let dueTime: RxTimeInterval
