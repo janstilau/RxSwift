@@ -48,7 +48,8 @@ final class ControlTarget: RxTarget {
     // 然后在 Control 的 Event 触发的时候, 进行 CallBack 的调用,
     // 这在自己的公司的代码工具库里面, 也经常使用.
     @objc func eventHandler(_ sender: Control!) {
-        if let callback = self.callback, let control = self.control {
+        if let callback = self.callback,
+           let control = self.control {
             callback(control)
         }
     }

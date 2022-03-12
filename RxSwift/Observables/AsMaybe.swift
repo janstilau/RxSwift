@@ -1,4 +1,3 @@
-
 // 可能, 会有一个 next 事件, 然后是 complete 事件.
 // 或者, 直接是 complete 事件.
 private final class AsMaybeSink<Observer: ObserverType> : Sink<Observer>, ObserverType {

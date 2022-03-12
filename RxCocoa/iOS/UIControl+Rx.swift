@@ -36,9 +36,10 @@ extension Reactive where Base: UIControl {
                 observer.on(.next(()))
             }
             
+            // Disposables.create(with: controlTarget.dispose)
+            // 这句代码, 掌管了 ControlTarget 的生命周期 .
             return Disposables.create(with: controlTarget.dispose)
-        }
-            .take(until: deallocated)
+        }.take(until: deallocated)
         
         return ControlEvent(events: source)
     }
@@ -61,10 +62,10 @@ extension Reactive where Base: UIControl {
                 return Disposables.create()
             }
             
-            // getter 在这里发生了作用, 使用 getter 从 control 身上进行了取值. 
+            // getter 在这里发生了作用, 使用 getter 从 control 身上进行了取值.
             observer.on(.next(getter(control)))
             
-            // 创建一个 ControlTarget, 会在每次事件触发之后, 发射信号给后方. 
+            // 创建一个 ControlTarget, 会在每次事件触发之后, 发射信号给后方.
             let controlTarget = ControlTarget(control: control, controlEvents: editingEvents) { _ in
                 if let control = weakControl {
                     observer.on(.next(getter(control)))
@@ -76,6 +77,7 @@ extension Reactive where Base: UIControl {
         
         let bindingObserver = Binder(base, binding: setter)
         
+        // 这里没有必要, 使用 ControlEvent
         return ControlProperty<T>(values: source, valueSink: bindingObserver)
     }
     

@@ -42,6 +42,7 @@ extension PrimitiveSequenceType where Trait == MaybeTrait {
             return subscribe { event in
                 switch event {
                 case .success(let element):
+                    // 接受到一个数据, forward 之后, 直接自动 complete.
                     observer.on(.next(element))
                     observer.on(.completed)
                 case .error(let error):

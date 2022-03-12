@@ -12,13 +12,8 @@
 // 2
 
 extension PrimitiveSequenceType where Trait == SingleTrait {
-    /**
+    /*
     Merges the specified observable sequences into one observable sequence by using the selector function whenever all of the observable sequences have produced an element at a corresponding index.
-
-    - seealso: [zip operator on reactivex.io](http://reactivex.io/documentation/operators/zip.html)
-
-    - parameter resultSelector: Function to invoke for each series of elements at corresponding indexes in the sources.
-    - returns: An observable sequence containing the result of combining elements of the sources using the specified result selector function.
     */
     public static func zip<E1, E2>(_ source1: PrimitiveSequence<Trait, E1>, _ source2: PrimitiveSequence<Trait, E2>, resultSelector: @escaping (E1, E2) throws -> Element)
         -> PrimitiveSequence<Trait, Element> {
@@ -30,12 +25,8 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
 }
 
 extension PrimitiveSequenceType where Element == Any, Trait == SingleTrait {
-    /**
+    /*
     Merges the specified observable sequences into one observable sequence of tuples whenever all of the observable sequences have produced an element at a corresponding index.
-
-    - seealso: [zip operator on reactivex.io](http://reactivex.io/documentation/operators/zip.html)
-
-    - returns: An observable sequence containing the result of combining elements of the sources using the specified result selector function.
     */
     public static func zip<E1, E2>(_ source1: PrimitiveSequence<Trait, E1>, _ source2: PrimitiveSequence<Trait, E2>)
         -> PrimitiveSequence<Trait, (E1, E2)> {

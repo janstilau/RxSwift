@@ -7,13 +7,8 @@
 //
 
 extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Never {
-    /**
+    /*
      Concatenates the second observable sequence to `self` upon successful termination of `self`.
-
-     - seealso: [concat operator on reactivex.io](http://reactivex.io/documentation/operators/concat.html)
-
-     - parameter second: Second observable sequence.
-     - returns: An observable sequence that contains the elements of `self`, followed by those of the second sequence.
      */
     public func andThen<Element>(_ second: Single<Element>) -> Single<Element> {
         let completable = self.primitiveSequence.asObservable()
@@ -61,8 +56,9 @@ extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Neve
 }
 
 final private class ConcatCompletable<Element>: Producer<Element> {
-    fileprivate let completable: Observable<Never>
-    fileprivate let second: Observable<Element>
+    
+    fileprivate let completable: Observable<Never> // 第一个 Source.
+    fileprivate let second: Observable<Element> // 第二个 Source.
 
     init(completable: Observable<Never>, second: Observable<Element>) {
         self.completable = completable
@@ -98,7 +94,9 @@ final private class ConcatCompletableSink<Observer: ObserverType>
         case .next:
             break
         case .completed:
+            // 当, 第一个 Source Complete 之后, 这里会有一个切换的动作.
             let otherSink = ConcatCompletableSinkOther(parent: self)
+            // 让第二个 Source 注册给  OtherSink, OtherSink 又原封不动的传递 event 到 当前 Sink
             self.subscription.disposable = self.parent.second.subscribe(otherSink)
         }
     }
@@ -123,6 +121,7 @@ final private class ConcatCompletableSinkOther<Observer: ObserverType>
         self.parent = parent
     }
 
+    // 把所有的事件, 都传递给 parent.
     func on(_ event: Event<Observer.Element>) {
         self.parent.forwardOn(event)
         if event.isStopEvent {

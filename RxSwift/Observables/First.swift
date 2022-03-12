@@ -6,6 +6,9 @@
 //  Copyright © 2017 Krunoslav Zaher. All rights reserved.
 //
 
+/*
+ First 一定有值, 要么是 Element, 要么是一个 Nil
+ */
 private final class FirstSink<Element, Observer: ObserverType> : Sink<Observer>, ObserverType where Observer.Element == Element? {
     typealias Parent = First<Element>
     

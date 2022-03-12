@@ -12,7 +12,7 @@ import UIKit
 import RxSwift
 
 extension Reactive where Base: UITextView {
-    /// Reactive wrapper for `text` property
+    
     public var text: ControlProperty<String?> {
         value
     }

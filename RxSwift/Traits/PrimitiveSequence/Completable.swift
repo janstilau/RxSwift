@@ -15,6 +15,7 @@ public enum CompletableTrait { }
 /// Represents a push style sequence containing 0 elements.
 public typealias Completable = PrimitiveSequence<CompletableTrait, Swift.Never>
 
+// 不应该有 next 事件.
 @frozen public enum CompletableEvent {
     /// Sequence terminated with an error. (underlying observable sequence emits: `.error(Error)`)
     case error(Swift.Error)
@@ -38,6 +39,7 @@ extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Swif
         let source = Observable<Element>.create { observer in
             return subscribe { event in
                 switch event {
+                    // 只能接收到 complete 的事件
                 case .error(let error):
                     observer.on(.error(error))
                 case .completed:
@@ -117,19 +119,19 @@ extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Swif
     public func subscribe(onCompleted: (() -> Void)? = nil,
                           onError: ((Swift.Error) -> Void)? = nil,
                           onDisposed: (() -> Void)? = nil) -> Disposable {
-        #if DEBUG
-                let callStack = Hooks.recordCallStackOnError ? Thread.callStackSymbols : []
-        #else
-                let callStack = [String]()
-        #endif
-
+#if DEBUG
+        let callStack = Hooks.recordCallStackOnError ? Thread.callStackSymbols : []
+#else
+        let callStack = [String]()
+#endif
+        
         let disposable: Disposable
         if let onDisposed = onDisposed {
             disposable = Disposables.create(with: onDisposed)
         } else {
             disposable = Disposables.create()
         }
-
+        
         let observer: CompletableObserver = { event in
             switch event {
             case .error(let error):
@@ -144,7 +146,7 @@ extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Swif
                 disposable.dispose()
             }
         }
-
+        
         return Disposables.create(
             self.primitiveSequence.subscribe(observer),
             disposable
@@ -155,37 +157,37 @@ extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Swif
 extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Swift.Never {
     /**
      Returns an observable sequence that terminates with an `error`.
-
+     
      - seealso: [throw operator on reactivex.io](http://reactivex.io/documentation/operators/empty-never-throw.html)
-
+     
      - returns: The observable sequence that terminates with specified error.
      */
     public static func error(_ error: Swift.Error) -> Completable {
         PrimitiveSequence(raw: Observable.error(error))
     }
-
+    
     /**
      Returns a non-terminating observable sequence, which can be used to denote an infinite duration.
-
+     
      - seealso: [never operator on reactivex.io](http://reactivex.io/documentation/operators/empty-never-throw.html)
-
+     
      - returns: An observable sequence whose observers will never get called.
      */
     public static func never() -> Completable {
         PrimitiveSequence(raw: Observable.never())
     }
-
+    
     /**
      Returns an empty observable sequence, using the specified scheduler to send out the single `Completed` message.
-
+     
      - seealso: [empty operator on reactivex.io](http://reactivex.io/documentation/operators/empty-never-throw.html)
-
+     
      - returns: An observable sequence with no elements.
      */
     public static func empty() -> Completable {
         Completable(raw: Observable.empty())
     }
-
+    
 }
 
 extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Swift.Never {
@@ -211,20 +213,20 @@ extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Swif
                      onSubscribe: (() -> Void)? = nil,
                      onSubscribed: (() -> Void)? = nil,
                      onDispose: (() -> Void)? = nil)
-        -> Completable {
-            return Completable(raw: self.primitiveSequence.source.do(
-                onError: onError,
-                afterError: afterError,
-                onCompleted: onCompleted,
-                afterCompleted: afterCompleted,
-                onSubscribe: onSubscribe,
-                onSubscribed: onSubscribed,
-                onDispose: onDispose)
-            )
+    -> Completable {
+        return Completable(raw: self.primitiveSequence.source.do(
+            onError: onError,
+            afterError: afterError,
+            onCompleted: onCompleted,
+            afterCompleted: afterCompleted,
+            onSubscribe: onSubscribe,
+            onSubscribed: onSubscribed,
+            onDispose: onDispose)
+        )
     }
-
-
-
+    
+    
+    
     /**
      Concatenates the second observable sequence to `self` upon successful termination of `self`.
      
@@ -245,9 +247,9 @@ extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Swif
      - returns: An observable sequence that contains the elements of each given sequence, in sequential order.
      */
     public static func concat<Sequence: Swift.Sequence>(_ sequence: Sequence) -> Completable
-        where Sequence.Element == Completable {
-            let source = Observable.concat(sequence.lazy.map { $0.asObservable() })
-            return Completable(raw: source)
+    where Sequence.Element == Completable {
+        let source = Observable.concat(sequence.lazy.map { $0.asObservable() })
+        return Completable(raw: source)
     }
     
     /**
@@ -258,9 +260,9 @@ extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Swif
      - returns: An observable sequence that contains the elements of each given sequence, in sequential order.
      */
     public static func concat<Collection: Swift.Collection>(_ collection: Collection) -> Completable
-        where Collection.Element == Completable {
-            let source = Observable.concat(collection.map { $0.asObservable() })
-            return Completable(raw: source)
+    where Collection.Element == Completable {
+        let source = Observable.concat(collection.map { $0.asObservable() })
+        return Completable(raw: source)
     }
     
     /**
@@ -274,28 +276,28 @@ extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Swif
         let source = Observable.concat(sources.map { $0.asObservable() })
         return Completable(raw: source)
     }
-
+    
     /**
      Merges the completion of all Completables from a collection into a single Completable.
-
+     
      - seealso: [merge operator on reactivex.io](http://reactivex.io/documentation/operators/merge.html)
      - note: For `Completable`, `zip` is an alias for `merge`.
-
+     
      - parameter sources: Collection of Completables to merge.
      - returns: A Completable that merges the completion of all Completables.
      */
     public static func zip<Collection: Swift.Collection>(_ sources: Collection) -> Completable
-           where Collection.Element == Completable {
+    where Collection.Element == Completable {
         let source = Observable.merge(sources.map { $0.asObservable() })
         return Completable(raw: source)
     }
-
+    
     /**
      Merges the completion of all Completables from an array into a single Completable.
-
+     
      - seealso: [merge operator on reactivex.io](http://reactivex.io/documentation/operators/merge.html)
      - note: For `Completable`, `zip` is an alias for `merge`.
-
+     
      - parameter sources: Array of observable sequences to merge.
      - returns: A Completable that merges the completion of all Completables.
      */
@@ -303,13 +305,13 @@ extension PrimitiveSequenceType where Trait == CompletableTrait, Element == Swif
         let source = Observable.merge(sources.map { $0.asObservable() })
         return Completable(raw: source)
     }
-
+    
     /**
      Merges the completion of all Completables into a single Completable.
-
+     
      - seealso: [merge operator on reactivex.io](http://reactivex.io/documentation/operators/merge.html)
      - note: For `Completable`, `zip` is an alias for `merge`.
-
+     
      - parameter sources: Collection of observable sequences to merge.
      - returns: The observable sequence that merges the elements of the observable sequences.
      */

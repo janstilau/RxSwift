@@ -146,10 +146,19 @@ class NumbersViewController: ViewController {
         .map { $0.description }
         .bind(to: result.rx.text)
         .disposed(by: disposeBag)
+        
+        
+        
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        openYami()
+        Single.create { singleObserver in
+            singleObserver(.success("呵呵哒"))
+            singleObserver(.failure(RxSwift.RxError.argumentOutOfRange))
+            return Disposables.create()
+        }.subscribe { event in
+            print(event)
+        }
     }
     
     func openYami() {
