@@ -7,13 +7,9 @@
 //
 
 extension ObservableType {
-    /**
+    /*
      The `asSingle` operator throws a `RxError.noElements` or `RxError.moreThanOneElement`
      if the source Observable does not emit exactly one element before successfully completing.
-
-     - seealso: [single operator on reactivex.io](http://reactivex.io/documentation/operators/first.html)
-
-     - returns: An observable sequence that emits a single element when the source Observable has completed, or throws an exception if more (or none) of them are emitted.
      */
     public func asSingle() -> Single<Element> {
         PrimitiveSequence(raw: AsSingle(source: self.asObservable()))

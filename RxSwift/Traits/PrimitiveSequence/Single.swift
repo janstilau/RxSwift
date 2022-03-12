@@ -20,7 +20,7 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
     
     public typealias SingleObserver = (SingleEvent<Element>) -> Void
     
-    /**
+    /*
      Creates an observable sequence from a specified subscribe method implementation.
      
      - seealso: [create operator on reactivex.io](http://reactivex.io/documentation/operators/create.html)
@@ -65,22 +65,6 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
                 rxFatalErrorInDebug("Singles can't emit a completion event")
             }
         }
-    }
-    
-    /**
-     Subscribes a success handler, and an error handler for this sequence.
-     
-     - parameter onSuccess: Action to invoke for each element in the observable sequence.
-     - parameter onError: Action to invoke upon errored termination of the observable sequence.
-     - parameter onDisposed: Action to invoke upon any type of termination of sequence (if the sequence has
-     gracefully completed, errored, or if the generation is canceled by disposing subscription).
-     - returns: Subscription object used to unsubscribe from the observable sequence.
-     */
-    @available(*, deprecated, renamed: "subscribe(onSuccess:onFailure:onDisposed:)")
-    public func subscribe(onSuccess: ((Element) -> Void)? = nil,
-                          onError: @escaping ((Swift.Error) -> Void),
-                          onDisposed: (() -> Void)? = nil) -> Disposable {
-        subscribe(onSuccess: onSuccess, onFailure: onError, onDisposed: onDisposed)
     }
     
     /**
@@ -372,20 +356,6 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
     public func catchAndReturn(_ element: Element)
     -> PrimitiveSequence<Trait, Element> {
         PrimitiveSequence(raw: self.primitiveSequence.source.catchAndReturn(element))
-    }
-    
-    /**
-     Continues an observable sequence that is terminated by an error with a single element.
-     
-     - seealso: [catch operator on reactivex.io](http://reactivex.io/documentation/operators/catch.html)
-     
-     - parameter element: Last element in an observable sequence in case error occurs.
-     - returns: An observable sequence containing the source sequence's elements, followed by the `element` in case an error occurred.
-     */
-    @available(*, deprecated, renamed: "catchAndReturn(_:)")
-    public func catchErrorJustReturn(_ element: Element)
-    -> PrimitiveSequence<Trait, Element> {
-        catchAndReturn(element)
     }
     
     /// Converts `self` to `Maybe` trait.

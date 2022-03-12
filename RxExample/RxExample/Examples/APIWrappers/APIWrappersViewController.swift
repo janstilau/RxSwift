@@ -62,6 +62,7 @@ class APIWrappersViewController: ViewController {
         
         // MARK: UIBarButtonItem
         
+        // 如果, 不大面积使用 Rx, 那么其实在项目里面使用 rx 也就无非是使用 rx.tap 这种绑定监听事件的机制了
         bbitem.rx.tap
             .subscribe(onNext: { [weak self] x in
                 self?.debug("UIBarButtonItem Tapped")
@@ -72,8 +73,10 @@ class APIWrappersViewController: ViewController {
         
         // also test two way binding
         let segmentedValue = BehaviorRelay(value: 0)
+        // 双向绑定.
         _ = segmentedControl.rx.value <-> segmentedValue
         
+        // 信号发送的机制, 给与了外界多监听者的机制. 
         segmentedValue.asObservable()
             .subscribe(onNext: { [weak self] x in
                 self?.debug("UISegmentedControl value \(x)")

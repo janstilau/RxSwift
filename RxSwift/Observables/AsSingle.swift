@@ -1,6 +1,7 @@
 
-// 必须要有一个 next 事件, 然后是 complete 事件.
-// 如果没有 next 事件, 或者多个事件, 那么会报错. 
+/*
+ 
+ */
 private final class AsSingleSink<Observer: ObserverType> : Sink<Observer>, ObserverType {
     typealias Element = Observer.Element
     

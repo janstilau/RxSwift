@@ -7,12 +7,6 @@
 //
 
 extension ObservableType {
-    @available(*, deprecated, renamed: "element(at:)")
-    public func elementAt(_ index: Int)
-    -> Observable<Element> {
-        element(at: index)
-    }
-    
     public func element(at index: Int)
     -> Observable<Element> {
         ElementAt(source: self.asObservable(), index: index, throwOnEmpty: true)
