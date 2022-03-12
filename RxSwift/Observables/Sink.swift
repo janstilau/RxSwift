@@ -18,17 +18,18 @@
 
 class Sink<Observer: ObserverType>: Disposable {
     
-    
     // Sink 和 自己的
     fileprivate let observer: Observer // Sink 操作后数据后, 应该传递数据的去向
     fileprivate let cancel: Cancelable
     
     private let disposed = AtomicInt(0)
     
-    // 这个传递过来的 cancel, 一般是一个 SinkDisposer.
-    // 在这里会引起循环引用, 保证了 Sink 的生命周期, 这是特意设计出来的循环引用.
     init(observer: Observer, cancel: Cancelable) {
+        // 存储响应联调的下一个节点, Sink 有一个非常大的责任, 就是将信号数据, 传递给下一个节点. 所以必须要存储.
         self.observer = observer
+        // 这个传递过来的 cancel, 一般是一个 SinkDisposer.
+        // SinkDisposer 会强引用自己, 这里会有一个循环引用. 这个循环引用, 会在 dispose 里面打破
+        // 这是一个故意设计出来的机制, 因为, 响应链条的生命周期是不会交给外界处理的, 只会在 dispose 中进行相关的释放工作.
         self.cancel = cancel
     }
     
@@ -65,7 +66,7 @@ class Sink<Observer: ObserverType>: Disposable {
      */
     func dispose() {
         // 将自身的状态, 设置为 disposed
-        fetchOr(self.disposed, 1)
+        let _ = fetchOr(self.disposed, 1)
         // Sink 的 dispose, 仅仅是状态的改变.
         // 真正的取消操作, 是 cancel 的 dispose 进行的.
         self.cancel.dispose()
