@@ -8,13 +8,13 @@
 
 import RxSwift
 
+
+/*
+ 最终, Bindto 里面的逻辑, 就是调用 subscribe. 但是 Bind 的表意更加的明显.
+ */
 extension ObservableType {
-    /**
+    /*
      Creates new subscription and sends elements to publish relay(s).
-     In case error occurs in debug mode, `fatalError` will be raised.
-     In case error occurs in release mode, `error` will be logged.
-     - parameter relays: Target publish relays for sequence elements.
-     - returns: Disposable object that can be used to unsubscribe the observer.
      */
     public func bind(to relays: PublishRelay<Element>...) -> Disposable {
         bind(to: relays)
@@ -38,8 +38,6 @@ extension ObservableType {
      Creates new subscription and sends elements to publish relay(s).
      In case error occurs in debug mode, `fatalError` will be raised.
      In case error occurs in release mode, `error` will be logged.
-     - parameter relays: Target publish relays for sequence elements.
-     - returns: Disposable object that can be used to unsubscribe the observer.
      */
     private func bind(to relays: [PublishRelay<Element>]) -> Disposable {
         subscribe { e in

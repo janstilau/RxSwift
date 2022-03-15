@@ -12,7 +12,8 @@ extension ObservableType {
     }
     
     // 在特定的 scheduler 上, 进行 Element 的 Emit
-    public static func just(_ element: Element, scheduler: ImmediateSchedulerType) -> Observable<Element> {
+    public static func just(_ element: Element,
+                            scheduler: ImmediateSchedulerType) -> Observable<Element> {
         JustScheduled(element: element, scheduler: scheduler)
     }
 }
@@ -28,8 +29,13 @@ final private class JustScheduledSink<Observer: ObserverType>: Sink<Observer> {
     }
     
     func run() -> Disposable {
-        
         let scheduler = self.parent.scheduler
+        /*
+         这里只所以要这面写, 和 schedule 的实现相关.
+         schedule 返回的是一个可赋值的 disposable.
+         没有调度前, 调用 dispose, 是取消调度这件事.
+         调度的代码执行后, 调用 dispsoe, 是取消被调度代码的 subscription.
+         */
         return scheduler.schedule(self.parent.element) { element in
             self.forwardOn(.next(element))
             return scheduler.schedule(()) { _ in

@@ -43,7 +43,7 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
     
     public typealias Element = PropertyType
     
-    //
+    // ControlProperty 中, values 其实保证了, 一定是 Event 才会触发信号的发送. 
     let values: Observable<PropertyType> // Publisher. 
     let valueSink: AnyObserver<PropertyType> // Binder
     
