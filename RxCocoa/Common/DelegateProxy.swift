@@ -16,6 +16,7 @@ import RxCocoaRuntime
 /// Base class for `DelegateProxyType` protocol.
 ///
 /// This implementation is not thread safe and can be used only from one thread (Main thread).
+
 open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
     public typealias ParentObject = P
     public typealias Delegate = D
@@ -37,7 +38,10 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
     // delegateProxy 被监听对象的代理对象.
     public init<Proxy: DelegateProxyType>(parentObject: ParentObject,
                                           delegateProxy: Proxy.Type)
-    where Proxy: DelegateProxy<ParentObject, Delegate>, Proxy.ParentObject == ParentObject, Proxy.Delegate == Delegate {
+    where Proxy: DelegateProxy<ParentObject, Delegate>,
+          Proxy.ParentObject == ParentObject,
+          Proxy.Delegate == Delegate {
+              
         self._parentObject = parentObject
         self._currentDelegateFor = delegateProxy._currentDelegate
         self._setCurrentDelegateTo = delegateProxy._setCurrentDelegate
@@ -151,8 +155,7 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
         
         if let subject = subject {
             return subject.asObservable()
-        }
-        else {
+        } else {
             let subject = MessageDispatcher(selector: selector, delegateProxy: self)
             self._methodInvokedForSelector[selector] = subject
             return subject.asObservable()
@@ -199,13 +202,9 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
     
     /// Sets reference of normal delegate that receives all forwarded messages
     /// through `self`.
-    ///
     /// - parameter delegate: Reference of delegate that receives all messages through `self`.
     /// - parameter retainDelegate: Should `self` retain `forwardToDelegate`.
     open func setForwardToDelegate(_ delegate: Delegate?, retainDelegate: Bool) {
-#if DEBUG // 4.0 all configurations
-        MainScheduler.ensureRunningOnMainThread()
-#endif
         self._setForwardToDelegate(delegate, retainDelegate: retainDelegate)
         
         let sentSelectors: [Selector] = self._sentMessageForSelector.values.filter { $0.hasObservers }.map { $0.selector }
@@ -257,6 +256,8 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
 private let mainScheduler = MainScheduler()
 
 private final class MessageDispatcher {
+    
+    // 
     private let dispatcher: PublishSubject<[Any]>
     private let result: Observable<[Any]>
     
@@ -269,8 +270,11 @@ private final class MessageDispatcher {
         self.dispatcher = dispatcher
         self.selector = selector
         
+        // 这里, 展示了 do 的作用, 就是在实际来临的时候, 做一些事情.
         self.result = dispatcher
-            .do(onSubscribed: { weakDelegateProxy?.checkSelectorIsObservable(selector); weakDelegateProxy?.reset() }, onDispose: { weakDelegateProxy?.reset() })
+            .do(onSubscribed: { weakDelegateProxy?.checkSelectorIsObservable(selector); weakDelegateProxy?.reset() },
+                onDispose: { weakDelegateProxy?.reset() })
+                // 这里没太明白, 本来 PublisherSubject 就带有 share 属性.
                 .share()
                 .subscribe(on: mainScheduler)
                 }

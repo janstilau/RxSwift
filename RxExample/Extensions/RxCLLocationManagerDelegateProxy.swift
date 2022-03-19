@@ -2,9 +2,9 @@ import CoreLocation
 import RxSwift
 import RxCocoa
 
+// 通过 typealiase, 确定了 HasDelegate 中 Delegate 的类型. 
 extension CLLocationManager: HasDelegate {
     public typealias Delegate = CLLocationManagerDelegate
-    
 }
 
 public class RxCLLocationManagerDelegateProxy
@@ -12,12 +12,13 @@ public class RxCLLocationManagerDelegateProxy
 , DelegateProxyType ,
 CLLocationManagerDelegate {
     
-    public init(locationManager: CLLocationManager) {
-        super.init(parentObject: locationManager, delegateProxy: RxCLLocationManagerDelegateProxy.self)
-    }
-    
     public static func registerKnownImplementations() {
         self.register { RxCLLocationManagerDelegateProxy(locationManager: $0) }
+    }
+    
+    public init(locationManager: CLLocationManager) {
+        super.init(parentObject: locationManager,
+                   delegateProxy: RxCLLocationManagerDelegateProxy.self)
     }
     
     // 使用 Subject, 来做原有的指令式世界, 到响应式世界的跳转机制.

@@ -11,6 +11,7 @@
 #import "include/_RXObjCRuntime.h"
 
 @interface _RXDelegateProxy () {
+    // 记录一下, 原来的 Delegate 对象.
     id __weak __forwardToDelegate;
 }
 
@@ -26,7 +27,8 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
     NSMutableSet *selectors = [NSMutableSet set];
 
     unsigned int protocolMethodCount = 0;
-    struct objc_method_description *pMethods = protocol_copyMethodDescriptionList(protocol, NO, YES, &protocolMethodCount);
+    struct objc_method_description *pMethods =
+    protocol_copyMethodDescriptionList(protocol, NO, YES, &protocolMethodCount);
 
     for (unsigned int i = 0; i < protocolMethodCount; ++i) {
         struct objc_method_description method = pMethods[i];
@@ -36,8 +38,10 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
     }
             
     free(pMethods);
-
+// 到这里, protocol 的所有 void 方法就已经搞定了.
+    
     unsigned int numberOfBaseProtocols = 0;
+    // 这里是查询 Protocol 的父类 Protocol, 然后把父类的所有方法都搞出来, 添加到 selectors 里面去..
     Protocol * __unsafe_unretained * pSubprotocols = protocol_copyProtocolList(protocol, &numberOfBaseProtocols);
 
     for (unsigned int i = 0; i < numberOfBaseProtocols; ++i) {
@@ -49,7 +53,11 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
     return selectors;
 }
 
+/*
+ 这是, 每个 _RXDelegateProxy 的子类都会触发的方法.
+ */
 +(void)initialize {
+    // 使用类对象来上锁.
     @synchronized (_RXDelegateProxy.class) {
         if (voidSelectorsPerClass == nil) {
             voidSelectorsPerClass = [[NSMutableDictionary alloc] init];
@@ -84,6 +92,7 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
 #endif
         }
         
+        // 将, 一个类里面所有的 void 返回值的方法, 都从 initlization 时进行了收集.
         voidSelectorsPerClass[CLASS_VALUE(self)] = voidSelectors;
     }
 }
@@ -93,11 +102,11 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
 }
 
 -(void)_setForwardToDelegate:(id __nullable)forwardToDelegate retainDelegate:(BOOL)retainDelegate {
+    // 专门一个量, 来记录原来的 delegate.
     __forwardToDelegate = forwardToDelegate;
     if (retainDelegate) {
         self.strongForwardDelegate = forwardToDelegate;
-    }
-    else {
+    } else {
         self.strongForwardDelegate = nil;
     }
 }
@@ -109,11 +118,13 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
 -(BOOL)voidDelegateMethodsContain:(SEL)selector {
     @synchronized(_RXDelegateProxy.class) {
         NSSet *voidSelectors = voidSelectorsPerClass[CLASS_VALUE(self.class)];
-        NSAssert(voidSelectors != nil, @"Set of allowed methods not initialized");
         return [voidSelectors containsObject:SEL_VALUE(selector)];
     }
 }
 
+/*
+ 在 rx 里面, 实际上是用到了 OC 的最后一层转发机制.
+ */
 -(void)forwardInvocation:(NSInvocation *)anInvocation {
     BOOL isVoid = RX_is_method_signature_void(anInvocation.methodSignature);
     NSArray *arguments = nil;
@@ -122,7 +133,9 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
         [self _sentMessage:anInvocation.selector withArguments:arguments];
     }
     
-    if (self._forwardToDelegate && [self._forwardToDelegate respondsToSelector:anInvocation.selector]) {
+    // 这里是把调用, 传给了最初设置的, 非 RXDelegate 的版本.
+    if (self._forwardToDelegate &&
+        [self._forwardToDelegate respondsToSelector:anInvocation.selector]) {
         [anInvocation invokeWithTarget:self._forwardToDelegate];
     }
 
@@ -131,6 +144,7 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
     }
 }
 
+// 
 // abstract method
 -(void)_sentMessage:(SEL)selector withArguments:(NSArray *)arguments {
 

@@ -128,7 +128,7 @@ class Animal: NSObject {
 
 
 
-class NumbersViewController: ViewController {
+class NumbersViewController: ViewController, UIScrollViewDelegate {
     @IBOutlet weak var number1: UITextField!
     @IBOutlet weak var number2: UITextField!
     @IBOutlet weak var number3: UITextField!
@@ -148,7 +148,24 @@ class NumbersViewController: ViewController {
         .disposed(by: disposeBag)
         
         
+        let scrollView = UIScrollView()
+        print(scrollView.delegate)
         
+        scrollView.delegate = self
+        print(scrollView.delegate)
+        
+        scrollView.rx.delegate
+        print(scrollView.delegate)
+        
+        // 实际上, 这里会将 scrollView 的 Delegate 进行更改. 那么这样, 原有的 ScrollView 的信号就失效了.
+        scrollView.delegate = self
+        print(scrollView.delegate)
+        
+        scrollView.rx.delegate
+        print(scrollView.delegate)
+        
+        scrollView.rx.contentOffset
+        print("end")
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {

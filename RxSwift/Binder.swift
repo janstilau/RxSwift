@@ -7,8 +7,8 @@
 //
 
 /*
-    Binder 是用来当做 Observer 的.
-    它的 On 就是使用调用传递过来的闭包, 一般来说, 就是将数据, 设置到 Base 的某个值上. 
+ Binder 是用来当做 Observer 的.
+ 它的 On 就是使用调用传递过来的闭包, 一般来说, 就是将数据, 设置到 Base 的某个值上. 
  */
 public struct Binder<Value>: ObserverType {
     public typealias Element = Value
