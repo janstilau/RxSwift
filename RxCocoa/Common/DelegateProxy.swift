@@ -32,16 +32,16 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
     /// Initializes new instance.
     ///
     /// - parameter parentObject: Optional parent object that owns `DelegateProxy` as associated object.
-    public init<Proxy: DelegateProxyType>(parentObject: ParentObject, delegateProxy: Proxy.Type)
+    
+    // parentObject 被监听的对象
+    // delegateProxy 被监听对象的代理对象.
+    public init<Proxy: DelegateProxyType>(parentObject: ParentObject,
+                                          delegateProxy: Proxy.Type)
     where Proxy: DelegateProxy<ParentObject, Delegate>, Proxy.ParentObject == ParentObject, Proxy.Delegate == Delegate {
         self._parentObject = parentObject
         self._currentDelegateFor = delegateProxy._currentDelegate
         self._setCurrentDelegateTo = delegateProxy._setCurrentDelegate
-        
         MainScheduler.ensureRunningOnMainThread()
-#if TRACE_RESOURCES
-        _ = Resources.incrementTotal()
-#endif
         super.init()
     }
     
@@ -249,9 +249,6 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
         for v in self._methodInvokedForSelector.values {
             v.on(.completed)
         }
-#if TRACE_RESOURCES
-        _ = Resources.decrementTotal()
-#endif
     }
     
     

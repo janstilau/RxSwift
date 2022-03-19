@@ -11,7 +11,8 @@
 import Foundation
 import RxSwift
 
-/**
+/*
+ 
  `DelegateProxyType` protocol enables using both normal delegates and Rx observable sequences with
  views that can have only one delegate/datasource registered.
  
@@ -28,30 +29,30 @@ import RxSwift
  
  
  +-------------------------------------------+
- |                                           |                           
- | UIView subclass (UIScrollView)            |                           
  |                                           |
- +-----------+-------------------------------+                           
- |                                                           
- | Delegate                                                  
- |                                                           
- |                                                           
- +-----------v-------------------------------+                           
- |                                           |                           
+ | UIView subclass (UIScrollView)            |
+ |                                           |
+ +-----------+-------------------------------+
+ |
+ | Delegate
+ |
+ |
+ +-----------v-------------------------------+
+ |                                           |
  | Delegate proxy : DelegateProxyType        +-----+---->  Observable<T1>
  |                , UIScrollViewDelegate     |     |
  +-----------+-------------------------------+     +---->  Observable<T2>
- |                                     |                     
+ |                                     |
  |                                     +---->  Observable<T3>
- |                                     |                     
+ |                                     |
  | forwards events                     |
  | to custom delegate                  |
- |                                     v                     
- +-----------v-------------------------------+                           
- |                                           |                           
- | Custom delegate (UIScrollViewDelegate)    |                           
+ |                                     v
+ +-----------v-------------------------------+
  |                                           |
- +-------------------------------------------+                           
+ | Custom delegate (UIScrollViewDelegate)    |
+ |                                           |
+ +-------------------------------------------+
  
  
  Since RxCocoa needs to automagically create those Proxies and because views that have delegates can be hierarchical
@@ -116,7 +117,7 @@ public protocol DelegateProxyType: AnyObject {
     func setForwardToDelegate(_ forwardToDelegate: Delegate?, retainDelegate: Bool)
 }
 
-// default implementations
+// Protocol 的非常好的地方, 就是可以直接在 Extension 里面, 生成全局可用的实现.
 extension DelegateProxyType {
     /// Unique identifier for delegate
     public static var identifier: UnsafeRawPointer {
@@ -132,6 +133,7 @@ extension DelegateProxyType {
         currentDelegate(for: object).map { $0 as AnyObject }
     }
     
+    // 在这里, 将 object 的代理赋值给了 delegate
     static func _setCurrentDelegate(_ delegate: AnyObject?, to object: ParentObject) {
         setCurrentDelegate(castOptionalOrFatalError(delegate), to: object)
     }
@@ -157,6 +159,8 @@ extension DelegateProxyType {
     
     /// Creates new proxy for target object.
     /// Should not call this function directory, use 'DelegateProxy.proxy(for:)'
+    
+    // 创建 Proxy 的过程.
     public static func createProxy(for object: AnyObject) -> Self {
         castOrFatalError(factory.createProxy(for: object))
     }
@@ -178,6 +182,8 @@ extension DelegateProxyType {
     ///             ...
     ///         }
     ///     }
+    
+    // 这是一个工厂方法, 里面会 object 和 生成 Proxy 对象的 Proxy 绑定机制.
     public static func proxy(for object: ParentObject) -> Self {
         MainScheduler.ensureRunningOnMainThread()
         
@@ -186,8 +192,7 @@ extension DelegateProxyType {
         let proxy: AnyObject
         if let existingProxy = maybeProxy {
             proxy = existingProxy
-        }
-        else {
+        } else {
             proxy = castOrFatalError(self.createProxy(for: object))
             self.assignProxy(proxy, toObject: object)
             assert(self.assignedProxy(for: object) === proxy)
@@ -254,7 +259,7 @@ extension DelegateProxyType {
     }
 }
 
-/// Describes an object that has a delegate.
+// 一个专门的抽象类型, 只要能够提供一个 Delegate 对象即可.
 public protocol HasDelegate: AnyObject {
     /// Delegate type
     associatedtype Delegate
@@ -263,11 +268,13 @@ public protocol HasDelegate: AnyObject {
     var delegate: Delegate? { get set }
 }
 
-extension DelegateProxyType where ParentObject: HasDelegate, Self.Delegate == ParentObject.Delegate {
+extension DelegateProxyType where ParentObject: HasDelegate,
+                                  Self.Delegate == ParentObject.Delegate {
     public static func currentDelegate(for object: ParentObject) -> Delegate? {
         object.delegate
     }
     
+    // 实际的设置代理的地方.
     public static func setCurrentDelegate(_ delegate: Delegate?, to object: ParentObject) {
         object.delegate = delegate
     }
@@ -282,7 +289,8 @@ public protocol HasDataSource: AnyObject {
     var dataSource: DataSource? { get set }
 }
 
-extension DelegateProxyType where ParentObject: HasDataSource, Self.Delegate == ParentObject.DataSource {
+extension DelegateProxyType where ParentObject: HasDataSource,
+                                  Self.Delegate == ParentObject.DataSource {
     public static func currentDelegate(for object: ParentObject) -> Delegate? {
         object.dataSource
     }
@@ -341,10 +349,6 @@ extension ObservableType {
             .take(until: object.rx.deallocated)
             .subscribe { [weak object] (event: Event<Element>) in
                 
-                if let object = object {
-                    assert(proxy === DelegateProxy.currentDelegate(for: object), "Proxy changed from the time it was first set.\nOriginal: \(proxy)\nExisting: \(String(describing: DelegateProxy.currentDelegate(for: object)))")
-                }
-                
                 binding(proxy, event)
                 
                 switch event {
@@ -386,20 +390,26 @@ extension ObservableType {
  
  */
 private class DelegateProxyFactory {
+    
+    // 全局的存储, 包装到类的内部.
     private static var _sharedFactories: [UnsafeRawPointer: DelegateProxyFactory] = [:]
     
     fileprivate static func sharedFactory<DelegateProxy: DelegateProxyType>(for proxyType: DelegateProxy.Type) -> DelegateProxyFactory {
+    
+        // 导出都有缓存的机制. 所以, 要限制必须在一个线程在做这个事情.
         MainScheduler.ensureRunningOnMainThread()
         let identifier = DelegateProxy.identifier
         if let factory = _sharedFactories[identifier] {
             return factory
         }
+        
         let factory = DelegateProxyFactory(for: proxyType)
         _sharedFactories[identifier] = factory
         DelegateProxy.registerKnownImplementations()
         return factory
     }
     
+    // 存储, Type 的 指针值, 对应工厂生成方法.
     private var _factories: [ObjectIdentifier: ((AnyObject) -> AnyObject)]
     private var _delegateProxyType: Any.Type
     private var _identifier: UnsafeRawPointer
@@ -420,12 +430,13 @@ private class DelegateProxyFactory {
     }
     
     fileprivate func createProxy(for object: AnyObject) -> AnyObject {
-        MainScheduler.ensureRunningOnMainThread()
+        
         var maybeMirror: Mirror? = Mirror(reflecting: object)
         while let mirror = maybeMirror {
             if let factory = self._factories[ObjectIdentifier(mirror.subjectType)] {
                 return factory(object)
             }
+            // 找不到就用父类的.
             maybeMirror = mirror.superclassMirror
         }
         rxFatalError("DelegateProxy has no factory of \(object). Implement DelegateProxy subclass for \(object) first.")

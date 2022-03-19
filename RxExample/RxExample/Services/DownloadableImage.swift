@@ -16,5 +16,4 @@ import RxSwift
 enum DownloadableImage{
     case content(image:Image)
     case offlinePlaceholder
-
 }
