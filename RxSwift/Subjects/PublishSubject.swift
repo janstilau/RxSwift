@@ -4,10 +4,14 @@
  Subject 的意义在于, 这是一个从指令式编码模块, 到响应式编码模块的交接点.
  我们可以使用原有的指令式的代码, 来计算出值, 然后使用 Subject 进行信号的发射.
  而 Subject 的内部, 其实是保存了各个 Observers 的.
- 这一点很重要, 就是向 Subject 进行注册, 是真正的监听者模式, Subject 是信号的起点, 后面连接了各样不同的响应链条.
  */
-public final class PublishSubject<Element>
-: Observable<Element>
+
+/*
+ 真正的使用 rx 开发, 进行各种 Observable 的组装实在是过于复杂.
+ 对于想要信号槽的那种松耦合的开发场景, 使用 Subject 是一个非常通用的行为.
+ 在 App 架构那本书里面, 简化版的 MVVM 也是使用了 Subject 来当做源头.
+ */
+public final class PublishSubject<Element> : Observable<Element>
 , SubjectType
 , Cancelable
 , ObserverType
@@ -48,6 +52,7 @@ public final class PublishSubject<Element>
         dispatch(self.synchronized_on(event), event)
     }
     
+    // 这是一个 Get 函数, 这里的命名不好.
     func synchronized_on(_ event: Event<Element>) -> Observers {
         self.lock.lock(); defer { self.lock.unlock() }
         
@@ -95,6 +100,7 @@ public final class PublishSubject<Element>
             return Disposables.create()
         }
         
+        // 在 Share 里面, 使用了 Subject. 因为 Subject 这种存储, 是真正的分发的结构. 所有的后继节点, 公用一个源头. 
         let key = self.observers.insert(observer.on)
         return SubscriptionDisposable(owner: self, key: key)
     }

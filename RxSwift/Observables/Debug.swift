@@ -10,14 +10,8 @@ import Foundation
 
 extension ObservableType {
     
-    /**
+    /*
      Prints received events for all observers on standard output.
-     
-     - seealso: [do operator on reactivex.io](http://reactivex.io/documentation/operators/do.html)
-     
-     - parameter identifier: Identifier that is printed together with event description to standard output.
-     - parameter trimOutput: Should output be trimmed to max 40 characters.
-     - returns: An observable sequence whose events are printed to standard output.
      */
     public func debug(_ identifier: String? = nil, trimOutput: Bool = false, file: String = #file, line: UInt = #line, function: String = #function)
     -> Observable<Element> {
@@ -48,7 +42,7 @@ final private class DebugSink<Source: ObservableType, Observer: ObserverType>: S
     }
     
     // 完全 forward, 在之前进行 Log
-    // Operator 的作用, 就是操作信号中的数据, debug 没有任何的 transform, 仅仅是打印 event 的值. 
+    // Operator 的作用, 就是操作信号中的数据, debug 没有任何的 transform, 仅仅是打印 event 的值.
     func on(_ event: Event<Element>) {
         let maxEventTextLength = 40
         let eventText = "\(event)"
@@ -66,7 +60,7 @@ final private class DebugSink<Source: ObservableType, Observer: ObserverType>: S
         }
     }
     
-    // 就连 dispose 事件, 都进行了传递. 
+    // 就连 dispose 事件, 都进行了传递.
     override func dispose() {
         if !self.isDisposed {
             logEvent(self.parent.identifier, dateFormat: self.timestampFormatter, content: "isDisposed")
