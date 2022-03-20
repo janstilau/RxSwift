@@ -138,6 +138,15 @@ class NumbersViewController: ViewController, UIScrollViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        /*
+         之所以, 这样的简练, 是因为在 rx 框架层, 将 Button 的点击进行了封装 .
+         在 number1.rx.text 中, 就已经包含了 targetaction 的机制调用.
+         而 combineLatest 中, 又将之前必须写出来的业务逻辑, 收集, check, 触发后续操作进行了封装.
+         
+         rx 中, 每一个操作符, 都包含了相应的业务逻辑处理, 如果不熟悉这些操作符的背后原理, 写出来的代码就不够简练.
+         
+         将命令式, 转化成为响应式, rx 提供了便利但又复杂的转化器, 只有熟悉它的机制, 才能写出符合 rx 风格的代码出来.
+         */
         Observable.combineLatest(number1.rx.text.orEmpty,
                                  number2.rx.text.orEmpty,
                                  number3.rx.text.orEmpty) { textValue1, textValue2, textValue3 -> Int in
