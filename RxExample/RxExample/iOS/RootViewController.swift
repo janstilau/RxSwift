@@ -25,6 +25,7 @@ public class RootViewController : UITableViewController {
         geoService.authorized.drive(onNext: { _ in
 
         }).dispose()
+        
         geoService.location.drive(onNext: { _ in
 
         }).dispose()

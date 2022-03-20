@@ -10,12 +10,14 @@ extension ObservableType {
     /*
      Returns an observable sequence that invokes the specified factory function whenever a new observer subscribes.
      */
-    public static func deferred(_ observableFactory: @escaping () throws -> Observable<Element>)
+    public static func deferred(_ observableFactory:
+                                @escaping () throws -> Observable<Element>)
     -> Observable<Element> {
         Deferred(observableFactory: observableFactory)
     }
 }
 
+// 这就是一个中间节点. 
 final private class DeferredSink<Source: ObservableType, Observer: ObserverType>: Sink<Observer>, ObserverType where Source.Element == Observer.Element {
     typealias Element = Observer.Element
     

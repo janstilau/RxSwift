@@ -10,6 +10,7 @@ import RxSwift
 
 public enum SharingScheduler {
     /// Default scheduler used in SharedSequence based traits.
+    /// 使用主线程的调度器.
     public private(set) static var make: () -> SchedulerType = { MainScheduler() }
 
     /**

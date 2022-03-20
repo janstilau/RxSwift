@@ -159,6 +159,7 @@ extension Reactive where Base: UICollectionView {
 }
 
 extension Reactive where Base: UICollectionView {
+    
     public typealias DisplayCollectionViewCellEvent = (cell: UICollectionViewCell, at: IndexPath)
     public typealias DisplayCollectionViewSupplementaryViewEvent = (supplementaryView: UICollectionReusableView, elementKind: String, at: IndexPath)
 

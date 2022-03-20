@@ -137,6 +137,7 @@ BOOL RX_is_method_signature_void(NSMethodSignature * __nonnull methodSignature) 
     return strcmp(methodReturnType, @encode(void)) == 0;
 }
 
+// 就是比较函数的签名.
 BOOL RX_is_method_with_description_void(struct objc_method_description method) {
     return strncmp(method.types, @encode(void), 1) == 0;
 }
@@ -190,6 +191,7 @@ id __nonnull RX_extract_argument_at_index(NSInvocation * __nonnull invocation, N
 }
 
 NSArray *RX_extract_arguments(NSInvocation *invocation) {
+    
     NSUInteger numberOfArguments = invocation.methodSignature.numberOfArguments;
     NSUInteger numberOfVisibleArguments = numberOfArguments - HIDDEN_ARGUMENT_COUNT;
     

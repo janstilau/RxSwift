@@ -18,6 +18,7 @@ extension ObservableConvertibleType {
     public func asDriver(onErrorJustReturn: Element) -> Driver<Element> {
         let source = self
             .asObservable()
+        // 一定要在 DriverSharingStrategy 指定的调度器上, 进行数据的处理.
             .observe(on:DriverSharingStrategy.scheduler)
             .catchAndReturn(onErrorJustReturn)
         return Driver(source)

@@ -23,9 +23,10 @@ extension Reactive where Base: CLLocationManager {
 
     // MARK: Responding to Location Events
 
-    /**
+    /*
     Reactive wrapper for `delegate` message.
     */
+    // 对外暴露的, 仅仅是一个 Observable 对象. 
     public var didUpdateLocations: Observable<[CLLocation]> {
         RxCLLocationManagerDelegateProxy.proxy(for: base).didUpdateLocationsSubject.asObservable()
     }

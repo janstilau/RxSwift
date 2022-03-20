@@ -19,7 +19,14 @@ import RxSwift
  
  To find out more about units and how to use them, please visit `Documentation/Traits.md`.
  */
-public struct SharedSequence<SharingStrategy: SharingStrategyProtocol, Element> : SharedSequenceConvertibleType, ObservableConvertibleType {
+
+/*
+ 这是一个构建器. 很像是 C++ 的写法.
+ 这个构建器, 使用一个 SharingStrategyProtocol 来做调度, 将传入的 Publisher, 变为一个 sharedPublisher.
+ 而具体的 SharingStrategyProtocol 应该是什么, 不是动态传入的, 而已编写过程中, 有 SharingStrategyProtocol 的开发人员指定的.
+ */
+public struct SharedSequence<SharingStrategy: SharingStrategyProtocol, Element> :
+    SharedSequenceConvertibleType, ObservableConvertibleType {
     let source: Observable<Element>
     
     init(_ source: Observable<Element>) {
@@ -45,8 +52,10 @@ public struct SharedSequence<SharingStrategy: SharingStrategyProtocol, Element> 
     }
 }
 
-/**
+/*
  Different `SharedSequence` sharing strategies must conform to this protocol.
+ 
+ 这个协议, 主要提供两个功能, 调度器, 以及如何把一个 Publisher 变为 shared Publihser.
  */
 public protocol SharingStrategyProtocol {
     /**
@@ -69,7 +78,6 @@ public protocol SharingStrategyProtocol {
  */
 public protocol SharedSequenceConvertibleType : ObservableConvertibleType {
     associatedtype SharingStrategy: SharingStrategyProtocol
-    
     /**
      Converts self to `SharedSequence`.
      */
@@ -83,6 +91,8 @@ extension SharedSequenceConvertibleType {
 }
 
 
+// 以下的所有方法, 都是在做一件事事情,
+// 使用 SharingStrategy 的调度器, 进行调度, 然后构造函数里面, 使用 SharingStrategy 的 share 方法, 把原有的 Publisher 共享;
 extension SharedSequence {
     
     /**

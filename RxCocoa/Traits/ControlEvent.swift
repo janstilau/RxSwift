@@ -53,7 +53,10 @@ public struct ControlEvent<PropertyType> : ControlEventType {
     ///
     /// - parameter events: Observable sequence that represents events.
     /// - returns: Control event created with a observable sequence of events.
+    
     // ControlEvent 并不管理 events 的构建过程, 这个过程是外部创建的.
+    // 之所以, 这里需要外接传递过来, 是因为这并不是专门给 UIControl 使用的.
+    // 各种 TableView 的 Delegate, Datasource 事件, 都使用了这个进行包装.
     public init<Ev: ObservableType>(events: Ev) where Ev.Element == Element {
         self.events = events.subscribe(on: ConcurrentMainScheduler.instance)
     }

@@ -31,6 +31,7 @@ class GeolocationViewController: ViewController {
         
         view.addSubview(noGeolocationView)
         
+        // 使用了全局对象.
         let geolocationService = GeolocationService.instance
         
         geolocationService.authorized
