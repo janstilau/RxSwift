@@ -38,6 +38,7 @@ public struct SharedSequence<SharingStrategy: SharingStrategyProtocol, Element> 
     
     let source: Observable<Element>
     
+    // 最重要的抽象, 其实就是对 source 进行了一次 share 处理.
     init(_ source: Observable<Element>) {
         self.source = SharingStrategy.share(source)
     }
@@ -105,10 +106,9 @@ public protocol SharingStrategyProtocol {
  大部分的能力, 还是 ObservableConvertibleType 上添加的. 但是在
  
  DriverSharingStrategy, SignalSharingStrategy 下, 可以有着更加特化的方法可以调用.
- 
  */
 
-/**
+/*
  A type that can be converted to `SharedSequence`.
  */
 public protocol SharedSequenceConvertibleType : ObservableConvertibleType {
@@ -130,29 +130,26 @@ extension SharedSequenceConvertibleType {
 // 使用 SharingStrategy 的调度器, 进行调度, 然后构造函数里面, 使用 SharingStrategy 的 share 方法, 把原有的 Publisher 共享;
 extension SharedSequence {
     
-    /**
+    /*
+     init(raw: Observable<Element>)  在这里被用到了.
+     当, 传入的 Source 不需要共享的时候, 可以省略共享节点这一层逻辑.
+     */
+    /*
      Returns an empty observable sequence, using the specified scheduler to send out the single `Completed` message.
-     
-     - returns: An observable sequence with no elements.
      */
     public static func empty() -> SharedSequence<SharingStrategy, Element> {
         SharedSequence(raw: Observable.empty().subscribe(on: SharingStrategy.scheduler))
     }
     
-    /**
+    /*
      Returns a non-terminating observable sequence, which can be used to denote an infinite duration.
-     
-     - returns: An observable sequence whose observers will never get called.
      */
     public static func never() -> SharedSequence<SharingStrategy, Element> {
         SharedSequence(raw: Observable.never())
     }
     
-    /**
+    /*
      Returns an observable sequence that contains a single element.
-     
-     - parameter element: Single element in the resulting observable sequence.
-     - returns: An observable sequence containing the single specified element.
      */
     public static func just(_ element: Element) -> SharedSequence<SharingStrategy, Element> {
         SharedSequence(raw: Observable.just(element).subscribe(on: SharingStrategy.scheduler))

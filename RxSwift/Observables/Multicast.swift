@@ -6,6 +6,8 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
+
+// 
 /*
  Represents an observable wrapper that can be connected and disconnected from its underlying observable sequence.
  */
@@ -89,6 +91,7 @@ extension ObservableType {
     }
 }
 
+// 令人恶心的抽象.
 extension ConnectableObservableType {
     
     public func refCount() -> Observable<Element> {
@@ -191,6 +194,12 @@ final private class Connection<Subject: SubjectType>: ObserverType, Disposable {
     }
 }
 
+/*
+ ConnectableObservableAdapter 中由一个 Subject 对象, 由这个对象, 来完成 share. -->ShareSubject
+ ConnectableObservableAdapter.ref, 生成一个 RefCount 对象, 他会生产出一个 RefCountSink 对象.
+ ShareSubject 中, 存储的是各个 RefCountSink 对象.
+ */
+
 final private class ConnectableObservableAdapter<Subject: SubjectType>
 : ConnectableObservable<Subject.Element> {
     
@@ -230,6 +239,7 @@ final private class ConnectableObservableAdapter<Subject: SubjectType>
                                         lock: self.lock,
                                         subscription: singleAssignmentDisposable)
             self.connection = connection
+            
             // 在这里, 才将真正的上游节点, 插入到 Connection 对象的内部.
             let subscription = self.source.subscribe(connection)
             singleAssignmentDisposable.setDisposable(subscription)
@@ -255,10 +265,8 @@ final private class ConnectableObservableAdapter<Subject: SubjectType>
 }
 
 
-// RefCount 里面, 是注册数量的管理.
 final private class RefCountSink<ConnectableSource: ConnectableObservableType, Observer: ObserverType>
-: Sink<Observer>
-, ObserverType where ConnectableSource.Element == Observer.Element {
+: Sink<Observer>, ObserverType where ConnectableSource.Element == Observer.Element {
     
     typealias Element = Observer.Element
     typealias Parent = RefCount<ConnectableSource>
@@ -274,6 +282,7 @@ final private class RefCountSink<ConnectableSource: ConnectableObservableType, O
     
     
     func run() -> Disposable {
+        // 实际在这里进行了注册工作. 将自己变为了相应链条的一部分.
         let subscription = self.parent.source.subscribe(self)
         self.parent.lock.lock(); defer { self.parent.lock.unlock() }
         
@@ -292,6 +301,7 @@ final private class RefCountSink<ConnectableSource: ConnectableObservableType, O
         }
         
         return Disposables.create {
+            
             subscription.dispose()
             self.parent.lock.lock(); defer { self.parent.lock.unlock() }
             
