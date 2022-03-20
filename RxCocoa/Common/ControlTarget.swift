@@ -20,7 +20,7 @@ import Cocoa
 typealias Control = Cocoa.NSControl
 #endif
 
-// This should be only used from `MainScheduler`
+// RXTarget 有着自我引用的生命周期管理.
 final class ControlTarget: RxTarget {
     typealias Callback = (Control) -> Void
     
@@ -30,6 +30,7 @@ final class ControlTarget: RxTarget {
 #if os(iOS) || os(tvOS)
     let controlEvents: UIControl.Event
 #endif
+    
     var callback: Callback?
     
 #if os(iOS) || os(tvOS)

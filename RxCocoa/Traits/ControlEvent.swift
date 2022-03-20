@@ -40,14 +40,14 @@ public protocol ControlEventType : ObservableType {
  properties, don’t use this trait.**
  */
 
-// 先是有 ControlEvent, 然后有 ControlEventType
-// 而 ControlEvent 对于 ControlEventType 的实现, 就是返回自己本身
-// 这是一个非常通用的设计.
+// 无论是 ControlProperty, 还是 ControlEvent, 都没有将信号的创建, 包装到自己的内部.
+// 而是在外界进行创建, 然后自己仅仅是作为概念的包装.
 public struct ControlEvent<PropertyType> : ControlEventType {
     
     public typealias Element = PropertyType
     
-    let events: Observable<PropertyType> // 传递一个 Publsiher 过来, 进行了在主线程调度的变化, 真正使用的是这个会在主线程传递数据给后续节点的 Event Publisher.
+    //
+    let events: Observable<PropertyType>
     
     /// Initializes control event with a observable sequence that represents events.
     ///
@@ -55,8 +55,7 @@ public struct ControlEvent<PropertyType> : ControlEventType {
     /// - returns: Control event created with a observable sequence of events.
     
     // ControlEvent 并不管理 events 的构建过程, 这个过程是外部创建的.
-    // 之所以, 这里需要外接传递过来, 是因为这并不是专门给 UIControl 使用的.
-    // 各种 TableView 的 Delegate, Datasource 事件, 都使用了这个进行包装.
+    
     public init<Ev: ObservableType>(events: Ev) where Ev.Element == Element {
         self.events = events.subscribe(on: ConcurrentMainScheduler.instance)
     }
