@@ -6,7 +6,7 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
-/**
+/*
  Represents an observable wrapper that can be connected and disconnected from its underlying observable sequence.
  */
 public class ConnectableObservable<Element>
@@ -140,17 +140,27 @@ final private class Connection<Subject: SubjectType>: ObserverType, Disposable {
     // state
     private var parent: ConnectableObservableAdapter<Subject>?
     private var subscription : Disposable?
+    
+    
     private var subjectObserver: Subject.Observer
     
     private let disposed = AtomicInt(0)
+     
     
-    init(parent: ConnectableObservableAdapter<Subject>, subjectObserver: Subject.Observer, lock: RecursiveLock, subscription: Disposable) {
+    // subjectObserver 的生成给外界, 使得 Subject 的特性, 可以直接影响到 Connection.
+    init(parent: ConnectableObservableAdapter<Subject>,
+         subjectObserver: Subject.Observer,
+         lock: RecursiveLock,
+         subscription: Disposable) {
         self.parent = parent
         self.subscription = subscription
         self.lock = lock
         self.subjectObserver = subjectObserver
     }
     
+    /*
+     parent 的 Source, 是直接和 Connection 进行挂钩的. 在 Connection 内, 是将数据, 传递给存储的 Subject 中管理的各个监听者.
+     */
     func on(_ event: Event<Subject.Observer.Element>) {
         if isFlagSet(self.disposed, 1) {
             return
@@ -158,6 +168,8 @@ final private class Connection<Subject: SubjectType>: ObserverType, Disposable {
         if event.isStopEvent {
             self.dispose()
         }
+        
+        // 当上游事件来临后, 交给 subjectObserver 进行分发.
         self.subjectObserver.on(event)
     }
     
@@ -193,7 +205,12 @@ final private class ConnectableObservableAdapter<Subject: SubjectType>
     // state
     fileprivate var connection: ConnectionType?
     
+    /*
+     Source 是上游节点.
+     makeSubject 是 Subject 的生成器.
+     */
     init(source: Observable<Subject.Observer.Element>, makeSubject: @escaping () -> Subject) {
+        
         self.source = source
         self.makeSubject = makeSubject
         
@@ -213,8 +230,7 @@ final private class ConnectableObservableAdapter<Subject: SubjectType>
                                         lock: self.lock,
                                         subscription: singleAssignmentDisposable)
             self.connection = connection
-            // source 注册的是 connection 对象
-            // 没太明白, 这一层的意义何在, 直接 self.source.subscribe(lazySubject) 有什么问题.
+            // 在这里, 才将真正的上游节点, 插入到 Connection 对象的内部.
             let subscription = self.source.subscribe(connection)
             singleAssignmentDisposable.setDisposable(subscription)
             return connection
@@ -226,6 +242,7 @@ final private class ConnectableObservableAdapter<Subject: SubjectType>
             return subject
         }
         
+        // makeSubject 的生成器在这里使用, 就是为了生成内部的 Subject 对象.
         let subject = self.makeSubject()
         self.subject = subject
         return subject
@@ -345,6 +362,7 @@ final private class RefCount<ConnectableSource: ConnectableObservableType>: Prod
 }
 
 final private class MulticastSink<Subject: SubjectType, Observer: ObserverType>: Sink<Observer>, ObserverType {
+    
     typealias Element = Observer.Element
     typealias ResultType = Element
     typealias MutlicastType = Multicast<Subject, Observer.Element>
@@ -358,6 +376,7 @@ final private class MulticastSink<Subject: SubjectType, Observer: ObserverType>:
     
     func run() -> Disposable {
         do {
+            // 在这里, 生成了 Subject 对象.
             let subject = try self.parent.subjectSelector()
             let connectable = ConnectableObservableAdapter(source: self.parent.source, makeSubject: { subject })
             
@@ -385,6 +404,7 @@ final private class MulticastSink<Subject: SubjectType, Observer: ObserverType>:
 }
 
 final private class Multicast<Subject: SubjectType, Result>: Producer<Result> {
+    
     typealias SubjectSelectorType = () throws -> Subject
     typealias SelectorType = (Observable<Subject.Element>) throws -> Observable<Result>
     

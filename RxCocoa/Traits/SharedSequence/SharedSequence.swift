@@ -24,9 +24,18 @@ import RxSwift
  这是一个构建器. 很像是 C++ 的写法.
  这个构建器, 使用一个 SharingStrategyProtocol 来做调度, 将传入的 Publisher, 变为一个 sharedPublisher.
  而具体的 SharingStrategyProtocol 应该是什么, 不是动态传入的, 而已编写过程中, 有 SharingStrategyProtocol 的开发人员指定的.
+ 
+ 一般来说, 将类型参数, 真正的当参数来使用, 一般是静态方法偏多.
+ 不过也不是绝对的, 使用类型参数, 构建一个对象, 然后调用对象方法来完成静态方法的工作也没有什么问题.
  */
+
+// public typealias Driver<Element> = SharedSequence<DriverSharingStrategy, Element>
+// public typealias Signal<Element> = SharedSequence<SignalSharingStrategy, Element>
+
+// SharingStrategy 到底是什么, 不重要, 重要的是可以使用 SharingStrategy.share 将一个 source, 变为了 sharedSource.
 public struct SharedSequence<SharingStrategy: SharingStrategyProtocol, Element> :
     SharedSequenceConvertibleType, ObservableConvertibleType {
+    
     let source: Observable<Element>
     
     init(_ source: Observable<Element>) {
@@ -72,6 +81,32 @@ public protocol SharingStrategyProtocol {
      */
     static func share<Element>(_ source: Observable<Element>) -> Observable<Element>
 }
+
+/*
+ 
+ public struct DriverSharingStrategy: SharingStrategyProtocol {
+     
+     public static var scheduler: SchedulerType { SharingScheduler.make() }
+     
+     public static func share<Element>(_ source: Observable<Element>) -> Observable<Element> {
+         source.share(replay: 1, scope: .whileConnected)
+     }
+ }
+ 
+ public struct SignalSharingStrategy: SharingStrategyProtocol {
+     
+     public static var scheduler: SchedulerType { SharingScheduler.make() }
+     
+     public static func share<Element>(_ source: Observable<Element>) -> Observable<Element> {
+         source.share(scope: .whileConnected)
+     }
+ }
+ 
+ 大部分的能力, 还是 ObservableConvertibleType 上添加的. 但是在
+ 
+ DriverSharingStrategy, SignalSharingStrategy 下, 可以有着更加特化的方法可以调用.
+ 
+ */
 
 /**
  A type that can be converted to `SharedSequence`.

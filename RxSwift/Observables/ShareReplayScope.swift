@@ -110,9 +110,16 @@ public enum SubjectLifetimeScope {
     case forever
 }
 
+/*
+ 对于 Publisher 来说, 每一次 subscribe, 默认其实都会创建一条序列链条.
+ 如何重用上游的事件序列呢, 就是要找一个节点, 将所有的下游进行存储.
+ share 所做的, 就是这个收集存储的工作.
+ 
+ 而 Subject, 则是天然有着这层存储属性的.
+ */
 extension ObservableType {
     
-    /**
+    /*
      Returns an observable sequence that **shares a single subscription to the underlying sequence**, and immediately upon subscription replays  elements in buffer.
      
      This operator is equivalent to:
@@ -164,7 +171,7 @@ private final class ShareReplay1WhileConnectedConnection<Element>
     private var disposed: Bool = false
     fileprivate var observers = Observers()
     
-    // 这里就是 relay One 实现的逻辑, 就存一个.
+    // 和下面的唯一区别, 就是这里存了一个 Ele 到内部, 当有新的下游节点的时候, 可以直接使用存储的值.
     private var element: Element?
     
     init(parent: Parent, lock: RecursiveLock) {
@@ -252,10 +259,6 @@ final private class ShareReplay1WhileConnected<Element>
         self.source = source
     }
     
-    /*
-     找了一个中间层, 这个中间层, 是真正 Source 的 Observer.
-     然后下游节点存储在中间层中, 中间层接受上游节点的数据, 分发到所有的下游节点中, 
-     */
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         self.lock.lock()
         let connection = self.synchronized_subscribe(observer)
@@ -271,7 +274,6 @@ final private class ShareReplay1WhileConnected<Element>
         return disposable
     }
     
-    @inline(__always)
     private func synchronized_subscribe<Observer: ObserverType>(_ observer: Observer) -> Connection where Observer.Element == Element {
         let connection: Connection
         
@@ -288,20 +290,21 @@ final private class ShareReplay1WhileConnected<Element>
     }
 }
 
+// SynchronizedUnsubscribeType 的出现, 就暗示了, 在这个类的内部, 进行了后续监听者的管理.
 private final class ShareWhileConnectedConnection<Element>
 : ObserverType, SynchronizedUnsubscribeType {
     
     typealias Observers = AnyObserver<Element>.s
     typealias DisposeKey = Observers.KeyType
-    
     typealias Parent = ShareWhileConnected<Element>
-    private let parent: Parent
+    
+    private let parent: Parent // 这种, 被使用类和使用类相互引用在 rx 里面很常用.
     private let subscription = SingleAssignmentDisposable()
     
     private let lock: RecursiveLock
     private var disposed: Bool = false
     /*
-     Shared 的可以实现的基础, 就是和 Subject 一样, 使用了一个数据结构, 将所有的 Observer 都记录了下来.
+     这里和 Subject 是一样的, 将 Observers 存储到了自己的内部.
      */
     fileprivate var observers = Observers()
     
@@ -310,7 +313,7 @@ private final class ShareWhileConnectedConnection<Element>
         self.lock = lock
     }
     
-    // Connection 充当上游的监听者, 在自己的 On 里面, 将所有的事件, 交给自己记录的所有的 observers 进行处理.
+    // ShareWhileConnected 充当了自己的上游, 在自己的 On 里面, 将所有的事件, 交给自己记录的所有的 observers 进行处理.
     final func on(_ event: Event<Element>) {
         let observers = self.lock.performLocked { self.synchronized_on(event) }
         dispatch(observers, event)
@@ -332,6 +335,7 @@ private final class ShareWhileConnectedConnection<Element>
     }
     
     final func connect() {
+        // 将 source 和 自己进行相连. 这样, source 的信号, 直接到自己内部, 自己再次分发给所记录的所有下游节点.
         self.subscription.setDisposable(self.parent.source.subscribe(self))
     }
     
@@ -352,6 +356,7 @@ private final class ShareWhileConnectedConnection<Element>
     
     final func synchronizedUnsubscribe(_ disposeKey: DisposeKey) {
         if self.lock.performLocked({ self.synchronized_unsubscribe(disposeKey) }) {
+            // 如果没有了下游, 那么自己也就可以结束了.
             self.subscription.dispose()
         }
     }
@@ -371,8 +376,8 @@ private final class ShareWhileConnectedConnection<Element>
 }
 
 // optimized version of share replay for most common case
-final private class ShareWhileConnected<Element>
-: Observable<Element> {
+// 被 Shared 的, 还是一个 observable.
+final private class ShareWhileConnected<Element> : Observable<Element> {
     
     fileprivate typealias Connection = ShareWhileConnectedConnection<Element>
     
@@ -387,14 +392,20 @@ final private class ShareWhileConnected<Element>
     
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         self.lock.lock()
+        
+        // synchronized_subscribe 就是 createConnectionIfNeed.
         let connection = self.synchronized_subscribe(observer)
         let count = connection.observers.count
         
-        // 实际上, 是 connection 完成了记录的工作 .
+        /*
+         将下游节点, 注册到了 ShareWhileConnectedConnection<Element> 的内部.
+         */
         let disposable = connection.synchronized_subscribe(observer)
         self.lock.unlock()
         
-        // 如果, 之前 connection 没有成为上游的监听者, 在这个时候才进行了监听的注册.
+        /*
+         如果, 这是第一次进行注册, 那么将
+         */
         if count == 0 {
             connection.connect()
         }
