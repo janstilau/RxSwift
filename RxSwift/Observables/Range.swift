@@ -10,7 +10,10 @@ extension ObservableType where Element: RxAbstractInteger {
     /*
      Generates an observable sequence of integral numbers within a specified range, using the specified scheduler to generate and send out observer messages.
      */
-    public static func range(start: Element, count: Element, scheduler: ImmediateSchedulerType = CurrentThreadScheduler.instance) -> Observable<Element> {
+    public static func range(start: Element,
+                             count: Element,
+                             scheduler: ImmediateSchedulerType = CurrentThreadScheduler.instance)
+    -> Observable<Element> {
         RangeProducer<Element>(start: start, count: count, scheduler: scheduler)
     }
 }
@@ -52,7 +55,8 @@ final private class RangeSink<Observer: ObserverType>: Sink<Observer> where Obse
     }
     
     func run() -> Disposable {
-        // 这里, 写的实在是在复杂了. 
+        // 这里, 写的实在是在复杂了.
+        // 要有调度器的存在, 要有数据的更改. 
         return self.parent.scheduler.scheduleRecursive(0 as Observer.Element)
         { i, recurse in
             if i < self.parent.count {

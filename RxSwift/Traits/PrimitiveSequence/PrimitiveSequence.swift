@@ -10,7 +10,8 @@
 
 public struct PrimitiveSequence<Trait, Element> {
     let source: Observable<Element>
-    
+    // Element 是为了确定事件的关联数据类型.
+    // Trait 就是为了编译分化的.
     init(raw: Observable<Element>) {
         self.source = raw
     }
@@ -40,22 +41,14 @@ extension PrimitiveSequence: PrimitiveSequenceType {
 }
 
 extension PrimitiveSequence: ObservableConvertibleType {
-    /// Converts `self` to `Observable` sequence.
-    ///
-    /// - returns: Observable sequence that represents `self`.
     public func asObservable() -> Observable<Element> {
         self.source
     }
 }
 
 extension PrimitiveSequence {
-    /**
+    /*
      Returns an observable sequence that invokes the specified factory function whenever a new observer subscribes.
-     
-     - seealso: [defer operator on reactivex.io](http://reactivex.io/documentation/operators/defer.html)
-     
-     - parameter observableFactory: Observable factory function to invoke for each observer that subscribes to the resulting sequence.
-     - returns: An observable sequence whose observers trigger an invocation of the given observable factory function.
      */
     public static func deferred(_ observableFactory: @escaping () throws -> PrimitiveSequence<Trait, Element>)
     -> PrimitiveSequence<Trait, Element> {

@@ -40,6 +40,7 @@ final private class DeferredSink<Source: ObservableType, Observer: ObserverType>
         }
     }
     
+    // 纯粹的一个中介者.
     func on(_ event: Event<Element>) {
         self.forwardOn(event)
         
