@@ -55,7 +55,7 @@ extension InfallibleType {
      - parameter onDisposed: Action to invoke upon any type of termination of sequence (if the sequence has
      gracefully completed, errored, or if the generation is canceled by disposing subscription)
      - returns: Subscription object used to unsubscribe from the observable sequence.
-    */
+     */
     public func subscribe(onNext: ((Element) -> Void)? = nil,
                           onCompleted: (() -> Void)? = nil,
                           onDisposed: (() -> Void)? = nil) -> Disposable {
@@ -63,7 +63,7 @@ extension InfallibleType {
                                       onCompleted: onCompleted,
                                       onDisposed: onDisposed)
     }
-
+    
     /**
      Subscribes an event handler to an observable sequence.
      

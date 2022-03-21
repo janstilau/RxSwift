@@ -7,7 +7,6 @@
 //
 
 // Observable sequences containing 0 or 1 element.
-
 public struct PrimitiveSequence<Trait, Element> {
     let source: Observable<Element>
     // Element 是为了确定事件的关联数据类型.

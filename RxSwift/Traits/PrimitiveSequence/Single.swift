@@ -34,17 +34,21 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
      */
     /*
      Single.create { singleObserver in
-         singleObserver(.success("呵呵哒"))
-         singleObserver(.failure(RxSwift.RxError.argumentOutOfRange))
-         return Disposables.create()
+     singleObserver(.success("呵呵哒"))
+     singleObserver(.failure(RxSwift.RxError.argumentOutOfRange))
+     return Disposables.create()
      }.subscribe { event in
-         print(event)
+     print(event)
      }
      */
     public static func create(subscribe: @escaping (@escaping SingleObserver) -> Disposable) -> Single<Element> {
         
-        // Observable<Element>.create 创建了一个 Observer.
-        // subscribe 则是创建了一个 Publisher.
+        /*
+         Observable<Element>.create 会在内部, 创建一个 AnoymousObserver, 作为后面闭包的参数.
+         这个 AnoymousObserver 的 on 方法, 后传递到后面的节点上.
+         subscribe 是真正开启异步任务的地方, 它相当于把 Observable<Element>.create 的任务接管了. subscribe 开启任务, 在结果处, 调用闭包将结果传出.
+         这个闭包, 是 AnoymousObserver 需要的, 它需要根据 event 的值, 来决定自己的 emit 什么信号. 
+         */
         let source = Observable<Element>.create { observer in
             return subscribe { event in
                 switch event {
