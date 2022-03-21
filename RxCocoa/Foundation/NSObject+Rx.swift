@@ -133,7 +133,7 @@ extension Reactive where Base: AnyObject {
      */
     
     // 这是一个懒加载的机制, 如果调用, 才会生成 DeallocObservable 挂钩到 Obj 上.
-    // OBJ 消亡的时候, DeallocObservable 也会消亡. 然后它里面的 Subject 会发出信号来. 
+    // OBJ 消亡的时候, DeallocObservable 也会消亡. 然后它里面的 Subject 会发出信号来.
     public var deallocated: Observable<Void> {
         return self.synchronized {
             if let deallocObservable = objc_getAssociatedObject(self.base, &deallocatedSubjectContext) as? DeallocObservable {
@@ -338,6 +338,7 @@ private final class MessageSentProxy
 #endif
 
 // 给, obj 挂钩一个关联对象. 这个关联对象在结束的时候, 会发送一个信号.
+// 这里可以认为是 RAII 的技术, 利用对象的生命周期, 自动进行事件的触发.
 private final class DeallocObservable {
     
     let subject = ReplaySubject<Void>.create(bufferSize:1)
@@ -546,7 +547,7 @@ private let deallocSelector = NSSelectorFromString("dealloc")
 // 模拟传统的 @synchronize 的机制.
 extension Reactive where Base: AnyObject {
     func synchronized<T>( _ action: () -> T) -> T {
-        // objc_sync_enter 应该和传统的 @synchronize 是一个机制.
+        // 使用 base 进行锁的查找, 所以, 一定是一个引用值才可以.
         objc_sync_enter(self.base)
         let result = action()
         objc_sync_exit(self.base)

@@ -24,11 +24,21 @@ import RxSwift
  这是一个构建器. 很像是 C++ 的写法.
  这个构建器, 使用一个 SharingStrategyProtocol 来做调度, 将传入的 Publisher, 变为一个 sharedPublisher.
  而具体的 SharingStrategyProtocol 应该是什么, 不是动态传入的, 而已编写过程中, 有 SharingStrategyProtocol 的开发人员指定的.
+ 
+ 一般来说, 将类型参数, 真正的当参数来使用, 一般是静态方法偏多.
+ 不过也不是绝对的, 使用类型参数, 构建一个对象, 然后调用对象方法来完成静态方法的工作也没有什么问题.
  */
+
+// public typealias Driver<Element> = SharedSequence<DriverSharingStrategy, Element>
+// public typealias Signal<Element> = SharedSequence<SignalSharingStrategy, Element>
+
+// SharingStrategy 到底是什么, 不重要, 重要的是可以使用 SharingStrategy.share 将一个 source, 变为了 sharedSource.
 public struct SharedSequence<SharingStrategy: SharingStrategyProtocol, Element> :
     SharedSequenceConvertibleType, ObservableConvertibleType {
+    
     let source: Observable<Element>
     
+    // 最重要的抽象, 其实就是对 source 进行了一次 share 处理.
     init(_ source: Observable<Element>) {
         self.source = SharingStrategy.share(source)
     }
@@ -73,7 +83,32 @@ public protocol SharingStrategyProtocol {
     static func share<Element>(_ source: Observable<Element>) -> Observable<Element>
 }
 
-/**
+/*
+ 
+ public struct DriverSharingStrategy: SharingStrategyProtocol {
+     
+     public static var scheduler: SchedulerType { SharingScheduler.make() }
+     
+     public static func share<Element>(_ source: Observable<Element>) -> Observable<Element> {
+         source.share(replay: 1, scope: .whileConnected)
+     }
+ }
+ 
+ public struct SignalSharingStrategy: SharingStrategyProtocol {
+     
+     public static var scheduler: SchedulerType { SharingScheduler.make() }
+     
+     public static func share<Element>(_ source: Observable<Element>) -> Observable<Element> {
+         source.share(scope: .whileConnected)
+     }
+ }
+ 
+ 大部分的能力, 还是 ObservableConvertibleType 上添加的. 但是在
+ 
+ DriverSharingStrategy, SignalSharingStrategy 下, 可以有着更加特化的方法可以调用.
+ */
+
+/*
  A type that can be converted to `SharedSequence`.
  */
 public protocol SharedSequenceConvertibleType : ObservableConvertibleType {
@@ -95,29 +130,26 @@ extension SharedSequenceConvertibleType {
 // 使用 SharingStrategy 的调度器, 进行调度, 然后构造函数里面, 使用 SharingStrategy 的 share 方法, 把原有的 Publisher 共享;
 extension SharedSequence {
     
-    /**
+    /*
+     init(raw: Observable<Element>)  在这里被用到了.
+     当, 传入的 Source 不需要共享的时候, 可以省略共享节点这一层逻辑.
+     */
+    /*
      Returns an empty observable sequence, using the specified scheduler to send out the single `Completed` message.
-     
-     - returns: An observable sequence with no elements.
      */
     public static func empty() -> SharedSequence<SharingStrategy, Element> {
         SharedSequence(raw: Observable.empty().subscribe(on: SharingStrategy.scheduler))
     }
     
-    /**
+    /*
      Returns a non-terminating observable sequence, which can be used to denote an infinite duration.
-     
-     - returns: An observable sequence whose observers will never get called.
      */
     public static func never() -> SharedSequence<SharingStrategy, Element> {
         SharedSequence(raw: Observable.never())
     }
     
-    /**
+    /*
      Returns an observable sequence that contains a single element.
-     
-     - parameter element: Single element in the resulting observable sequence.
-     - returns: An observable sequence containing the single specified element.
      */
     public static func just(_ element: Element) -> SharedSequence<SharingStrategy, Element> {
         SharedSequence(raw: Observable.just(element).subscribe(on: SharingStrategy.scheduler))

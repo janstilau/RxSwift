@@ -6,6 +6,7 @@ public class ReplaySubject<Element>
 , SubjectType
 , ObserverType
 , Disposable {
+    
     public typealias SubjectObserverType = ReplaySubject<Element>
     
     typealias Observers = AnyObserver<Element>.s
@@ -27,10 +28,6 @@ public class ReplaySubject<Element>
         }
     }
     fileprivate var observers = Observers()
-    
-#if DEBUG
-    fileprivate let synchronizationTracker = SynchronizationTracker()
-#endif
     
     func unsubscribe(_ key: DisposeKey) {
         rxAbstractMethod()
@@ -95,10 +92,6 @@ private class ReplayBufferBase<Element>
     }
     
     override func on(_ event: Event<Element>) {
-#if DEBUG
-        self.synchronizationTracker.register(synchronizationErrorMessage: .default)
-        defer { self.synchronizationTracker.unregister() }
-#endif
         dispatch(self.synchronized_on(event), event)
     }
     

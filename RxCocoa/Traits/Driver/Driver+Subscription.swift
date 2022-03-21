@@ -23,11 +23,7 @@ extension SharedSequenceConvertibleType where SharingStrategy == DriverSharingSt
     - returns: Disposable object that can be used to unsubscribe the observer from the subject.
     */
     /*
-     实际上, 还是使用了 subscribe
-     但是 SharedSequenceConvertibleType : ObservableConvertibleType
-     SharedSequenceConvertibleType 上是没有 subscribe 方法的.
-     
-     使用 driver, 只能使用 drive 函数. 
+     使用 driver, 只能使用 drive 函数.
      */
     public func drive<Observer: ObserverType>(_ observers: Observer...) -> Disposable where Observer.Element == Element {
         return self.asSharedSequence()

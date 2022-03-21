@@ -6,9 +6,10 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
-// Represents a disposable resource whose underlying disposable resource can be replaced by another disposable resource, causing automatic disposal of the previous underlying disposable resource.
-
+// Represents a disposable resource whose underlying disposable resource can be replaced by another disposable resource
+// causing automatic disposal of the previous underlying disposable resource.
 // 存储的 Disposable 可以替换, 每次替换, 自动引起被替换的进行 dispose 的调用.
+
 public final class SerialDisposable : DisposeBase, Cancelable {
     private var lock = SpinLock()
     

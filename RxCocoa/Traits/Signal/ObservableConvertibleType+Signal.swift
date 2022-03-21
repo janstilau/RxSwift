@@ -39,11 +39,8 @@ extension ObservableConvertibleType {
         return Signal(source)
     }
 
-    /**
+    /*
      Converts observable sequence to `Signal` trait.
-
-     - parameter onErrorRecover: Calculates signal that continues to emit the sequence in case of error.
-     - returns: Signal trait.
      */
     public func asSignal(onErrorRecover: @escaping (_ error: Swift.Error) -> Signal<Element>) -> Signal<Element> {
         let source = self

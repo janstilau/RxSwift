@@ -85,6 +85,7 @@ final private class CatchSink<Observer: ObserverType>: Sink<Observer>, ObserverT
                 // 使用之前存储的根据 Error 生成 Sequence 的 Handler, 生成一个新的 Publisher
                 let catchSequence = try self.parent.handler(error)
                 let observer = CatchSinkProxy(parent: self)
+                // subscription 的赋值, 会导致之前的 disposable 触发 dispose 的.
                 self.subscription.disposable = catchSequence.subscribe(observer)
             } catch let e {
                 self.forwardOn(.error(e))

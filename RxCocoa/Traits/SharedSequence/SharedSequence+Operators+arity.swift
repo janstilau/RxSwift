@@ -33,6 +33,10 @@ extension SharedSequence {
     }
 }
 
+/*
+ 在这里, 定义 SharedSequenceConvertibleType 的通用方法.
+ 然后在 extension SharedSequenceConvertibleType where SharingStrategy == SignalSharingStrategy  里面, 定义独特的方法. 这些独特的方法, 会随着 类型参数的改变而改变.
+ */
 extension SharedSequenceConvertibleType where Element == Any {
     /**
     Merges the specified observable sequences into one observable sequence of element tuples whenever all of the observable sequences have produced an element at a corresponding index.

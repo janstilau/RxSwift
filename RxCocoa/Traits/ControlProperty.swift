@@ -18,6 +18,7 @@ public protocol ControlPropertyType : ObservableType, ObserverType {
 /*
  Trait for `Observable`/`ObservableType` that represents property of UI element.
  
+ // 只会对 UI 初始值, 以及用户触发的改变发出信号. 这其实是 target action 的机制导致的.
  Sequence of values only represents initial control value and user initiated value changes.
  Programmatic value changes won't be reported.
  
@@ -25,7 +26,9 @@ public protocol ControlPropertyType : ObservableType, ObserverType {
  
  - `shareReplay(1)` behavior
  - it's stateful, upon subscription (calling subscribe) last element is immediately replayed if it was produced
+ // 最后会有一个 completion, 所以当 UI 消亡的时候, 可以通知使用了 UI 的 Publisher 的地方
  - it will `Complete` sequence on control being deallocated
+ // UI 事件的通用设计.
  - it never errors out
  - it delivers events on `MainScheduler.instance`
  
@@ -39,6 +42,12 @@ public protocol ControlPropertyType : ObservableType, ObserverType {
  **In case `values` observable sequence that is being passed into initializer doesn't satisfy all enumerated
  properties, please don't use this trait.**
  */
+
+/*
+ 能够当做 Publisher, 是因为在内部, 进行了 target action 的监听, 当改变自身值的时候, 进行了信号的发射.
+ 能够当做 Observer, 因为有一个 binder, 当外界信号发出的时候, 在 Binder 内部, 对所控制的 UI 进行了修改.
+ 但是这都是外界传递过来的.
+ */
 public struct ControlProperty<PropertyType> : ControlPropertyType {
     
     public typealias Element = PropertyType
@@ -49,11 +58,6 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
     
     /// Initializes control property with a observable sequence that represents property values and observer that enables
     /// binding values to property.
-    ///
-    /// - parameter values: Observable sequence that represents property values.
-    /// - parameter valueSink: Observer that enables binding values to control property.
-    /// - returns: Control property created with a observable sequence of values and an observer that enables binding values
-    /// to property.
     public init<Values: ObservableType, Sink: ObserverType>(values: Values,
                                                             valueSink: Sink) where Element == Values.Element, Element == Sink.Element {
         self.values = values.subscribe(on: ConcurrentMainScheduler.instance)
@@ -98,7 +102,10 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
     /// - In case next element is received, it is being set to control value.
     /// - In case error is received, DEBUG builds raise fatal error, RELEASE builds log event to standard output.
     /// - In case sequence completes, nothing happens.
-    // 充当监听者, 就是使用自己的 self.valueSink Observer
+    
+    /*
+     对于 Control 的 PropertyObserver 来说, 它的作用就是, 在将数据传递给自己的 valueSink
+     */
     public func on(_ event: Event<Element>) {
         switch event {
         case .error(let error):
@@ -112,11 +119,15 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
 }
 
 extension ControlPropertyType where Element == String? {
-    /// Transforms control property of type `String?` into control property of type `String`.
+    /*
+     对于原有的 ControlProperty 的包装, 其实就是修改了一下, Pusblisher 的输出值. 
+     */
     public var orEmpty: ControlProperty<String> {
         let original: ControlProperty<String?> = self.asControlProperty()
         // 如果, 原有序列是 nil, 直接这里转化一次, 变为 ""
         let values: Observable<String> = original.values.map { $0 ?? "" }
+        
+        // 这里不是太明白. original.valueSink.mapObserver { $0 } 是 String? 类型的, 怎么变为 String 类型的了
         let valueSink: AnyObserver<String> = original.valueSink.mapObserver { $0 }
         return ControlProperty<String>(values: values, valueSink: valueSink)
     }

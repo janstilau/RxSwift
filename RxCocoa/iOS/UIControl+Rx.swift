@@ -55,18 +55,20 @@ extension Reactive where Base: UIControl {
         setter: @escaping (Base, T) -> Void
     ) -> ControlProperty<T> {
         
-        // 当, 事件发生是, 会发射一个信号. 这个信号里面的内容,  就是 get 函数提供的个.
+        // 这个闭包, 是在 controlProperty 被调用的时候就生成的, 只不过它的调用, 是在实际被注册的时候才发生. 在这个时候, base 的值, 已经传递给了 weak weakControl
         let source: Observable<T> = Observable.create { [weak weakControl = base] observer in
             guard let control = weakControl else {
                 observer.on(.completed)
                 return Disposables.create()
             }
             
-            // getter 在这里发生了作用, 使用 getter 从 control 身上进行了取值.
+            // 先会读取当前的 Control 上面的数据, 传递给后续节点使用.
             observer.on(.next(getter(control)))
             
-            // 创建一个 ControlTarget, 会在每次事件触发之后, 发射信号给后方.
-            let controlTarget = ControlTarget(control: control, controlEvents: editingEvents) { _ in
+            // 在 ControlTarget 的内部, 进行了自我的引用循环管理. 所以, 会一直存在, 直到 controlTarget.dispose 被调用.
+            // 在 ControlTarget 的内部, 每次事件触发, 都会调用传递过去的闭包被调用. 而这个闭包, 就是传递 next 到后面的处理节点.
+            let controlTarget = ControlTarget(control: control,
+                                              controlEvents: editingEvents) { _ in
                 if let control = weakControl {
                     observer.on(.next(getter(control)))
                 }
@@ -76,8 +78,6 @@ extension Reactive where Base: UIControl {
         }.take(until: deallocated)
         
         let bindingObserver = Binder(base, binding: setter)
-        
-        // 这里没有必要, 使用 ControlEvent
         return ControlProperty<T>(values: source, valueSink: bindingObserver)
     }
     
