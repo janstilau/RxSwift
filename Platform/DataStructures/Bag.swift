@@ -21,6 +21,9 @@ struct BagKey {
  然后是数组存储.
  最后是字典存储.
  */
+/*
+ Bag 里面, Element 的数据类型不定, 根据传入的参数来确定.
+ */
 struct Bag<T> : CustomDebugStringConvertible {
     /// Type of identifier for inserted elements.
     typealias KeyType = BagKey

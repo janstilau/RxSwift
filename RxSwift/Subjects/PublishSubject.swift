@@ -100,7 +100,8 @@ public final class PublishSubject<Element> : Observable<Element>
             return Disposables.create()
         }
         
-        // 在 Share 里面, 使用了 Subject. 因为 Subject 这种存储, 是真正的分发的结构. 所有的后继节点, 公用一个源头. 
+        // 在 Share 里面, 使用了 Subject. 因为 Subject 这种存储, 是真正的分发的结构. 所有的后继节点, 公用一个源头.
+        // Bag 里面, 仅仅存储闭包, 而这个闭包, 其实是有生命周期管理的. 
         let key = self.observers.insert(observer.on)
         return SubscriptionDisposable(owner: self, key: key)
     }

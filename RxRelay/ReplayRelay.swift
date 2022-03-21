@@ -8,6 +8,11 @@
 
 import RxSwift
 
+/*
+ Replay 的逻辑, 统一的思想就是, 包装一个 Subject 值, 使得 Relay 对象失去 Observer 的能力.
+ 只能充当 Publisher, 当调用 accept 的时候, 进行 Publish
+ */
+
 /// ReplayRelay is a wrapper for `ReplaySubject`.
 ///
 /// Unlike `ReplaySubject` it can't terminate with an error or complete.
@@ -24,6 +29,18 @@ public final class ReplayRelay<Element>: ObservableType {
         self.subject = subject
     }
     
+    /// Subscribes observer
+    public func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
+        self.subject.subscribe(observer)
+    }
+    
+    /// - returns: Canonical interface for push style sequence
+    public func asObservable() -> Observable<Element> {
+        self.subject.asObserver()
+    }
+}
+
+extension ReplayRelay {
     /// Creates new instance of `ReplayRelay` that replays at most `bufferSize` last elements sent to it.
     ///
     /// - parameter bufferSize: Maximal number of elements to replay to observers after subscription.
@@ -37,15 +54,5 @@ public final class ReplayRelay<Element>: ObservableType {
     /// number of elements.
     public static func createUnbound() -> ReplayRelay<Element> {
         ReplayRelay(subject: ReplaySubject.createUnbounded())
-    }
-    
-    /// Subscribes observer
-    public func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
-        self.subject.subscribe(observer)
-    }
-    
-    /// - returns: Canonical interface for push style sequence
-    public func asObservable() -> Observable<Element> {
-        self.subject.asObserver()
     }
 }

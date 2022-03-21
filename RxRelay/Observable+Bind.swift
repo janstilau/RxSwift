@@ -10,12 +10,13 @@ import RxSwift
 
 
 /*
- 最终, Bindto 里面的逻辑, 就是调用 subscribe. 但是 Bind 的表意更加的明显.
+ 各种 Bind 到 SubjectRelay, 就是使用一个 AnonymousObserver, 包装 Relay 的 accept 方法的调用 .
  */
 extension ObservableType {
     /*
      Creates new subscription and sends elements to publish relay(s).
      */
+    // PublishRelay 已经失去了 Observer 的能力了, 所以不能直接被 subscribe.
     public func bind(to relays: PublishRelay<Element>...) -> Disposable {
         bind(to: relays)
     }
@@ -34,11 +35,14 @@ extension ObservableType {
         self.map { $0 as Element? }.bind(to: relays)
     }
     
-    /**
+    /*
      Creates new subscription and sends elements to publish relay(s).
      In case error occurs in debug mode, `fatalError` will be raised.
      In case error occurs in release mode, `error` will be logged.
      */
+    // Relay 不能当做是 Observer 了, 所以, 上游节点其实是注册给  AnonymousObserver 了.
+    // 然后在 AnonymousObserver 中, 根据 event, 调用 relay 的 accept 方法.
+    // 因为, Relay 不是一个 Observer, 所以, 只能通过 Bind 才能完成数据流的流动.
     private func bind(to relays: [PublishRelay<Element>]) -> Disposable {
         subscribe { e in
             switch e {

@@ -8,9 +8,9 @@
 
 import RxSwift
 
-/// BehaviorRelay is a wrapper for `BehaviorSubject`.
-///
-/// Unlike `BehaviorSubject` it can't terminate with error or completed.
+// BehaviorRelay is a wrapper for `BehaviorSubject`.
+//
+// Unlike `BehaviorSubject` it can't terminate with error or completed.
 
 // 限制了 BehaviorSubject 的能力, 只能充当 Publisher 了, 提供给了一个输出 value 的方法.
 // 实际上, UI 相关的 Publisher, 应该绑定事件到这个上面. 因为 UI 不会发出 Error.
@@ -18,6 +18,7 @@ public final class BehaviorRelay<Element>: ObservableType {
     private let subject: BehaviorSubject<Element>
     
     public func accept(_ event: Element) {
+        // subject.onNext 的调用, BehaviorSubject 中会存储最后的一个值. 
         self.subject.onNext(event)
     }
     
@@ -27,7 +28,8 @@ public final class BehaviorRelay<Element>: ObservableType {
         return try! self.subject.value()
     }
     
-    /// Initializes behavior relay with initial value.
+    // 初始化的时候, 一定要传递一个初值过来.
+    // 这是 BehaviorSubject 的要求.
     public init(value: Element) {
         self.subject = BehaviorSubject(value: value)
     }
