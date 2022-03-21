@@ -9,6 +9,9 @@
 
 extension String {
     var URLEscaped: String {
-       return self.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) ?? ""
+        /*
+         Returns a new string created by replacing all characters in the string not in the specified set with percent encoded characters.
+         */
+        return self.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) ?? ""
     }
 }

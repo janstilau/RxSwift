@@ -9,6 +9,7 @@
 import UIKit
 import RxSwift
 import RxCocoa
+import Combine
 
 class DynamicClass {
     var variableMember: Int = 1
@@ -147,6 +148,8 @@ class NumbersViewController: ViewController, UIScrollViewDelegate {
          
          将命令式, 转化成为响应式, rx 提供了便利但又复杂的转化器, 只有熟悉它的机制, 才能写出符合 rx 风格的代码出来.
          */
+        
+
         Observable.combineLatest(number1.rx.text.orEmpty,
                                  number2.rx.text.orEmpty,
                                  number3.rx.text.orEmpty) { textValue1, textValue2, textValue3 -> Int in
