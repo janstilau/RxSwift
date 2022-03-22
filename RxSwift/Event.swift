@@ -11,10 +11,8 @@
 @frozen public enum Event<Element> {
     /// Next element is produced.
     case next(Element)
-    
     /// Sequence terminated with an error.
     case error(Swift.Error)
-    
     /// Sequence completed successfully.
     case completed
 }
@@ -36,21 +34,22 @@ extension Event: CustomDebugStringConvertible {
 
 // 这种, Enum 添加 is 查询的写法, 是很好的写法. Enum 就是一个盒子, 将盒子的拆解过程, 封装到盒子的类里面, 是正确的.
 // 各种操作, 返回 Bool 也好, 返回 Optional 也好, 都能够很好的表现自己的含义.
+
 extension Event {
+    
     /// Is `completed` or `error` event.
     public var isStopEvent: Bool {
         switch self {
+        // 这里, 就没有对于关联值的获取的逻辑.
         case .next: return false
         case .error, .completed: return true
         }
     }
     
     /*
-     If case
-     guard case
+     If case 的逻辑.
      如果不需要进行 associate value 的获取, 直接进行 case  的比较, 是没有问题的.
      */
-    
     /// If `next` event, returns element value.
     public var element: Element? {
         if case .next(let value) = self {
@@ -79,7 +78,8 @@ extension Event {
 extension Event {
     /// Maps sequence elements using transform. If error happens during the transform, `.error`
     /// will be returned as value.
-    // 这个操作, 是和 Optinal 学的, 不过, 自己很少用这个. Enum 类型, Map 可以算作是一个固定的书写思路, 就是按照 case 进行判断, 调用.
+    // 这个操作, 是和 Optinal 学的, 不过, 自己很少用这个.
+    // Enum 类型, Map 可以算作是一个固定的书写思路, 就是按照 case 进行判断, 调用.
     public func map<Result>(_ transform: (Element) throws -> Result) -> Event<Result> {
         do {
             switch self {
@@ -90,8 +90,7 @@ extension Event {
             case .completed:
                 return .completed
             }
-        }
-        catch let e {
+        } catch let e {
             return .error(e)
         }
     }

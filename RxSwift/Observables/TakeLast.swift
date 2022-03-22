@@ -28,7 +28,7 @@ final private class TakeLastSink<Observer: ObserverType>: Sink<Observer>, Observ
     
     private let parent: Parent
     
-    // Queue, 用来缓存.
+    // 在内部, 使用一个 queue 来记录.
     private var elements: Queue<Element>
     
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
@@ -40,8 +40,9 @@ final private class TakeLastSink<Observer: ObserverType>: Sink<Observer>, Observ
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
+            // 当, next 来临的时候, 进行存储, 进行 buffer size 的控制.
             self.elements.enqueue(value)
-            // 如果, 超过了 Buffer 的个数, 会有一个置换的处理. 
+            // 如果, 超过了 Buffer 的个数, 会有一个置换的处理.
             if self.elements.count > self.parent.count {
                 _ = self.elements.dequeue()
             }
@@ -49,6 +50,7 @@ final private class TakeLastSink<Observer: ObserverType>: Sink<Observer>, Observ
             self.forwardOn(event)
             self.dispose()
         case .completed:
+            // 在, 结束的时候, 将存储的所有值一次性的进行发送. 
             for e in self.elements {
                 self.forwardOn(.next(e))
             }
@@ -63,9 +65,6 @@ final private class TakeLast<Element>: Producer<Element> {
     fileprivate let count: Int
     
     init(source: Observable<Element>, count: Int) {
-        if count < 0 {
-            rxFatalError("count can't be negative")
-        }
         self.source = source
         self.count = count
     }

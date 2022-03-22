@@ -100,7 +100,7 @@ final private class TakeTimeSink<Element, Observer: ObserverType>
         self.synchronizedOn(event)
     }
     
-    // 这里, 也是完全的转交.
+    // 完全的转交, 等待定时器触发结束事件
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
@@ -114,7 +114,6 @@ final private class TakeTimeSink<Element, Observer: ObserverType>
         }
     }
     
-    // 到时间了, 直接进行 complete 信号的发送.
     func tick() {
         self.lock.performLocked {
             self.forwardOn(.completed)
@@ -123,6 +122,8 @@ final private class TakeTimeSink<Element, Observer: ObserverType>
     }
     
     func run() -> Disposable {
+        // 在 Subscripe 的时候, 注册一个定时器.
+        // 在 tick 的时候, 是向后传递 complete 信号, 进行 dispose
         let disposeTimer = self.parent.scheduler.scheduleRelative((), dueTime: self.parent.duration) { _ in
             // tick 就是取消 timer.
             self.tick()

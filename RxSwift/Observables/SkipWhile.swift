@@ -26,13 +26,11 @@ final private class SkipWhileSink<Observer: ObserverType>: Sink<Observer>, Obser
         super.init(observer: observer, cancel: cancel)
     }
     
-    /*
-     当新的 Event 到达之后, 判断当前自己的状态. 只有达到了要求之后, 才可以修改自己的状态.
-     只要修改过, 就不会再次判断了.
-     */
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
+            // 同 Until 相比, 这个 Sink 存储的是一个 Block.
+            // 所以, 每次 on 处理新的数据的时候, 先是用这个 block 进行判断, 当条件达到之后, 进行后续数据的处理, 并且不会再次进行判断了. 
             if !self.running {
                 do {
                     self.running = try !self.parent.predicate(value)

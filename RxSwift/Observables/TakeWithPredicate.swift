@@ -1,11 +1,3 @@
-//
-//  TakeWithPredicate.swift
-//  RxSwift
-//
-//  Created by Krunoslav Zaher on 6/7/15.
-//  Copyright © 2015 Krunoslav Zaher. All rights reserved.
-//
-
 extension ObservableType {
     
     // 在 other 触发之前, 一直进行订阅.
@@ -72,6 +64,7 @@ final private class TakeUntilSinkOther<Other, Observer: ObserverType>
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next:
+            // 只要有数据, 就通知 parent 结束.
             self.parent.forwardOn(.completed)
             self.parent.dispose()
         case .error(let e):
@@ -101,7 +94,6 @@ final private class TakeUntilSink<Other, Observer: ObserverType>
         super.init(observer: observer, cancel: cancel)
     }
     
-    // 现在的 On 有的进行线程控制. 有的没有, 原因未查.
     func on(_ event: Event<Element>) {
         self.synchronizedOn(event)
     }
@@ -162,6 +154,7 @@ final private class TakeUntilPredicateSink<Observer: ObserverType>
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 这里和 Skip 的逻辑是一样的.
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
@@ -170,9 +163,9 @@ final private class TakeUntilPredicateSink<Observer: ObserverType>
             }
             
             do {
-                // 每次 On, 都有一次的 Predicate 的判断处理.
                 self.running = try !self.parent.predicate(value)
             } catch let e {
+                // 当, 出错的时候, 进行 error 的继续传递.
                 self.forwardOn(.error(e))
                 self.dispose()
                 return

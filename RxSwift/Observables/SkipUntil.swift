@@ -7,8 +7,8 @@
 //
 
 extension ObservableType {
-    
     // Returns the elements from the source observable sequence that are emitted after the other observable sequence produces an element.
+    // 只有在 other 之后, 才会进行数据的传递.
     public func skip<Source: ObservableType>(until other: Source)
     -> Observable<Element> {
         SkipUntil(source: self.asObservable(), other: other.asObservable())
@@ -59,11 +59,13 @@ final private class SkipUntilSink<Other, Observer: ObserverType>
 , ObserverType
 , LockOwnerType
 , SynchronizedOnType {
+    
     typealias Element = Observer.Element
     typealias Parent = SkipUntil<Element, Other>
     
     let lock = RecursiveLock()
     private let parent: Parent
+    // 专门的一个值, 来记录当前是否应该进行数据的 forward.
     fileprivate var forwardElements = false
     
     private let sourceSubscription = SingleAssignmentDisposable()
@@ -80,6 +82,7 @@ final private class SkipUntilSink<Other, Observer: ObserverType>
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next:
+            // 只有 forwardElements 的时候, 才进行数据的传递.
             if self.forwardElements {
                 self.forwardOn(event)
             }
@@ -87,6 +90,7 @@ final private class SkipUntilSink<Other, Observer: ObserverType>
             self.forwardOn(event)
             self.dispose()
         case .completed:
+            // ???
             if self.forwardElements {
                 self.forwardOn(event)
             }
@@ -95,13 +99,16 @@ final private class SkipUntilSink<Other, Observer: ObserverType>
     }
     
     func run() -> Disposable {
-        // 引入了一个中间层, 这个中间层, 来进行控制变量的值进行变化.
         let sourceSubscription = self.parent.source.subscribe(self)
+        
+        // 引入了一个中间层, 这个中间层, 来进行控制变量的值进行变化.
+        // 所以, 这里有两个响应链路.
         let otherObserver = SkipUntilSinkOther(parent: self)
         let otherSubscription = self.parent.other.subscribe(otherObserver)
+        
         self.sourceSubscription.setDisposable(sourceSubscription)
         otherObserver.subscription.setDisposable(otherSubscription)
-        
+        // 返回的 subscription, 应该取消当前的主链条的 sub, 以及 until 的 sub.
         return Disposables.create(sourceSubscription, otherObserver.subscription)
     }
 }
