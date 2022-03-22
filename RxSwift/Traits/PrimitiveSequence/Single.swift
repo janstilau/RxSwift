@@ -12,19 +12,23 @@ import Foundation
 
 /// Sequence containing exactly 1 element
 /// 必须要有一个, 不能直接 Complete.
+// 注意, 这里是必须有, 所以 要么是 ele + comlete, 要么是 error
 public enum SingleTrait { }
 /// Represents a push style sequence containing 1 element.
 public typealias Single<Element> = PrimitiveSequence<SingleTrait, Element>
+
+// SingleEvent 就是上面的, 要么是 ele + comlete, 要么是 error 的表现.
 public typealias SingleEvent<Element> = Result<Element, Swift.Error>
 
 /*
  这种在 C++ 中也有对应的编译技巧.
  一个泛型类里面, 有一个 trait 类型. 这个类型, 不会真正的用到代码逻辑里面, 仅仅是用作类型判断. 当有这个类型是什么类型的时候, 该泛型类会有对应的方法.
- 在这里, 这个泛型类是 PrimitiveSequenceType, PrimitiveSequence 在泛型类上面添加方法, 这些方法, 仅仅在 Trait 为某种类型的时候, 才能够使用.
+ 在这里, 这个泛型类是 PrimitiveSequenceType,
+ 在 PrimitiveSequence 上面添加方法, 这些方法, 仅仅在 Trait 为某种类型的时候, 才能够使用.
  public typealias Single<Element> = PrimitiveSequence<SingleTrait, Element> 就是在做类型绑定的事情.
  */
 
-// 只有 Trait == SingleTrait 才能使用的方法. 但是, 还是可以使用 PrimitiveSequenceType 的 extension 中定义的方法.
+// 仅仅 Trait == SingleTrait 才能使用下面的方法, 也就是, 仅仅 single 才能使用下面的方法.
 extension PrimitiveSequenceType where Trait == SingleTrait {
     
     public typealias SingleObserver = (SingleEvent<Element>) -> Void
@@ -34,21 +38,28 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
      */
     /*
      Single.create { singleObserver in
-     singleObserver(.success("呵呵哒"))
-     singleObserver(.failure(RxSwift.RxError.argumentOutOfRange))
-     return Disposables.create()
+        singleObserver(.success("呵呵哒"))
+        singleObserver(.failure(RxSwift.RxError.argumentOutOfRange))
+        return Disposables.create()
      }.subscribe { event in
-     print(event)
+        print(event)
      }
+     */
+    
+    /*
+     Observable<Element>.create { observer
+        observer.onNext()
+        obverver.onComplete()
+     }
+     这是之前的 Observable 的创建过程. Single 应该有自己的 event 处理格式. 这里包装了一层.
+     
+     异步任务的创建, subscription 的生成, 都应该在 Single 的 subscribe 中.
+     所以, Observable<Element>.create 创建一个 Observer. 然后这个 Observer 的状态, 由
+     Single 的 subscribe 来决定.
+     Single 的 subscribe 的参数, Observable<Element>.create 传递过去的. 主要目的就是 Single subscribe 中主动调用, 来触发 observer 的状态变化的逻辑.
      */
     public static func create(subscribe: @escaping (@escaping SingleObserver) -> Disposable) -> Single<Element> {
         
-        /*
-         Observable<Element>.create 会在内部, 创建一个 AnoymousObserver, 作为后面闭包的参数.
-         这个 AnoymousObserver 的 on 方法, 后传递到后面的节点上.
-         subscribe 是真正开启异步任务的地方, 它相当于把 Observable<Element>.create 的任务接管了. subscribe 开启任务, 在结果处, 调用闭包将结果传出.
-         这个闭包, 是 AnoymousObserver 需要的, 它需要根据 event 的值, 来决定自己的 emit 什么信号.
-         */
         let source = Observable<Element>.create { observer in
             return subscribe { event in
                 switch event {
@@ -69,9 +80,11 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
      */
     public func subscribe(_ observer: @escaping (SingleEvent<Element>) -> Void) -> Disposable {
         var stopped = false
-        // 新建一个 AnonymousObserver 来完成, 只触发一次这个效果.
-        // 要记住, Single 并不是一个 Publisher. 他能转化成为一个 Publisher, 但是并不是.
-        // subscribe(_ observer: @escaping (SingleEvent<Element>) -> Void) 是 PrimitiveSequenceType 的接口, 并不是 Publisher 的接口. 
+        /*
+         Signle 并不是一个 Publisher, 所以它要串起来响应节点, 要调用方法把它存储的 source 查找出来.
+         这个函数的参数是 SingleEvent. 其实就是将传动的 event, 转变成为 Single 的形式.
+         由于是 Signle, 所以只进行一次事件的处理逻辑.
+         */
         return self.primitiveSequence.asObservable().subscribe { event in
             // 只会接受一次处理.
             if stopped { return }
@@ -133,6 +146,8 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
      gracefully completed, errored, or if the generation is canceled by disposing subscription).
      - returns: Subscription object used to unsubscribe from the observable sequence.
      */
+    // 就是 Observer 的 susbcribe 一样.
+    // 将具名的闭包封装起来, 变为一个 SingleObserver, 然后调用最原始的 subscribe 方法.
     public func subscribe(onSuccess: ((Element) -> Void)? = nil,
                           onFailure: ((Swift.Error) -> Void)? = nil,
                           onDisposed: (() -> Void)? = nil) -> Disposable {
@@ -168,14 +183,10 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
 }
 
 extension PrimitiveSequenceType where Trait == SingleTrait {
-    /**
+    /*
      Returns an observable sequence that contains a single element.
-     
-     - seealso: [just operator on reactivex.io](http://reactivex.io/documentation/operators/just.html)
-     
-     - parameter element: Single element in the resulting observable sequence.
-     - returns: An observable sequence containing the single specified element.
      */
+    // 从原始的 Observer 的 Just, 变为了 Single 的形态 
     public static func just(_ element: Element) -> Single<Element> {
         Single(raw: Observable.just(element))
     }

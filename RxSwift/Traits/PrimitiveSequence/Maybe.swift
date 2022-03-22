@@ -15,6 +15,7 @@ public enum MaybeTrait { }
 /// Represents a push style sequence containing 0 or 1 element.
 public typealias Maybe<Element> = PrimitiveSequence<MaybeTrait, Element>
 
+// 和 Single 相比, 有三种 event 需要处理, 同样的, 也是仅仅处理一次就结束了.
 @frozen public enum MaybeEvent<Element> {
     /// One and only sequence element is produced. (underlying observable sequence emits: `.next(Element)`, `.completed`)
     case success(Element)
@@ -64,6 +65,7 @@ extension PrimitiveSequenceType where Trait == MaybeTrait {
     public func subscribe(_ observer: @escaping (MaybeEvent<Element>) -> Void) -> Disposable {
         var stopped = false
         return self.primitiveSequence.asObservable().subscribe { event in
+            // 仅仅处理一次就结束了. 
             if stopped { return }
             stopped = true
             

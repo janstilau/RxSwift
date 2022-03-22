@@ -12,6 +12,7 @@
  
  他的存在, 主要是为了完成某些特殊的操作. 当 Trait 不同的时候, 可以有不同的特殊的 API 执行. 这就是这个类存在的主要的意义.
  Sigle, MayBe, Completeable, 可以调用 subscribe 来触发各自版本的监听函数, 其实这些监听函数, 还是要转换为监听 event, 只不过这个过程, 被封装到了 PrimitiveSequence 的内部.
+ 
  PrimitiveSequence 是将这些操作, 都包装到了自己的接口上, 所以 asSingle, asMaybe, 各种操作, 需要返回的是 PrimitiveSequence 对象.
  */
 

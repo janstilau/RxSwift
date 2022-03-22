@@ -15,26 +15,16 @@ extension ObservableType where Element: Equatable {
 }
 
 extension ObservableType {
-    /**
+    /*
      Returns an observable sequence that contains only distinct contiguous elements according to the `keySelector`.
-     
-     - seealso: [distinct operator on reactivex.io](http://reactivex.io/documentation/operators/distinct.html)
-     
-     - parameter keySelector: A function to compute the comparison key for each element.
-     - returns: An observable sequence only containing the distinct contiguous elements, based on a computed key value, from the source sequence.
      */
     public func distinctUntilChanged<Key: Equatable>(_ keySelector: @escaping (Element) throws -> Key)
     -> Observable<Element> {
         self.distinctUntilChanged(keySelector, comparer: { $0 == $1 })
     }
     
-    /**
+    /*
      Returns an observable sequence that contains only distinct contiguous elements according to the `comparer`.
-     
-     - seealso: [distinct operator on reactivex.io](http://reactivex.io/documentation/operators/distinct.html)
-     
-     - parameter comparer: Equality comparer for computed key values.
-     - returns: An observable sequence only containing the distinct contiguous elements, based on `comparer`, from the source sequence.
      */
     public func distinctUntilChanged(_ comparer: @escaping (Element, Element) throws -> Bool)
     -> Observable<Element> {
@@ -42,26 +32,19 @@ extension ObservableType {
         self.distinctUntilChanged({ $0 }, comparer: comparer)
     }
     
-    /**
+    /*
      Returns an observable sequence that contains only distinct contiguous elements according to the keySelector and the comparer.
-     
-     - seealso: [distinct operator on reactivex.io](http://reactivex.io/documentation/operators/distinct.html)
-     
-     - parameter keySelector: A function to compute the comparison key for each element.
-     - parameter comparer: Equality comparer for computed key values.
-     - returns: An observable sequence only containing the distinct contiguous elements, based on a computed key value and the comparer, from the source sequence.
      */
-    public func distinctUntilChanged<K>(_ keySelector: @escaping (Element) throws -> K, comparer: @escaping (K, K) throws -> Bool)
+    // 这是最最核心的方法, 如何取值, 取得值后, 如何进行判断.
+    // 其他的最终都归结到该方法.
+    public func distinctUntilChanged<K>(_ keySelector: @escaping (Element) throws -> K,
+                                        comparer: @escaping (K, K) throws -> Bool)
     -> Observable<Element> {
         return DistinctUntilChanged(source: self.asObservable(), selector: keySelector, comparer: comparer)
     }
     
-    /**
+    /*
      Returns an observable sequence that contains only contiguous elements with distinct values in the provided key path on each object.
-     
-     - seealso: [distinct operator on reactivex.io](http://reactivex.io/documentation/operators/distinct.html)
-     
-     - returns: An observable sequence only containing the distinct contiguous elements, based on equality operator on the provided key path
      */
     public func distinctUntilChanged<Property: Equatable>(at keyPath: KeyPath<Element, Property>) ->
     Observable<Element> {
@@ -69,6 +52,10 @@ extension ObservableType {
     }
 }
 
+/*
+ DistinctUntilChangedSink 并没有在 subscribe 的时候, 有什么新的操作.
+ 仅仅是在 on 的时候, 增加了取值, 判等的逻辑.
+ */
 final private class DistinctUntilChangedSink<Observer: ObserverType, Key>: Sink<Observer>, ObserverType {
     typealias Element = Observer.Element
     
@@ -80,11 +67,12 @@ final private class DistinctUntilChangedSink<Observer: ObserverType, Key>: Sink<
         super.init(observer: observer, cancel: cancel)
     }
     
-    // On 里面的逻辑就很简单, 比对不相等, 才会发射新的信号. 
+    // On 里面的逻辑就很简单, 比对不相等, 才会发射新的信号.
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
             do {
+                // 这里可以当做是, 代码的典范.
                 let key = try self.parent.selector(value)
                 var areEqual = false
                 if let currentKey = self.currentKey {
@@ -95,11 +83,11 @@ final private class DistinctUntilChangedSink<Observer: ObserverType, Key>: Sink<
                     return
                 }
                 
+                // 存储一下最新的不同的 key 值.
                 self.currentKey = key
-                
+                // 然后直接交给后方节点.
                 self.forwardOn(event)
-            }
-            catch let error {
+            } catch let error {
                 self.forwardOn(.error(error))
                 self.dispose()
             }

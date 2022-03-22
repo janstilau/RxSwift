@@ -7,8 +7,10 @@
 //
 
 extension ObservableType {
+    
     public func toArray()
     -> Single<[Element]> {
+        // PrimitiveSequence 的 traint 是 single. 通过返回值的类型, 决定了 trait 的类型.
         PrimitiveSequence(raw: ToArray(source: self.asObservable()))
     }
 }
@@ -21,7 +23,6 @@ final private class ToArraySink<SourceType, Observer: ObserverType>: Sink<Observ
     
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
-        
         super.init(observer: observer, cancel: cancel)
     }
     
@@ -29,11 +30,13 @@ final private class ToArraySink<SourceType, Observer: ObserverType>: Sink<Observ
     func on(_ event: Event<SourceType>) {
         switch event {
         case .next(let value):
+            // 收集的工作.
             self.list.append(value)
         case .error(let e):
             self.forwardOn(.error(e))
             self.dispose()
         case .completed:
+            // 最终, 当 complete 来临的时候, 将所有的数据传递到后方的节点.
             self.forwardOn(.next(self.list))
             self.forwardOn(.completed)
             self.dispose()
