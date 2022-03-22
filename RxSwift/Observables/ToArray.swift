@@ -8,6 +8,8 @@
 
 extension ObservableType {
     
+    // ToArray 返回的是一个 Single, 因为 ToArray 满足 Single 的特性.
+    // 只会发射一次 next 到后方节点, 然后就是 Complete. 或者, 直接 Error.
     public func toArray()
     -> Single<[Element]> {
         // PrimitiveSequence 的 traint 是 single. 通过返回值的类型, 决定了 trait 的类型.

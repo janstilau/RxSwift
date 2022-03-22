@@ -25,6 +25,7 @@ final private class MapSink<SourceType, Observer: ObserverType>: Sink<Observer>,
     typealias ResultType = Observer.Element
     typealias Element = SourceType
     
+    // 在内部存储了如何变化的闭包. 
     private let transform: Transform
     
     init(transform: @escaping Transform, observer: Observer, cancel: Cancelable) {
