@@ -8,8 +8,7 @@
 
 extension ObservableType {
     
-    // 一个信号, 产生一个事件序列.
-    // 这是异步操作可以链式的基础 Operator.
+    // 当上游发射一个信号来临之后, 可以生产出一个新的事件序列出来.
     public func flatMap<Source: ObservableConvertibleType>(_ selector: @escaping (Element) throws -> Source)
     -> Observable<Source.Element> {
         return FlatMap(source: self.asObservable(), selector: selector)
@@ -19,14 +18,9 @@ extension ObservableType {
 
 extension ObservableType {
     
-    /**
+    /*
      Projects each element of an observable sequence to an observable sequence and merges the resulting observable sequences into one observable sequence.
      If element is received while there is some projected observable sequence being merged it will simply be ignored.
-     
-     - seealso: [flatMapFirst operator on reactivex.io](http://reactivex.io/documentation/operators/flatmap.html)
-     
-     - parameter selector: A transform function to apply to element that was observed while no observable is executing in parallel.
-     - returns: An observable sequence whose elements are the result of invoking the one-to-many transform function on each element of the input sequence that was received while no other sequence was being calculated.
      */
     public func flatMapFirst<Source: ObservableConvertibleType>(_ selector: @escaping (Element) throws -> Source)
     -> Observable<Source.Element> {
@@ -34,14 +28,11 @@ extension ObservableType {
     }
 }
 
+// 当, 自己的 ele 都是 Source 的时候, 可以直接调用 Merge
 extension ObservableType where Element: ObservableConvertibleType {
     
     /*
      Merges elements from all observable sequences in the given enumerable sequence into a single observable sequence.
-     
-     - seealso: [merge operator on reactivex.io](http://reactivex.io/documentation/operators/merge.html)
-     
-     - returns: The observable sequence that merges the elements of the observable sequences.
      */
     public func merge() -> Observable<Element.Element> {
         Merge(source: self.asObservable())
@@ -49,11 +40,6 @@ extension ObservableType where Element: ObservableConvertibleType {
     
     /**
      Merges elements from all inner observable sequences into a single observable sequence, limiting the number of concurrent subscriptions to inner sequences.
-     
-     - seealso: [merge operator on reactivex.io](http://reactivex.io/documentation/operators/merge.html)
-     
-     - parameter maxConcurrent: Maximum number of inner observable sequences being subscribed to concurrently.
-     - returns: The observable sequence that merges the elements of the inner sequences.
      */
     public func merge(maxConcurrent: Int)
     -> Observable<Element.Element> {
@@ -164,11 +150,10 @@ private final class MergeLimitedSinkIter<SourceElement, SourceSequence: Observab
         case .completed:
             self.parent.group.remove(for: self.disposeKey)
             if let next = self.parent.queue.dequeue() {
+                // 当, 自己完毕了, 会空出来一个位置, 所以一定是 activeCount < max, 所以直接就调用 self.parent.subscribe 将存储的 ele 拿出来开启新的注册了.
                 self.parent.subscribe(next, group: self.parent.group)
-            }
-            else {
+            } else {
                 self.parent.activeCount -= 1
-                
                 if self.parent.stopped && self.parent.activeCount == 0 {
                     self.parent.forwardOn(.completed)
                     self.parent.dispose()
@@ -188,6 +173,7 @@ private final class ConcatMapSink<SourceElement, SourceSequence: ObservableConve
         super.init(maxConcurrent: 1, observer: observer, cancel: cancel)
     }
     
+    // 要使用, 存储的 Selector 来生成新的 Source.
     override func performMap(_ element: SourceElement) throws -> SourceSequence {
         try self.selector(element)
     }
@@ -205,6 +191,7 @@ private class MergeLimitedSink<SourceElement, SourceSequence: ObservableConverti
 , ObserverType where Observer.Element == SourceSequence.Element {
     typealias QueueType = Queue<SourceSequence>
     
+    // 这个值, 控制的同时可以监听多少个 element 生成的事件序列.
     let maxConcurrent: Int
     
     let lock = RecursiveLock()
@@ -237,7 +224,6 @@ private class MergeLimitedSink<SourceElement, SourceSequence: ObservableConverti
         
         if let key = key {
             let observer = MergeLimitedSinkIter(parent: self, disposeKey: key)
-            
             let disposable = innerSource.asObservable().subscribe(observer)
             subscription.setDisposable(disposable)
         }
@@ -254,9 +240,9 @@ private class MergeLimitedSink<SourceElement, SourceSequence: ObservableConverti
             if self.activeCount < self.maxConcurrent {
                 self.activeCount += 1
                 subscribe = true
-            }
-            else {
+            } else {
                 do {
+                    // 缓存起来. 缓存起来的, 是 ele 产生的 sequence, 不是 element.
                     let value = try self.performMap(element)
                     self.queue.enqueue(value)
                 } catch {
@@ -332,7 +318,8 @@ private final class MergeBasicSink<Source: ObservableConvertibleType, Observer: 
 
 // MARK: flatMap
 
-private final class FlatMapSink<SourceElement, SourceSequence: ObservableConvertibleType, Observer: ObserverType> : MergeSink<SourceElement, SourceSequence, Observer> where Observer.Element == SourceSequence.Element {
+private final class FlatMapSink<SourceElement, SourceSequence: ObservableConvertibleType, Observer: ObserverType> :
+    MergeSink<SourceElement, SourceSequence, Observer> where Observer.Element == SourceSequence.Element {
     typealias Selector = (SourceElement) throws -> SourceSequence
     
     private let selector: Selector
@@ -342,6 +329,7 @@ private final class FlatMapSink<SourceElement, SourceSequence: ObservableConvert
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 对于 FlatMap 来说, 就是使用存储的 Selector, 从一个 element 生成一个 Publisher
     override func performMap(_ element: SourceElement) throws -> SourceSequence {
         try self.selector(element)
     }
@@ -401,9 +389,12 @@ private final class MergeSinkIter<SourceElement, SourceSequence: ObservableConve
 }
 
 
+// Concat 有着明确的前后顺序, Merge 就是监听, 各个序列哪一个先发生, 就向后面的节点, 发射哪个数据.
+
 private class MergeSink<SourceElement, SourceSequence: ObservableConvertibleType, Observer: ObserverType>
 : Sink<Observer>
 , ObserverType where Observer.Element == SourceSequence.Element {
+    
     typealias ResultType = Observer.Element
     typealias Element = SourceElement
     
@@ -424,12 +415,17 @@ private class MergeSink<SourceElement, SourceSequence: ObservableConvertibleType
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 如何从 topLine Source 的每一个 element, 变化出一个 Publisher 出来.
     func performMap(_ element: SourceElement) throws -> SourceSequence {
         rxAbstractMethod()
     }
     
+    // 这里就是生成 SubLine Publisher 的过程. 并且在这里进行了数量的管理.
     final private func nextElementArrived(element: SourceElement) -> SourceSequence? {
         self.lock.performLocked {
+            // 这里控制着, 当 on 中来临了一个新的 ele 的时候, 应该如何处理.
+            // 垃圾命名, 这里应该是 shouldSubscribeNext.
+            // FlatFirst 在这里的处理逻辑就是, 只有当前没有 activeCount, 也就是没有 element 生成的 source 当前正在被处理的时候, 才会注册
             if !self.subscribeNext {
                 return nil
             }
@@ -437,8 +433,7 @@ private class MergeSink<SourceElement, SourceSequence: ObservableConvertibleType
                 let value = try self.performMap(element)
                 self.activeCount += 1
                 return value
-            }
-            catch let e {
+            } catch let e {
                 self.forwardOn(.error(e))
                 self.dispose()
                 return nil
@@ -451,7 +446,7 @@ private class MergeSink<SourceElement, SourceSequence: ObservableConvertibleType
         case .next(let element):
             // 当, 源 Source 发射一个信号之后, 调用 nextElementArrived 来生成一个新的 Publisher.
             if let value = self.nextElementArrived(element: element) {
-                // 然后
+                // 新生成的 Publisher 的事件, 要直接传递给后续节点.
                 self.subscribeInner(value.asObservable())
             }
         case .error(let error):
@@ -493,7 +488,7 @@ private class MergeSink<SourceElement, SourceSequence: ObservableConvertibleType
     }
     
     // self.stopped 代表着, source 没有数据了.
-    // self.activeCount 代表着, 各个 ele 生成的 Publisher 也都没有数据了. 
+    // self.activeCount 代表着, 各个 ele 生成的 Publisher 也都没有数据了.
     func checkCompleted() {
         if self.stopped && self.activeCount == 0 {
             self.forwardOn(.completed)
@@ -526,6 +521,7 @@ final private class FlatMap<SourceElement, SourceSequence: ObservableConvertible
     }
     
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == SourceSequence.Element {
+        
         let sink = FlatMapSink(selector: self.selector, observer: observer, cancel: cancel)
         let subscription = sink.run(self.source)
         return (sink: sink, subscription: subscription)

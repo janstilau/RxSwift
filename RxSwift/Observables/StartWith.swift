@@ -8,7 +8,7 @@
 
 extension ObservableType {
     
-    // 可以在信号中, 插入一些已有的数据. 
+    // 可以在信号中, 插入一些已有的数据.
     public func startWith(_ elements: Element ...)
     -> Observable<Element> {
         return StartWith(source: self.asObservable(), elements: elements)
@@ -25,7 +25,6 @@ final private class StartWith<Element>: Producer<Element> {
         super.init()
     }
     
-    //
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         // 直接将存储的数据, 传递给后方.
         for e in self.elements {

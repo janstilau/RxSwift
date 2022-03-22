@@ -6,13 +6,10 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
+// 两个 source, 哪一个先发生 ,使用哪一个. 
 extension ObservableType {
-    /**
+    /*
      Propagates the observable sequence that reacts first.
-     
-     - seealso: [amb operator on reactivex.io](http://reactivex.io/documentation/operators/amb.html)
-     
-     - returns: An observable sequence that surfaces any of the given sequences, whichever reacted first.
      */
     public static func amb<Sequence: Swift.Sequence>(_ sequence: Sequence) -> Observable<Element>
     where Sequence.Element == Observable<Element> {
@@ -56,10 +53,6 @@ final private class AmbObserver<Observer: ObserverType>: ObserverType {
     fileprivate var cancel: Disposable
     
     init(parent: Parent, cancel: Disposable, sink: @escaping Sink) {
-#if TRACE_RESOURCES
-        _ = Resources.incrementTotal()
-#endif
-        
         self.parent = parent
         self.sink = sink
         self.cancel = cancel
@@ -70,12 +63,6 @@ final private class AmbObserver<Observer: ObserverType>: ObserverType {
         if event.isStopEvent {
             self.cancel.dispose()
         }
-    }
-    
-    deinit {
-#if TRACE_RESOURCES
-        _ = Resources.decrementTotal()
-#endif
     }
 }
 
@@ -100,7 +87,8 @@ final private class AmbSink<Observer: ObserverType>: Sink<Observer> {
         let subscription2 = SingleAssignmentDisposable()
         let disposeAll = Disposables.create(subscription1, subscription2)
         
-        let forwardEvent = { (o: AmbObserverType, event: Event<Element>) -> Void in
+        let forwardEvent = {
+            (o: AmbObserverType, event: Event<Element>) -> Void in
             self.forwardOn(event)
             if event.isStopEvent {
                 self.dispose()
@@ -109,13 +97,15 @@ final private class AmbSink<Observer: ObserverType>: Sink<Observer> {
         
         let decide = { (o: AmbObserverType, event: Event<Element>, me: AmbState, otherSubscription: Disposable) in
             self.lock.performLocked {
+                // 如果还没有决定, 在这里决定使用哪个 source, 然后释放另一个.
                 if self.choice == .neither {
                     self.choice = me
                     o.sink = forwardEvent
                     o.cancel = disposeAll
                     otherSubscription.dispose()
                 }
-                
+                    
+                // 然后就是 直接 forward.
                 if self.choice == me {
                     self.forwardOn(event)
                     if event.isStopEvent {

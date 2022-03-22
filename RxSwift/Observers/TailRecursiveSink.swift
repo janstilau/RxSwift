@@ -11,7 +11,7 @@ enum TailRecursiveSinkCommand {
     case dispose
 }
 
-// Sequence 里面的数据, 必须是一个序列对象.
+// 令人恶心的代码.
 class TailRecursiveSink<Sequence: Swift.Sequence, Observer: ObserverType>
 : Sink<Observer>, InvocableWithValueType where
 Sequence.Element: ObservableConvertibleType,
@@ -93,7 +93,7 @@ Sequence.Element.Element == Observer.Element {
             // there is no memory leak in case this operator is used to generate non terminating
             // sequence.
             
-            // 在这里, 进行了最大次数的更新. 
+            // 在这里, 进行了最大次数的更新.
             if let knownOriginalLeft = left {
                 // `- 1` because generator.next() has just been called
                 if knownOriginalLeft - 1 >= 1 {

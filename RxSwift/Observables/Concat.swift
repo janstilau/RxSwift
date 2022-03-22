@@ -1,6 +1,7 @@
 
 
 extension ObservableType {
+    // 这是一个实例方法, 其实就是调用静态方法, 创建一个 ConcatSink
     public func concat<Source: ObservableConvertibleType>(_ second: Source) -> Observable<Element> where Source.Element == Element {
         Observable.concat([self.asObservable(), second.asObservable()])
     }
@@ -68,8 +69,8 @@ final private class ConcatSink<Sequence: Swift.Sequence, Observer: ObserverType>
             self.forwardOn(event)
             self.dispose()
         case .completed:
-            // 前一个 Publisher 结束了, 就向存储的 Sources 里面, 读取下一个 Publisher, 然后注册给自己.
-            // 如果都结束了, 才会发送 Complete 事件给后方.
+            
+            
             self.schedule(.moveNext)
         }
     }
@@ -81,8 +82,7 @@ final private class ConcatSink<Sequence: Swift.Sequence, Observer: ObserverType>
     override func extract(_ observable: Observable<Element>) -> SequenceGenerator? {
         if let source = observable as? Concat<Sequence> {
             return (source.sources.makeIterator(), source.count)
-        }
-        else {
+        } else {
             return nil
         }
     }
@@ -93,6 +93,7 @@ final private class ConcatSink<Sequence: Swift.Sequence, Observer: ObserverType>
 final private class Concat<Sequence: Swift.Sequence>: Producer<Sequence.Element.Element> where Sequence.Element: ObservableConvertibleType {
     typealias Element = Sequence.Element.Element
     
+    // 存储了所有的 source
     fileprivate let sources: Sequence
     fileprivate let count: IntMax?
     

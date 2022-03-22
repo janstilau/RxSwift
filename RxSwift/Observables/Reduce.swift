@@ -11,6 +11,7 @@
  */
 
 extension ObservableType {
+    
     public func reduce<A, Result>(_ seed: A,
                                   accumulator: @escaping (A, Element) throws -> A,
                                   mapResult: @escaping (A) throws -> Result)

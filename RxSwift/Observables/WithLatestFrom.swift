@@ -7,40 +7,35 @@
 //
 
 extension ObservableType {
-
-    /**
+    
+    /*
      Merges two observable sequences into one observable sequence by combining each element from self with the latest element from the second source, if any.
-
-     - seealso: [combineLatest operator on reactivex.io](http://reactivex.io/documentation/operators/combinelatest.html)
-     - note: Elements emitted by self before the second source has emitted any values will be omitted.
-
-     - parameter second: Second observable source.
-     - parameter resultSelector: Function to invoke for each element from the self combined with the latest element from the second source, if any.
-     - returns: An observable sequence containing the result of combining each element of the self  with the latest element from the second source, if any, using the specified result selector function.
      */
     public func withLatestFrom<Source: ObservableConvertibleType, ResultType>(_ second: Source, resultSelector: @escaping (Element, Source.Element) throws -> ResultType) -> Observable<ResultType> {
         WithLatestFrom(first: self.asObservable(), second: second.asObservable(), resultSelector: resultSelector)
     }
-
+    
     /**
      Merges two observable sequences into one observable sequence by using latest element from the second sequence every time when `self` emits an element.
-
+     
      - seealso: [combineLatest operator on reactivex.io](http://reactivex.io/documentation/operators/combinelatest.html)
      - note: Elements emitted by self before the second source has emitted any values will be omitted.
-
+     
      - parameter second: Second observable source.
      - returns: An observable sequence containing the result of combining each element of the self  with the latest element from the second source, if any, using the specified result selector function.
      */
     public func withLatestFrom<Source: ObservableConvertibleType>(_ second: Source) -> Observable<Source.Element> {
+        // 默认, 就是使用 Second 的 ele 值. 
         WithLatestFrom(first: self.asObservable(), second: second.asObservable(), resultSelector: { $1 })
     }
 }
 
 final private class WithLatestFromSink<FirstType, SecondType, Observer: ObserverType>
-    : Sink<Observer>
-    , ObserverType
-    , LockOwnerType
-    , SynchronizedOnType {
+: Sink<Observer>
+, ObserverType
+, LockOwnerType
+, SynchronizedOnType {
+    
     typealias ResultType = Observer.Element
     typealias Parent = WithLatestFrom<FirstType, SecondType, ResultType>
     typealias Element = FirstType
@@ -49,7 +44,7 @@ final private class WithLatestFromSink<FirstType, SecondType, Observer: Observer
     
     fileprivate var lock = RecursiveLock()
     fileprivate var latest: SecondType?
-
+    
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
         
@@ -58,25 +53,27 @@ final private class WithLatestFromSink<FirstType, SecondType, Observer: Observer
     
     func run() -> Disposable {
         let sndSubscription = SingleAssignmentDisposable()
-        let sndO = WithLatestFromSecond(parent: self, disposable: sndSubscription)
         
+        let sndO = WithLatestFromSecond(parent: self, disposable: sndSubscription)
         sndSubscription.setDisposable(self.parent.second.subscribe(sndO))
+        
+        // First 桥接自己, Sencod 桥接 WithLatestFromSecond
         let fstSubscription = self.parent.first.subscribe(self)
-
+        
         return Disposables.create(fstSubscription, sndSubscription)
     }
-
+    
     func on(_ event: Event<Element>) {
         self.synchronizedOn(event)
     }
-
+    
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case let .next(value):
             guard let latest = self.latest else { return }
             do {
+                // 当自己的 source 来临之后, 需要和存储的 latest 值一起, 使用 resultSelector 来获取结果, 交给下游的节点.
                 let res = try self.parent.resultSelector(value, latest)
-                
                 self.forwardOn(.next(res))
             } catch let e {
                 self.forwardOn(.error(e))
@@ -93,9 +90,9 @@ final private class WithLatestFromSink<FirstType, SecondType, Observer: Observer
 }
 
 final private class WithLatestFromSecond<FirstType, SecondType, Observer: ObserverType>
-    : ObserverType
-    , LockOwnerType
-    , SynchronizedOnType {
+: ObserverType
+, LockOwnerType
+, SynchronizedOnType {
     
     typealias ResultType = Observer.Element
     typealias Parent = WithLatestFromSink<FirstType, SecondType, Observer>
@@ -103,11 +100,11 @@ final private class WithLatestFromSecond<FirstType, SecondType, Observer: Observ
     
     private let parent: Parent
     private let disposable: Disposable
-
+    
     var lock: RecursiveLock {
         self.parent.lock
     }
-
+    
     init(parent: Parent, disposable: Disposable) {
         self.parent = parent
         self.disposable = disposable
@@ -116,10 +113,11 @@ final private class WithLatestFromSecond<FirstType, SecondType, Observer: Observ
     func on(_ event: Event<Element>) {
         self.synchronizedOn(event)
     }
-
+    
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case let .next(value):
+            // 仅仅是存值.
             self.parent.latest = value
         case .completed:
             self.disposable.dispose()
@@ -136,7 +134,7 @@ final private class WithLatestFrom<FirstType, SecondType, ResultType>: Producer<
     fileprivate let first: Observable<FirstType>
     fileprivate let second: Observable<SecondType>
     fileprivate let resultSelector: ResultSelector
-
+    
     init(first: Observable<FirstType>, second: Observable<SecondType>, resultSelector: @escaping ResultSelector) {
         self.first = first
         self.second = second
