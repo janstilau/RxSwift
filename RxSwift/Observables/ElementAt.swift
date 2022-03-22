@@ -33,6 +33,7 @@ final private class ElementAtSink<Observer: ObserverType>: Sink<Observer>, Obser
         case .next:
             
             if self.i == 0 {
+                // 当, 到达了想要的 Index 之后, 发射给后面的节点, 然后发射 compelte 事件.
                 self.forwardOn(event)
                 self.forwardOn(.completed)
                 self.dispose()

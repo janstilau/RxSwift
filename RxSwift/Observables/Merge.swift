@@ -382,6 +382,7 @@ private final class MergeSinkIter<SourceElement, SourceSequence: ObservableConve
         self.disposeKey = disposeKey
     }
     
+    // MergeSinkIter 就是直接将数据, 传递给后面的了.
     func on(_ event: Event<Element>) {
         self.parent.lock.performLocked {
             switch event {
@@ -427,13 +428,11 @@ private class MergeSink<SourceElement, SourceSequence: ObservableConvertibleType
         rxAbstractMethod()
     }
     
-    @inline(__always)
     final private func nextElementArrived(element: SourceElement) -> SourceSequence? {
         self.lock.performLocked {
             if !self.subscribeNext {
                 return nil
             }
-            
             do {
                 let value = try self.performMap(element)
                 self.activeCount += 1
@@ -450,7 +449,9 @@ private class MergeSink<SourceElement, SourceSequence: ObservableConvertibleType
     func on(_ event: Event<SourceElement>) {
         switch event {
         case .next(let element):
+            // 当, 源 Source 发射一个信号之后, 调用 nextElementArrived 来生成一个新的 Publisher.
             if let value = self.nextElementArrived(element: element) {
+                // 然后
                 self.subscribeInner(value.asObservable())
             }
         case .error(let error):
@@ -471,6 +472,7 @@ private class MergeSink<SourceElement, SourceSequence: ObservableConvertibleType
         let iterDisposable = SingleAssignmentDisposable()
         if let disposeKey = self.group.insert(iterDisposable) {
             let iter = MergeSinkIter(parent: self, disposeKey: disposeKey)
+            // 然后, 使用新生成的 Publisher, 注册一个 MergeSinkIter
             let subscription = source.subscribe(iter)
             iterDisposable.setDisposable(subscription)
         }
@@ -490,7 +492,8 @@ private class MergeSink<SourceElement, SourceSequence: ObservableConvertibleType
         return self.group
     }
     
-    @inline(__always)
+    // self.stopped 代表着, source 没有数据了.
+    // self.activeCount 代表着, 各个 ele 生成的 Publisher 也都没有数据了. 
     func checkCompleted() {
         if self.stopped && self.activeCount == 0 {
             self.forwardOn(.completed)

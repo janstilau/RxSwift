@@ -12,6 +12,8 @@ import RxSwift
 //
 // Unlike `BehaviorSubject` it can't terminate with error or completed.
 
+// 缓存一个的特性, 其实是 BehaviorSubject 的能力. Relay 的作用, 就是限制 Subject 的接口而已. 
+
 // 限制了 BehaviorSubject 的能力, 只能充当 Publisher 了, 提供给了一个输出 value 的方法.
 // 实际上, UI 相关的 Publisher, 应该绑定事件到这个上面. 因为 UI 不会发出 Error.
 public final class BehaviorRelay<Element>: ObservableType {

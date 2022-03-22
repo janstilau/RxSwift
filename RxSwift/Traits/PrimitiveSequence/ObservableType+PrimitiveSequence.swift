@@ -12,6 +12,8 @@ extension ObservableType {
      if the source Observable does not emit exactly one element before successfully completing.
      */
     public func asSingle() -> Single<Element> {
+        // 返回值, 必须是 PrimitiveSequence 这种类型的, 不然没有办法使用 Single 的各种方法.
+        // 真正的 Signle 的含义, 是通过 AsSingleSink 实现的. 
         PrimitiveSequence(raw: AsSingle(source: self.asObservable()))
     }
     
