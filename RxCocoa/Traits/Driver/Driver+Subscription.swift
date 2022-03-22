@@ -12,6 +12,10 @@ import RxRelay
 private let errorMessage = "`drive*` family of methods can be only called from `MainThread`.\n" +
 "This is required to ensure that the last replayed `Driver` element is delivered on `MainThread`.\n"
 
+/*
+ 只有, SharedSequenceConvertibleType+DriverSharingStrategy 才能使用下面的方法.
+ Trait 的含义, 及时特定的类型, 使用特定的方法. 这些方法, 具有更加独特的接口, 来表明类型的含义. 
+ */
 extension SharedSequenceConvertibleType where SharingStrategy == DriverSharingStrategy {
     /**
     Creates new subscription and sends elements to observer.

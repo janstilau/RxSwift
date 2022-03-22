@@ -1,3 +1,10 @@
+
+/*
+ 对于 Subject 来说, 它的 subscripe, dispose 仅仅是将监听者从自身的管理中进行移除.
+ 当它进行析构的时候, 所有的监听者的内存会进行引用计数的减少.
+ */
+
+
 /// Represents a value that changes over time.
 /// Observers can subscribe to the subject to receive the last (or initial) value and all subsequent notifications.
 

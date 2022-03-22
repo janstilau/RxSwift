@@ -7,11 +7,11 @@
 //
 
 #if os(iOS)
-    import UIKit
-    typealias OSApplication = UIApplication
+import UIKit
+typealias OSApplication = UIApplication
 #elseif os(macOS)
-    import Cocoa
-    typealias OSApplication = NSApplication
+import Cocoa
+typealias OSApplication = NSApplication
 #endif
 
 extension OSApplication {

@@ -6,6 +6,15 @@
 //  Copyright © 2017 Krunoslav Zaher. All rights reserved.
 //
 
+/*
+ PrimitiveSequence 并不是一个 Publisher, 他是一个包含了 Publisher 的类型.
+ 他想要完成, Pusblisher 的操作, 还是要将各个后续节点, 连接到包含的 source 上才可以.
+ 
+ 他的存在, 主要是为了完成某些特殊的操作. 当 Trait 不同的时候, 可以有不同的特殊的 API 执行. 这就是这个类存在的主要的意义.
+ Sigle, MayBe, Completeable, 可以调用 subscribe 来触发各自版本的监听函数, 其实这些监听函数, 还是要转换为监听 event, 只不过这个过程, 被封装到了 PrimitiveSequence 的内部.
+ PrimitiveSequence 是将这些操作, 都包装到了自己的接口上, 所以 asSingle, asMaybe, 各种操作, 需要返回的是 PrimitiveSequence 对象.
+ */
+
 // Observable sequences containing 0 or 1 element.
 public struct PrimitiveSequence<Trait, Element> {
     let source: Observable<Element>

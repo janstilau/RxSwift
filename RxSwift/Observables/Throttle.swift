@@ -12,15 +12,7 @@ extension ObservableType {
 
     /*
      Returns an Observable that emits the first and the latest item emitted by the source Observable during sequential time windows of a specified duration.
-
      This operator makes sure that no two elements are emitted in less then dueTime.
-
-     - seealso: [debounce operator on reactivex.io](http://reactivex.io/documentation/operators/debounce.html)
-
-     - parameter dueTime: Throttling duration for each element.
-     - parameter latest: Should latest element received in a dueTime wide time window since last element emission be emitted.
-     - parameter scheduler: Scheduler to run the throttle timers on.
-     - returns: The throttled sequence.
      */
     public func throttle(_ dueTime: RxTimeInterval, latest: Bool = true, scheduler: SchedulerType)
         -> Observable<Element> {
@@ -55,7 +47,6 @@ final private class ThrottleSink<Observer: ObserverType>
     
     func run() -> Disposable {
         let subscription = self.parent.source.subscribe(self)
-        
         return Disposables.create(subscription, cancellable)
     }
 
@@ -72,8 +63,7 @@ final private class ThrottleSink<Observer: ObserverType>
 
             if let lastSendingTime = self.lastSentTime {
                 reducedScheduledTime = self.parent.dueTime.reduceWithSpanBetween(earlierDate: lastSendingTime, laterDate: now)
-            }
-            else {
+            } else {
                 reducedScheduledTime = .nanoseconds(0)
             }
 
@@ -156,5 +146,4 @@ final private class Throttle<Element>: Producer<Element> {
         let subscription = sink.run()
         return (sink: sink, subscription: subscription)
     }
-    
 }

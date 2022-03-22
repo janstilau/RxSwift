@@ -11,6 +11,11 @@ import RxSwift
 
 /*
  各种 Bind 到 SubjectRelay, 就是使用一个 AnonymousObserver, 包装 Relay 的 accept 方法的调用 .
+ 
+ Replay 保证, 是不应该接收到结束事件的. 所以, 它并不是一个 Observer.
+ 想要使用它, 只能使用 accept.
+ 而想要纳入到响应式的链式代码中, 只能使用 bindto 函数.
+ 在这个函数内部, 包装了一个 AnonymousObserver 调用 relay 的 accept 函数, 而面的结束事件, 不做处理. 
  */
 extension ObservableType {
     /*
