@@ -17,9 +17,9 @@ public extension ObservableType where Element == Data {
   /// - note: If using a custom decoder, it must conform to the `DataDecoder` protocol.
   ///
   /// - returns: An `Observable` of the decoded type
-  func decode<Item: Decodable,
-              Decoder: DataDecoder>(type: Item.Type,
+  func decode<Item: Decodable, Decoder: DataDecoder>(type: Item.Type,
                                     decoder: Decoder) -> Observable<Item> {
+      // Map 里面有 try catch, 所以这里不怕有错误处理. 
     map { try decoder.decode(type, from: $0) }
   }
 }
@@ -31,4 +31,5 @@ public protocol DataDecoder {
 }
 
 extension JSONDecoder: DataDecoder {}
+
 extension PropertyListDecoder: DataDecoder {}

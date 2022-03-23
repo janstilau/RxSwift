@@ -7,35 +7,28 @@
 //
 
 extension ObservableType {
-    /**
+    /*
      Merges the specified observable sequences into one observable sequence by using the selector function whenever all of the observable sequences have produced an element at a corresponding index.
-     
-     - seealso: [zip operator on reactivex.io](http://reactivex.io/documentation/operators/zip.html)
-     
-     - parameter resultSelector: Function to invoke for each series of elements at corresponding indexes in the sources.
-     - returns: An observable sequence containing the result of combining elements of the sources using the specified result selector function.
      */
+    // 所有 Collection 里面的元素, 必须都是 ObservableType 才可以.
     public static func zip<Collection: Swift.Collection>(_ collection: Collection, resultSelector: @escaping ([Collection.Element.Element]) throws -> Element) -> Observable<Element>
     where Collection.Element: ObservableType {
         ZipCollectionType(sources: collection, resultSelector: resultSelector)
     }
     
-    /**
+    /*
      Merges the specified observable sequences into one observable sequence whenever all of the observable sequences have produced an element at a corresponding index.
-     
-     - seealso: [zip operator on reactivex.io](http://reactivex.io/documentation/operators/zip.html)
-     
-     - returns: An observable sequence containing the result of combining elements of the sources.
      */
     public static func zip<Collection: Swift.Collection>(_ collection: Collection) -> Observable<[Element]>
     where Collection.Element: ObservableType, Collection.Element.Element == Element {
         ZipCollectionType(sources: collection, resultSelector: { $0 })
     }
-    
 }
 
+// 泛型的限制.
 final private class ZipCollectionTypeSink<Collection: Swift.Collection, Observer: ObserverType>
 : Sink<Observer> where Collection.Element: ObservableConvertibleType {
+    
     typealias Result = Observer.Element
     typealias Parent = ZipCollectionType<Collection, Result>
     typealias SourceElement = Collection.Element.Element
@@ -46,6 +39,7 @@ final private class ZipCollectionTypeSink<Collection: Swift.Collection, Observer
     
     // state
     private var numberOfValues = 0
+    
     // 每一个都是使用了一个 Queue 来进行了存储.
     private var values: [Queue<SourceElement>]
     private var isDone: [Bool]
@@ -54,6 +48,7 @@ final private class ZipCollectionTypeSink<Collection: Swift.Collection, Observer
     
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
+        // 上来就把所有需要用到的 queue 进行了创建.
         self.values = [Queue<SourceElement>](repeating: Queue(capacity: 4), count: parent.count)
         self.isDone = [Bool](repeating: false, count: parent.count)
         self.subscriptions = [SingleAssignmentDisposable]()
@@ -69,16 +64,16 @@ final private class ZipCollectionTypeSink<Collection: Swift.Collection, Observer
     // 这个 ON 是带 Index 的.
     func on(_ event: Event<SourceElement>, atIndex: Int) {
         self.lock.lock(); defer { self.lock.unlock() }
+        
         switch event {
+            
         case .next(let element):
             self.values[atIndex].enqueue(element)
-            
             // 每个 Bucket 的第一次, 进行 numberOfValues 的增加.
             if self.values[atIndex].count == 1 {
                 self.numberOfValues += 1
             }
             
-            // 如果不够, return.
             if self.numberOfValues < self.parent.count {
                 if self.numberOfDone == self.parent.count - 1 {
                     self.forwardOn(.completed)
@@ -121,10 +116,10 @@ final private class ZipCollectionTypeSink<Collection: Swift.Collection, Observer
             self.numberOfDone += 1
             
             if self.numberOfDone == self.parent.count {
+                // 全都 complete 了, 才 Completed.
                 self.forwardOn(.completed)
                 self.dispose()
-            }
-            else {
+            } else {
                 self.subscriptions[atIndex].dispose()
             }
         }
@@ -136,6 +131,8 @@ final private class ZipCollectionTypeSink<Collection: Swift.Collection, Observer
             let index = j
             let source = i.asObservable()
             
+            // 在这里, 将所有的 Collection 里面的 Source 进行了注册.
+            // 不过, 这里是找了一个中间层. 每一个 Item Source, 注册给了一个中间节点, 这个中间节点, 调用特殊的 OnIndex 的 on 处理方法.
             let disposable = source.subscribe(AnyObserver { event in
                 self.on(event, atIndex: index)
             })
@@ -143,6 +140,7 @@ final private class ZipCollectionTypeSink<Collection: Swift.Collection, Observer
             j += 1
         }
         
+        // 如果, 是空, 直接 complete 事件.
         if self.parent.sources.isEmpty {
             self.forwardOn(.completed)
         }
