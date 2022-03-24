@@ -11,7 +11,6 @@ enum TailRecursiveSinkCommand {
     case dispose
 }
 
-// 令人恶心的代码.
 class TailRecursiveSink<Sequence: Swift.Sequence, Observer: ObserverType>
 : Sink<Observer>, InvocableWithValueType where
 Sequence.Element: ObservableConvertibleType,
@@ -24,6 +23,7 @@ Sequence.Element.Element == Observer.Element {
     
     var generators: [SequenceGenerator] = []
     var disposed = false
+    
     // SerialDisposable, 为了达到不断的替换 Publisher 的效果.
     var subscription = SerialDisposable()
     

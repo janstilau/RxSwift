@@ -9,13 +9,16 @@ extension ObservableType {
      Continues an observable sequence that is terminated by an error with
      the observable sequence produced by the handler.
      */
+    /*
+     监听一个事件序列, 当这个事件序列发生错误之后, 不会进行 Dispose, 而是使用 handler 生成一个新的事件序列, 继续监听这个新生成的事件序列.
+     */
     public func `catch`(_ handler: @escaping (Swift.Error) throws -> Observable<Element>)
     -> Observable<Element> {
         Catch(source: self.asObservable(), handler: handler)
     }
     
     // 当发生错误之后, 直接使用 element 产生一个新的队列.
-    // ReplaceError
+    // 有了上面的通用的设计, 对于返回一个确定值的情况, 就是使用 Observable.just 生成一个事件序列, 然后返回那个值就可以了.
     public func catchAndReturn(_ element: Element)
     -> Observable<Element> {
         // 当, 发生了错误之后, 产生一个 element 的 next 信号, 然后整个信号序列结束了.
@@ -43,6 +46,9 @@ final private class CatchSinkProxy<Observer: ObserverType>: ObserverType {
         case .next:
             break
         case .error, .completed:
+            // 如果是结束事件, 那么直接调用 parent 的 dipose.
+            // 这是合理的做法, catch handler 生成的 Sequence, 不会触发 CatchSink 的 on 逻辑, 而是将所有的 event 交给了 CatchSinkProxy 来处理
+            // 不这样, CatchSink 再次触发 error, 那么就无限循环了.
             self.parent.dispose()
         }
     }
@@ -65,7 +71,7 @@ final private class CatchSink<Observer: ObserverType>: Sink<Observer>, ObserverT
     func run() -> Disposable {
         let d1 = SingleAssignmentDisposable()
         self.subscription.disposable = d1
-        // 让 Sink 来注册, 原本的 Source 的信号.
+        // CatchSink 还是成为原来的 Source 的 Observer.
         d1.setDisposable(self.parent.source.subscribe(self))
         return self.subscription
     }
@@ -116,11 +122,18 @@ final private class Catch<Element>: Producer<Element> {
 }
 
 extension ObservableType {
+    // 如果, 一个 Swift.Sequence 里面的元素, 都是一个 Publisher 的话, 会生成 CatchSequence
     public static func `catch`<Sequence: Swift.Sequence>(sequence: Sequence) -> Observable<Element>
     where Sequence.Element == Observable<Element> {
         CatchSequence(sources: sequence)
     }
 }
+
+
+
+/*
+    
+ */
 
 extension ObservableType {
     
@@ -178,6 +191,7 @@ final private class CatchSequenceSink<Sequence: Swift.Sequence, Observer: Observ
         }
     }
     
+    // 取得了下一个 Publisher, 应该怎么处理. 在子类中重写, 这里就是直接将和自己相连.
     override func subscribeToNext(_ source: Observable<Element>) -> Disposable {
         // 获取下一个 Publisher, 然后 Publisher 构建原有的响应链条的源头.
         source.subscribe(self)
@@ -186,19 +200,16 @@ final private class CatchSequenceSink<Sequence: Swift.Sequence, Observer: Observ
     override func done() {
         if let lastError = self.lastError {
             self.forwardOn(.error(lastError))
-        }
-        else {
+        } else {
             self.forwardOn(.completed)
         }
-        
         self.dispose()
     }
     
     override func extract(_ observable: Observable<Element>) -> SequenceGenerator? {
         if let onError = observable as? CatchSequence<Sequence> {
             return (onError.sources.makeIterator(), nil)
-        }
-        else {
+        } else {
             return nil
         }
     }
@@ -213,6 +224,7 @@ final private class CatchSequence<Sequence: Swift.Sequence>: Producer<Sequence.E
         self.sources = sources
     }
     
+    // 这种, 另起一行将参数顶头写的方式, 是官方推荐的写法.
     override func run<Observer: ObserverType>(
         _ observer: Observer,
         cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
