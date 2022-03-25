@@ -94,8 +94,7 @@ final private class RetryWhenSequenceSinkIter<Sequence: Swift.Sequence, Observer
                 let errorHandlerSubscription = self.parent.notifier.subscribe(RetryTriggerSink(parent: self))
                 self.errorHandlerSubscription.setDisposable(errorHandlerSubscription)
                 self.parent.errorSubject.on(.next(failedWith))
-            }
-            else {
+            } else {
                 self.parent.forwardOn(.error(error))
                 self.parent.dispose()
             }
