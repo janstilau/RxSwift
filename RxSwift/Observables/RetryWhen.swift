@@ -83,22 +83,30 @@ final private class RetryWhenSequenceSinkIter<Sequence: Swift.Sequence, Observer
     func on(_ event: Event<Element>) {
         switch event {
         case .next:
+            // 正常, 直接流转给后方
             self.parent.forwardOn(event)
         case .error(let error):
+            // 记录一下错误值.
             self.parent.lastError = error
             
             if let failedWith = error as? Error {
                 // dispose current subscription
                 self.subscription.dispose()
                 
+                // 在 Rx 里面, 这种一次性的事件序列使用的很频繁.
+                // 因为在 Rx 里面, 一切都是用信号的方式进行处理的, 所以一些中间的机制, 也是使用的临时事件序列.
+                // 这里, 让下一个 error 来临是, 又产生了一个新的 RetryTriggerSink, 当做 notifier 的监听者. 之前的 RetryTriggerSink 会在 errorHandlerSubscription.setDisposable 的逻辑里面, 被 dispose 掉.
                 let errorHandlerSubscription = self.parent.notifier.subscribe(RetryTriggerSink(parent: self))
                 self.errorHandlerSubscription.setDisposable(errorHandlerSubscription)
+                // 在这里, 使用 errorSubject 接受了当前的错误值.
                 self.parent.errorSubject.on(.next(failedWith))
             } else {
+                // 没看明白这里.
                 self.parent.forwardOn(.error(error))
                 self.parent.dispose()
             }
         case .completed:
+            // 完成, 直接流转给后方.
             self.parent.forwardOn(event)
             self.parent.dispose()
         }
@@ -112,6 +120,7 @@ final private class RetryWhenSequenceSinkIter<Sequence: Swift.Sequence, Observer
 
 final private class RetryWhenSequenceSink<Sequence: Swift.Sequence, Observer: ObserverType, TriggerObservable: ObservableType, Error>
 : TailRecursiveSink<Sequence, Observer> where Sequence.Element: ObservableType, Sequence.Element.Element == Observer.Element {
+    
     typealias Element = Observer.Element
     typealias Parent = RetryWhenSequence<Sequence, TriggerObservable, Error>
     
@@ -149,14 +158,17 @@ final private class RetryWhenSequenceSink<Sequence: Swift.Sequence, Observer: Ob
         return nil
     }
     
+    // 这里的 Source, 就是上游节点, Retry When 里面的 事件序列 Collection, 是 repeatedCollection.
     override func subscribeToNext(_ source: Observable<Element>) -> Disposable {
         let subscription = SingleAssignmentDisposable()
+        // 将需要 retry 的上游节点, 和 RetryWhenSequenceSinkIter 进行了挂钩.
         let iter = RetryWhenSequenceSinkIter(parent: self, subscription: subscription)
         subscription.setDisposable(source.subscribe(iter))
         return iter
     }
     
     override func run(_ sources: SequenceGenerator) -> Disposable {
+        // self.handler 和 self.notifier 挂钩.
         let triggerSubscription = self.handler.subscribe(self.notifier.asObserver())
         let superSubscription = super.run(sources)
         return Disposables.create(superSubscription, triggerSubscription)
