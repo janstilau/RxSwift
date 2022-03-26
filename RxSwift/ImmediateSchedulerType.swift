@@ -17,7 +17,8 @@ public protocol ImmediateSchedulerType {
     /**
     Schedules an action to be executed immediately.
     */
-    func schedule<StateType>(_ state: StateType, action: @escaping (StateType) -> Disposable) -> Disposable
+    func schedule<StateType>(_ state: StateType,
+                             action: @escaping (StateType) -> Disposable) -> Disposable
 }
 
 extension ImmediateSchedulerType {

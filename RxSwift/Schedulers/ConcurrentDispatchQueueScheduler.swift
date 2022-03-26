@@ -14,7 +14,8 @@ import Foundation
 /// This scheduler is suitable when some work needs to be performed in background.
 
 
-// ConcurrentDispatchQueueScheduler 和串行的实现没有任何的区别啊. 
+// ConcurrentDispatchQueueScheduler 和串行的实现没有任何的区别.
+// 所以, 在传入 DispatchQueue 的时候, 其实是需要创建者保证, 传入的是一个符合类定义场景的 queue 才合适.
 public class ConcurrentDispatchQueueScheduler: SchedulerType {
     public typealias TimeInterval = Foundation.TimeInterval
     public typealias Time = Date
@@ -22,14 +23,16 @@ public class ConcurrentDispatchQueueScheduler: SchedulerType {
     public var now : Date {
         Date()
     }
-
+    
+    // DispatchQueueConfiguration 名称超级栏, 应该叫做 dispatchQueue scheduler.
     let configuration: DispatchQueueConfiguration
     
     /// Constructs new `ConcurrentDispatchQueueScheduler` that wraps `queue`.
     ///
     /// - parameter queue: Target dispatch queue.
     /// - parameter leeway: The amount of time, in nanoseconds, that the system will defer the timer.
-    public init(queue: DispatchQueue, leeway: DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0)) {
+    public init(queue: DispatchQueue,
+                leeway: DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0)) {
         self.configuration = DispatchQueueConfiguration(queue: queue, leeway: leeway)
     }
     
@@ -43,42 +46,28 @@ public class ConcurrentDispatchQueueScheduler: SchedulerType {
             qos: qos,
             attributes: [DispatchQueue.Attributes.concurrent],
             target: nil),
-            leeway: leeway
+                  leeway: leeway
         )
     }
-
-    /**
-    Schedules an action to be executed immediately.
     
-    - parameter state: State passed to the action to be executed.
-    - parameter action: Action to be executed.
-    - returns: The disposable object used to cancel the scheduled action (best effort).
-    */
+    // 所有的对于 schedule 的操作, 全部交给了 configuration 来处理. 
+    /*
+     Schedules an action to be executed immediately.
+     */
     public final func schedule<StateType>(_ state: StateType, action: @escaping (StateType) -> Disposable) -> Disposable {
         self.configuration.schedule(state, action: action)
     }
     
-    /**
-    Schedules an action to be executed.
-    
-    - parameter state: State passed to the action to be executed.
-    - parameter dueTime: Relative time after which to execute the action.
-    - parameter action: Action to be executed.
-    - returns: The disposable object used to cancel the scheduled action (best effort).
-    */
+    /*
+     Schedules an action to be executed.
+     */
     public final func scheduleRelative<StateType>(_ state: StateType, dueTime: RxTimeInterval, action: @escaping (StateType) -> Disposable) -> Disposable {
         self.configuration.scheduleRelative(state, dueTime: dueTime, action: action)
     }
     
-    /**
-    Schedules a periodic piece of work.
-    
-    - parameter state: State passed to the action to be executed.
-    - parameter startAfter: Period after which initial work should be run.
-    - parameter period: Period for running the work periodically.
-    - parameter action: Action to be executed.
-    - returns: The disposable object used to cancel the scheduled action (best effort).
-    */
+    /*
+     Schedules a periodic piece of work.
+     */
     public func schedulePeriodic<StateType>(_ state: StateType, startAfter: RxTimeInterval, period: RxTimeInterval, action: @escaping (StateType) -> StateType) -> Disposable {
         self.configuration.schedulePeriodic(state, startAfter: startAfter, period: period, action: action)
     }

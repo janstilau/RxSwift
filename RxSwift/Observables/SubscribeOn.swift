@@ -48,6 +48,11 @@ final private class SubscribeOnSink<Ob: ObservableType, Observer: ObserverType>:
         }
     }
     
+    /*
+     Run, 其实就是在 subscribe 的时候, 是否要进行特殊的操作.
+     最重要的其实就是, 在 Producer 要生成事件的应该发生在什么地方 .
+     主要就是线程的切换.
+     */
     func run() -> Disposable {
         let disposeEverything = SerialDisposable()
         let cancelSchedule = SingleAssignmentDisposable()
@@ -57,10 +62,13 @@ final private class SubscribeOnSink<Ob: ObservableType, Observer: ObserverType>:
         // 在 特定的 scheduler 进行 subscribe 的动作.
         
         // 相应链条还是完整的保留了下来, 自己的这个节点, 在真正的相应链条里面, 就是纯粹的中间中介.
-        // 之所以有自己的这一环节, 仅仅是在创建这样一个链条的时候, 要将创建这一过程, 通过 scheduler 进行调度. 
+        // 之所以有自己的这一环节, 仅仅是在创建这样一个链条的时候, 要将创建这一过程, 通过 scheduler 进行调度.
+        
+        // disposeSchedule 指的是, 调度这件事, 是否需要取消.
         let disposeSchedule = self.parent.scheduler.schedule(()) { _ -> Disposable in
             let subscription = self.parent.source.subscribe(self)
-            disposeEverything.disposable = ScheduledDisposable(scheduler: self.parent.scheduler, disposable: subscription)
+            disposeEverything.disposable = ScheduledDisposable(scheduler: self.parent.scheduler,
+                                                               disposable: subscription)
             return Disposables.create()
         }
         

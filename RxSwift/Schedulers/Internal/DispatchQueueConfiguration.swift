@@ -24,7 +24,8 @@ struct DispatchQueueConfiguration {
 extension DispatchQueueConfiguration {
     
     // 这里的实现思路, 和 OperationQueue 的没有区别.
-    func schedule<StateType>(_ state: StateType, action: @escaping (StateType) -> Disposable) -> Disposable {
+    func schedule<StateType>(_ state: StateType,
+                             action: @escaping (StateType) -> Disposable) -> Disposable {
         let cancel = SingleAssignmentDisposable()
         self.queue.async {
             // 这是一个异步操作, 所以有可能, queue 中的任务没有执行之前, cancel 已经被 dispose 了

@@ -7,7 +7,8 @@
 //
 
 extension ObservableType {
-    
+    // ObserveOn, 就是在当前节点 on 事件触发的时候, 应该使用 scheduler 进行调度.
+    // 它的唯一的作用, 其实就是将 事件在 scheduler 的调度之后, 传递给后方的 observer.
     public func observe(on scheduler: ImmediateSchedulerType)
     -> Observable<Element> {
         guard let serialScheduler = scheduler as? SerialDispatchQueueScheduler else {
@@ -28,7 +29,9 @@ final private class ObserveOn<Element>: Producer<Element> {
     }
     
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
-        let sink = ObserveOnSink(scheduler: self.scheduler, observer: observer, cancel: cancel)
+        let sink = ObserveOnSink(scheduler: self.scheduler,
+                                 observer: observer,
+                                 cancel: cancel)
         let subscription = self.source.subscribe(sink)
         return (sink: sink, subscription: subscription)
     }
@@ -44,6 +47,8 @@ enum ObserveOnState : Int32 {
 final private class ObserveOnSink<Observer: ObserverType>: ObserverBase<Observer.Element> {
     typealias Element = Observer.Element
     
+    // Sink 就是响应链条中的节点.
+    // 在 on 接收到事件之后, 使用 scheduler 进行一次调度.
     let scheduler: ImmediateSchedulerType
     
     var lock = SpinLock()
@@ -62,8 +67,8 @@ final private class ObserveOnSink<Observer: ObserverType>: ObserverBase<Observer
         self.cancel = cancel
     }
     
-    
     override func onCore(_ event: Event<Element>) {
+        // 在锁的环境下, 进行数据的收集, 然后开启调度算法.
         let shouldStart = self.lock.performLocked { () -> Bool in
             self.queue.enqueue(event)
             
@@ -75,31 +80,32 @@ final private class ObserveOnSink<Observer: ObserverType>: ObserverBase<Observer
                 return false
             }
         }
-        
         if shouldStart {
-            // 在这里, 开启了调度器, 调度器的动作, 就是自己的 run 函数. 
+            // 在这里, 开启了调度器, 调度器的动作, 就是自己的 run 函数.
             self.scheduleDisposable.disposable = self.scheduler.scheduleRecursive((), action: self.run)
         }
     }
     
+    // 在锁的环境下, 进行数据的读取. 然后触发后续的操作.
+    // 坦率的说, scheduleRecursive 设计的不够好, 复杂的逻辑 .
+    // 如果自己写一个会简单的多.
     func run(_ state: (), _ recurse: (()) -> Void) {
         let (nextEvent, observer) = self.lock.performLocked { () -> (Event<Element>?, Observer) in
             if !self.queue.isEmpty {
                 return (self.queue.dequeue(), self.observer)
-            }
-            else {
+            } else {
                 self.state = .stopped
                 return (nil, self.observer)
             }
         }
         
         if let nextEvent = nextEvent, !self.cancel.isDisposed {
+            // 读取到数据, 直接将数据传递给后续的 Observer.
             observer.on(nextEvent)
             if nextEvent.isStopEvent {
                 self.dispose()
             }
-        }
-        else {
+        } else {
             return
         }
         
@@ -120,7 +126,6 @@ final private class ObserveOnSink<Observer: ObserverType>: ObserverBase<Observer
     
     override func dispose() {
         super.dispose()
-        
         self.cancel.dispose()
         self.scheduleDisposable.dispose()
     }
@@ -144,7 +149,7 @@ extension Resources {
 
 /*
  ObserverOn 这个 Operator 的内部实现就是, 当一个信号发射回来之后, 进行 schedule 调度, 在被调度的任务里面, 将信号发送给自己的下游节点.
- 这个调度可能是线程调度, 也可能是延时调度. 不管如何, 下游节点接受到上游信号的环境, 都已经发生了改变. 
+ 这个调度可能是线程调度, 也可能是延时调度. 不管如何, 下游节点接受到上游信号的环境, 都已经发生了改变.
  */
 final private class ObserveOnSerialDispatchQueueSink<Observer: ObserverType>: ObserverBase<Observer.Element> {
     
