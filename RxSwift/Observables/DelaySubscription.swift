@@ -8,14 +8,8 @@
 
 extension ObservableType {
 
-    /**
+    /*
      Time shifts the observable sequence by delaying the subscription with the specified relative time duration, using the specified scheduler to run timers.
-
-     - seealso: [delay operator on reactivex.io](http://reactivex.io/documentation/operators/delay.html)
-
-     - parameter dueTime: Relative time shift of the subscription.
-     - parameter scheduler: Scheduler to run the subscription delay timer on.
-     - returns: Time-shifted sequence.
      */
     public func delaySubscription(_ dueTime: RxTimeInterval, scheduler: SchedulerType)
         -> Observable<Element> {
@@ -23,6 +17,7 @@ extension ObservableType {
     }
 }
 
+// 完全的中介者.
 final private class DelaySubscriptionSink<Observer: ObserverType>
     : Sink<Observer>, ObserverType {
     typealias Element = Observer.Element 
@@ -49,10 +44,11 @@ final private class DelaySubscription<Element>: Producer<Element> {
     
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         let sink = DelaySubscriptionSink(observer: observer, cancel: cancel)
+        // 将, subscribe 这件事, 进行了延后处理.
+        // 在 scheduleRelative 中的返回值中, 首先是定时器的取消逻辑, 定时器触发了之后, 会替换为 self.source.subscribe(sink) 的取消逻辑. 
         let subscription = self.scheduler.scheduleRelative((), dueTime: self.dueTime) { _ in
             return self.source.subscribe(sink)
         }
-
         return (sink: sink, subscription: subscription)
     }
 }

@@ -11,7 +11,8 @@ import Foundation
 extension ObservableType {
     
     /*
-     Returns an observable sequence by the source observable sequence shifted forward in time by a specified delay. Error events from the source observable sequence are not delayed.
+     Returns an observable sequence by the source observable sequence shifted forward in time by a specified delay.
+     Error events from the source observable sequence are not delayed.
      */
     public func delay(_ dueTime: RxTimeInterval, scheduler: SchedulerType)
     -> Observable<Element> {
@@ -20,8 +21,8 @@ extension ObservableType {
 }
 
 final private class DelaySink<Observer: ObserverType>
-: Sink<Observer>
-, ObserverType {
+: Sink<Observer>, ObserverType {
+    
     typealias Element = Observer.Element
     typealias Source = Observable<Element>
     typealias DisposeKey = Bag<Disposable>.KeyType
@@ -92,8 +93,7 @@ final private class DelaySink<Observer: ObserverType>
                 self.forwardOn(errorEvent)
                 self.dispose()
                 return
-            }
-            else {
+            } else {
                 if let eventToForwardImmediately = eventToForwardImmediately {
                     ranAtLeastOnce = true
                     self.forwardOn(eventToForwardImmediately)
@@ -101,12 +101,10 @@ final private class DelaySink<Observer: ObserverType>
                         self.dispose()
                         return
                     }
-                }
-                else if let nextEventToScheduleOriginalTime = nextEventToScheduleOriginalTime {
+                } else if let nextEventToScheduleOriginalTime = nextEventToScheduleOriginalTime {
                     scheduler.schedule((), dueTime: self.dueTime.reduceWithSpanBetween(earlierDate: nextEventToScheduleOriginalTime, laterDate: self.scheduler.now))
                     return
-                }
-                else {
+                } else {
                     return
                 }
             }
@@ -134,6 +132,7 @@ final private class DelaySink<Observer: ObserverType>
             self.lock.lock()
             let shouldSchedule = !self.active
             self.active = true
+            // 存储事件, 然后等待稍后进行发送.
             self.queue.enqueue((self.scheduler.now, event))
             self.lock.unlock()
             
@@ -143,6 +142,7 @@ final private class DelaySink<Observer: ObserverType>
         }
     }
     
+    // 这里除了 source.subscribe 的逻辑外, 增加了取消定时器的逻辑.
     func run(source: Observable<Element>) -> Disposable {
         self.sourceSubscription.setDisposable(source.subscribe(self))
         return Disposables.create(sourceSubscription, cancelable)

@@ -19,6 +19,7 @@ private final class DematerializeSink<T: EventConvertible, Observer: ObserverTyp
     fileprivate func on(_ event: Event<T>) {
         switch event {
         case .next(let element):
+            // 这里, element.event 中, 可能会有 error, complete.
             self.forwardOn(element.event)
             // 还是原封传递. 只不过如果 event 是错误的, 就 dispose.
             if element.event.isStopEvent {
