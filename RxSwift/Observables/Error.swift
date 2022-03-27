@@ -7,12 +7,8 @@
 //
 
 extension ObservableType {
-    /**
+    /*
      Returns an observable sequence that terminates with an `error`.
-
-     - seealso: [throw operator on reactivex.io](http://reactivex.io/documentation/operators/empty-never-throw.html)
-
-     - returns: The observable sequence that terminates with specified error.
      */
     public static func error(_ error: Swift.Error) -> Observable<Element> {
         ErrorProducer(error: error)
@@ -26,6 +22,7 @@ final private class ErrorProducer<Element>: Producer<Element> {
         self.error = error
     }
     
+    // 在注册的时候, 直接就是一个 error.
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         observer.on(.error(self.error))
         return Disposables.create()

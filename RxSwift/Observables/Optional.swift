@@ -7,13 +7,8 @@
 //
 
 extension ObservableType {
-    /**
+    /*
      Converts a optional to an observable sequence.
-     
-     - seealso: [from operator on reactivex.io](http://reactivex.io/documentation/operators/from.html)
-     
-     - parameter optional: Optional element in the resulting observable sequence.
-     - returns: An observable sequence containing the wrapped value or not from given optional.
      */
     public static func from(optional: Element?) -> Observable<Element> {
         ObservableOptional(optional: optional)
@@ -86,6 +81,8 @@ final private class ObservableOptional<Element>: Producer<Element> {
     }
     
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
+        // 如果有值, 就 next, 然后 complete.
+        // 否则, 直接 complete.
         if let element = self.optional {
             observer.on(.next(element))
         }

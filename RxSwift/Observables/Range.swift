@@ -24,14 +24,6 @@ final private class RangeProducer<Element: RxAbstractInteger>: Producer<Element>
     fileprivate let scheduler: ImmediateSchedulerType
 
     init(start: Element, count: Element, scheduler: ImmediateSchedulerType) {
-        guard count >= 0 else {
-            rxFatalError("count can't be negative")
-        }
-
-        guard start &+ (count - 1) >= start || count == 0 else {
-            rxFatalError("overflow of count")
-        }
-
         self.start = start
         self.count = count
         self.scheduler = scheduler

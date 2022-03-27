@@ -51,9 +51,9 @@ class Producer<Element>: Observable<Element> {
      在以上的这个链条里面, 当 Filter Subscribe Subject 的时候, 返回的是一个 SinkDisposer 对象.
      SinkDisposer 对象里面, 存储着 FilterSink 对象, 以及 Map Subscribe FilterSink 的返回值, 还是一个 SinkDisposer 对象.
      FilterDisposer - MapDisposer - PublisherDisposer
-        |               |
+     |               |
      FilterSink        MapSink
-
+     
      最终返回的是 FilterDisposer, 通过上面的关系, 可以看到, FilterDisposer 的 Dispose 可以引起整个链条的 Dispose 触发. 
      */
     func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable)

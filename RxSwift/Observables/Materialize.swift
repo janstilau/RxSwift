@@ -18,6 +18,7 @@ extension ObservableType {
 
 private final class MaterializeSink<Element, Observer: ObserverType>: Sink<Observer>, ObserverType where Observer.Element == Event<Element> {
     
+    // next 里面, 现在是一个 event.
     func on(_ event: Event<Element>) {
         self.forwardOn(.next(event))
         if event.isStopEvent {

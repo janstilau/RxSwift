@@ -23,7 +23,11 @@ extension ObservableType {
                                 condition: @escaping (Element) throws -> Bool,
                                 scheduler: ImmediateSchedulerType = CurrentThreadScheduler.instance,
                                 iterate: @escaping (Element) throws -> Element) -> Observable<Element> {
-        Generate(initialState: initialState, condition: condition, iterate: iterate, resultSelector: { $0 }, scheduler: scheduler)
+        Generate(initialState: initialState,
+                 condition: condition,
+                 iterate: iterate,
+                 resultSelector: { $0 },
+                 scheduler: scheduler)
     }
 }
 
@@ -36,6 +40,7 @@ final private class GenerateSink<Sequence, Observer: ObserverType>: Sink<Observe
     
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
+        // 开始的 state 是 initialState.
         self.state = parent.initialState
         super.init(observer: observer, cancel: cancel)
     }
@@ -44,13 +49,13 @@ final private class GenerateSink<Sequence, Observer: ObserverType>: Sink<Observe
         return self.parent.scheduler.scheduleRecursive(true) { isFirst, recurse -> Void in
             do {
                 if !isFirst {
+                    // 后来的, 就是算出来的.
                     self.state = try self.parent.iterate(self.state)
                 }
                 
                 if try self.parent.condition(self.state) {
                     let result = try self.parent.resultSelector(self.state)
                     self.forwardOn(.next(result))
-                    
                     recurse(false)
                 } else {
                     self.forwardOn(.completed)

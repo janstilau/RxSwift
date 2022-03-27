@@ -6,8 +6,8 @@
 //  Copyright © 2017 Krunoslav Zaher. All rights reserved.
 //
 
+// 和 Sequence 里面的含义是完全一致的.
 extension ObservableType {
-    
     /*
      Enumerates the elements of an observable sequence.
      */
@@ -25,8 +25,9 @@ final private class EnumeratedSink<Element, Observer: ObserverType>: Sink<Observ
         switch event {
         case .next(let value):
             do {
+                // 在自己的内部, 进行 idx 的建立.
+                // 给后方的元组, 是 ele + index 的组合.
                 let nextIndex = try incrementChecked(&self.index)
-                // 将原始的 Ele 值, 变换成为了 元组数据, 中间增加了 Idx 的值. 
                 let next = (index: nextIndex, element: value)
                 self.forwardOn(.next(next))
             } catch let e {

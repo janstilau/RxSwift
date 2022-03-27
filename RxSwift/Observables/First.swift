@@ -8,6 +8,7 @@
 
 /*
  First 一定有值, 要么是 Element, 要么是一个 Nil
+ 和 Take 1 相比, 它保证了, 至少会有一个 nil 传递过去. 
  */
 private final class FirstSink<Element, Observer: ObserverType> : Sink<Observer>, ObserverType where Observer.Element == Element? {
     typealias Parent = First<Element>

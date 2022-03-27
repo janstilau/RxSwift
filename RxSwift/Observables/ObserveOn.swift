@@ -89,17 +89,20 @@ final private class ObserveOnSink<Observer: ObserverType>: ObserverBase<Observer
     // 在锁的环境下, 进行数据的读取. 然后触发后续的操作.
     // 坦率的说, scheduleRecursive 设计的不够好, 复杂的逻辑 .
     // 如果自己写一个会简单的多.
-    func run(_ state: (), _ recurse: (()) -> Void) {
+    func run(_ state: (),
+             _ recurse: (()) -> Void) {
         let (nextEvent, observer) = self.lock.performLocked { () -> (Event<Element>?, Observer) in
             if !self.queue.isEmpty {
                 return (self.queue.dequeue(), self.observer)
             } else {
+                // 在这, 进行了状态的改变.
                 self.state = .stopped
                 return (nil, self.observer)
             }
         }
         
-        if let nextEvent = nextEvent, !self.cancel.isDisposed {
+        if let nextEvent = nextEvent,
+           !self.cancel.isDisposed {
             // 读取到数据, 直接将数据传递给后续的 Observer.
             observer.on(nextEvent)
             if nextEvent.isStopEvent {

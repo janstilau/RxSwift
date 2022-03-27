@@ -9,14 +9,12 @@
 extension ObservableType {
     /*
      Groups the elements of an observable sequence according to a specified key selector function.
-
-     - seealso: [groupBy operator on reactivex.io](http://reactivex.io/documentation/operators/groupby.html)
-
-     - parameter keySelector: A function to extract the key for each element.
-     - returns: A sequence of observable groups, each of which corresponds to a unique key value, containing all elements that share that same key value.
+     
+     divide an Observable into a set of Observables that each emit a different subset of items from the original Observable
      */
-    public func groupBy<Key: Hashable>(keySelector: @escaping (Element) throws -> Key)
-        -> Observable<GroupedObservable<Key, Element>> {
+    public func groupBy<Key: Hashable>(keySelector:
+                                       @escaping (Element) throws -> Key)
+    -> Observable<GroupedObservable<Key, Element>> {
         GroupBy(source: self.asObservable(), selector: keySelector)
     }
 }
@@ -29,7 +27,7 @@ final private class GroupedObservableImpl<Element>: Observable<Element> {
         self.subject = subject
         self.refCount = refCount
     }
-
+    
     override public func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         let release = self.refCount.retain()
         let subscription = self.subject.subscribe(observer)
@@ -39,11 +37,11 @@ final private class GroupedObservableImpl<Element>: Observable<Element> {
 
 
 final private class GroupBySink<Key: Hashable, Element, Observer: ObserverType>
-    : Sink<Observer>
-    , ObserverType where Observer.Element == GroupedObservable<Key, Element> {
-    typealias ResultType = Observer.Element 
+: Sink<Observer>
+, ObserverType where Observer.Element == GroupedObservable<Key, Element> {
+    typealias ResultType = Observer.Element
     typealias Parent = GroupBy<Key, Element>
-
+    
     private let parent: Parent
     private let subscription = SingleAssignmentDisposable()
     private var refCountDisposable: RefCountDisposable!
@@ -57,7 +55,6 @@ final private class GroupBySink<Key: Hashable, Element, Observer: ObserverType>
     
     func run() -> Disposable {
         self.refCountDisposable = RefCountDisposable(disposable: self.subscription)
-        
         self.subscription.setDisposable(self.parent.source.subscribe(self))
         
         return self.refCountDisposable
@@ -79,7 +76,7 @@ final private class GroupBySink<Key: Hashable, Element, Observer: ObserverType>
             writer.on(.next(value))
         }
     }
-
+    
     final func on(_ event: Event<Element>) {
         switch event {
         case let .next(value):
@@ -100,7 +97,7 @@ final private class GroupBySink<Key: Hashable, Element, Observer: ObserverType>
             self.dispose()
         }
     }
-
+    
     final func error(_ error: Swift.Error) {
         self.forwardOnGroups(event: .error(error))
         self.forwardOn(.error(error))
@@ -117,7 +114,7 @@ final private class GroupBySink<Key: Hashable, Element, Observer: ObserverType>
 
 final private class GroupBy<Key: Hashable, Element>: Producer<GroupedObservable<Key,Element>> {
     typealias KeySelector = (Element) throws -> Key
-
+    
     fileprivate let source: Observable<Element>
     fileprivate let selector: KeySelector
     
@@ -125,7 +122,7 @@ final private class GroupBy<Key: Hashable, Element>: Producer<GroupedObservable<
         self.source = source
         self.selector = selector
     }
-
+    
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == GroupedObservable<Key,Element> {
         let sink = GroupBySink(parent: self, observer: observer, cancel: cancel)
         return (sink: sink, subscription: sink.run())

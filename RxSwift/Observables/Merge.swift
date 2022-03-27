@@ -9,7 +9,8 @@
 extension ObservableType {
     
     // 当上游发射一个信号来临之后, 可以生产出一个新的事件序列出来.
-    public func flatMap<Source: ObservableConvertibleType>(_ selector: @escaping (Element) throws -> Source)
+    public func flatMap<Source: ObservableConvertibleType>(
+        _ selector: @escaping (Element) throws -> Source)
     -> Observable<Source.Element> {
         return FlatMap(source: self.asObservable(), selector: selector)
     }

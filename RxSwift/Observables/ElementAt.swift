@@ -27,7 +27,7 @@ final private class ElementAtSink<Observer: ObserverType>: Sink<Observer>, Obser
         super.init(observer: observer, cancel: cancel)
     }
     
-    // 在 on 中, 进行了 times 的判断. 
+    // 在 on 中, 进行了 times 的判断.
     func on(_ event: Event<SourceType>) {
         switch event {
         case .next:
@@ -51,6 +51,8 @@ final private class ElementAtSink<Observer: ObserverType>: Sink<Observer>, Obser
             self.forwardOn(.error(e))
             self.dispose()
         case .completed:
+            // 能够直接接收到 Complete, 那就是 self.i 没有能够到达 0
+            // 那么就不符合 elementAt 的定义, 代表着 source count 到达不了 index.
             if self.parent.throwOnEmpty {
                 self.forwardOn(.error(RxError.argumentOutOfRange))
             } else {
@@ -68,10 +70,6 @@ final private class ElementAt<SourceType>: Producer<SourceType> {
     let index: Int
     
     init(source: Observable<SourceType>, index: Int, throwOnEmpty: Bool) {
-        if index < 0 {
-            rxFatalError("index can't be negative")
-        }
-        
         self.source = source
         self.index = index
         self.throwOnEmpty = throwOnEmpty

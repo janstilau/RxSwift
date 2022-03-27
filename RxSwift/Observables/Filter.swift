@@ -38,6 +38,7 @@ final private class FilterSink<Observer: ObserverType>: Sink<Observer>, Observer
             do {
                 let satisfies = try self.predicate(value)
                 // 只有, 符合了 Filter 的过滤条件的信号, 才会参与到后面的信号处理中.
+                // 如果不符合 Filter 的要求, 那么其实信号在这里就会中断了. 
                 if satisfies {
                     self.forwardOn(.next(value))
                 }
@@ -65,6 +66,8 @@ final private class Filter<Element>: Producer<Element> {
     
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
         let sink = FilterSink(predicate: self.predicate, observer: observer, cancel: cancel)
+        // Filter 所有的逻辑, 都在 Sink 内部, 是在 on 函数里面进行处理.
+        // 所以, 它不需要一个专门的 run 方法.
         let subscription = self.source.subscribe(sink)
         return (sink: sink, subscription: subscription)
     }

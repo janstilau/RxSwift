@@ -35,7 +35,6 @@ final private class ReduceSink<SourceType, AccumulateType, Observer: ObserverTyp
     init(parent: Parent, observer: Observer, cancel: Cancelable) {
         self.parent = parent
         self.accumulation = parent.seed
-        
         super.init(observer: observer, cancel: cancel)
     }
     
@@ -56,6 +55,7 @@ final private class ReduceSink<SourceType, AccumulateType, Observer: ObserverTyp
             do {
                 // 在, 最终接收到上游的 complete 事件之后, 将结果发送给下游, 然后发送 complete 事件.
                 // 然后 dispose.
+                // 还要一个最后的机会, 进行 transform.
                 let result = try self.parent.mapResult(self.accumulation)
                 self.forwardOn(.next(result))
                 self.forwardOn(.completed)

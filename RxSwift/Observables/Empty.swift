@@ -19,7 +19,7 @@ extension ObservableType {
     }
 }
 
-// Empty 的含义时, 会发送一个 Complete 事件. 
+// Empty 的含义时, 会发送一个 Complete 事件.
 final private class EmptyProducer<Element>: Producer<Element> {
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         observer.on(.completed)

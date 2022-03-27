@@ -42,6 +42,7 @@ final private class RepeatElementSink<Observer: ObserverType>: Sink<Observer> {
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 一直不断地, 产出数据. 
     func run() -> Disposable {
         return self.parent.scheduler.scheduleRecursive(self.parent.element) { e, recurse in
             self.forwardOn(.next(e))
