@@ -1,13 +1,12 @@
-
-
 extension ObservableType {
+    // 这个和 Sequence 的 CompactMap 有着完全一致的效果.
+    // 只有在 Transform 返回一个 Optional 的时候才能使用.
     public func compactMap<Result>(_ transform: @escaping (Element) throws -> Result?)
     -> Observable<Result> {
         CompactMap(source: self.asObservable(), transform: transform)
     }
 }
 
-// Transform 本身要是一个返回 Optional 的闭包. 
 final private class CompactMapSink<SourceType, Observer: ObserverType>: Sink<Observer>, ObserverType {
     typealias Transform = (SourceType) throws -> ResultType?
     
@@ -24,9 +23,9 @@ final private class CompactMapSink<SourceType, Observer: ObserverType>: Sink<Obs
     func on(_ event: Event<SourceType>) {
         switch event {
         case .next(let element):
+            // 去除了返回值是 nil 的元素. 对于下游来说, 并不知道, 存在着 value == nil 的信号被发送过来了.
+            // 这就是这个类, 最主要的逻辑.
             do {
-                // 去除了返回值是 nil 的元素. 对于下游来说, 并不知道, 存在着 value == nil 的信号被发送过来了.
-                // 这就是这个类, 最主要的逻辑.
                 if let mappedElement = try self.transform(element) {
                     self.forwardOn(.next(mappedElement))
                 }

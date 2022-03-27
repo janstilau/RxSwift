@@ -1,12 +1,7 @@
 
+// 最最最重要的方法.
+// 将指令式的世界, 纳入到响应式世界的关键就在这. 
 extension ObservableType {
-    
-    /*
-     我们给对方传递一个闭包过去, 就是希望对方调用这个闭包.
-     分析过源码, 对方会创建一个 Observer, 传入到这个闭包内.
-     在这个闭包内, 一般是创建一个异步函数, 然后在异步结果确定时, 调用 Observer 的状态修改函数.
-     */
-    
     public static func create(_ subscribe: @escaping (AnyObserver<Element>) -> Disposable) -> Observable<Element> {
         AnonymousObservable(subscribe)
     }
@@ -39,6 +34,8 @@ final private class AnonymousObservableSink<Observer: ObserverType>: Sink<Observ
         }
     }
     
+    // run 在 Subscribe 的时候被调用.
+    // parent.subscribeHandler 一般会建立异步任务, 然后这个异步任务的信号发射, 是通过调用参数的 OnNext, OnError, OnComplete, 来传递给后面的各个节点的. 
     func run(_ parent: Parent) -> Disposable {
         // 将自身, 当做观察者, 传递给被传递的闭包中.
         parent.subscribeHandler(AnyObserver(self))

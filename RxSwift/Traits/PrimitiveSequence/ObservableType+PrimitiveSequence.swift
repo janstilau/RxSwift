@@ -6,6 +6,8 @@
 //  Copyright © 2017 Krunoslav Zaher. All rights reserved.
 //
 
+// asXXX 的构建之后, 然后构建 PrimitiveSequence
+// 因为 Single 其实是 PrimitiveSequence 的特化. 
 extension ObservableType {
     /*
      The `asSingle` operator throws a `RxError.noElements` or `RxError.moreThanOneElement`
@@ -25,7 +27,7 @@ extension ObservableType {
         PrimitiveSequence(raw: First(source: self.asObservable()))
     }
 
-    /**
+    /*
      The `asMaybe` operator throws a `RxError.moreThanOneElement`
      if the source Observable does not emit at most one element before successfully completing.
      */

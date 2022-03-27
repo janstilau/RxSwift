@@ -1,7 +1,6 @@
 
 
 extension ObservableType {
-    // 这是一个实例方法, 其实就是调用静态方法, 创建一个 ConcatSink
     public func concat<Source: ObservableConvertibleType>(_ second: Source) -> Observable<Element> where Source.Element == Element {
         Observable.concat([self.asObservable(), second.asObservable()])
     }
@@ -10,16 +9,6 @@ extension ObservableType {
 extension ObservableType {
     /*
      Concatenates all observable sequences in the given sequence, as long as the previous observable sequence terminated successfully.
-     
-     This operator has tail recursive optimizations that will prevent stack overflow.
-     
-     Optimizations will be performed in cases equivalent to following:
-     
-     [1, [2, [3, .....].concat()].concat].concat()
-     
-     - seealso: [concat operator on reactivex.io](http://reactivex.io/documentation/operators/concat.html)
-     
-     - returns: An observable sequence that contains the elements of each given sequence, in sequential order.
      */
     public static func concat<Sequence: Swift.Sequence>(_ sequence: Sequence) -> Observable<Element>
     where Sequence.Element == Observable<Element> {
@@ -36,16 +25,6 @@ extension ObservableType {
     
     /**
      Concatenates all observable sequences in the given collection, as long as the previous observable sequence terminated successfully.
-     
-     This operator has tail recursive optimizations that will prevent stack overflow.
-     
-     Optimizations will be performed in cases equivalent to following:
-     
-     [1, [2, [3, .....].concat()].concat].concat()
-     
-     - seealso: [concat operator on reactivex.io](http://reactivex.io/documentation/operators/concat.html)
-     
-     - returns: An observable sequence that contains the elements of each given sequence, in sequential order.
      */
     public static func concat(_ sources: Observable<Element> ...) -> Observable<Element> {
         Concat(sources: sources, count: Int64(sources.count))
@@ -69,12 +48,12 @@ final private class ConcatSink<Sequence: Swift.Sequence, Observer: ObserverType>
             self.forwardOn(event)
             self.dispose()
         case .completed:
-            
-            
             self.schedule(.moveNext)
         }
     }
     
+    // 只有, 前面的 source Complete 的时候, 才会监听后面的 source.
+    // 所以, 在前面的 source 没有完成信号 complete 的发射的时候, 后面的 source 信号发射会被忽略. 
     override func subscribeToNext(_ source: Observable<Element>) -> Disposable {
         source.subscribe(self)
     }

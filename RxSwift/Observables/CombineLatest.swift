@@ -9,14 +9,7 @@ protocol CombineLatestProtocol: AnyObject {
 }
 
 /*
- CombineLatestSink 内部会创建多个 CombineLatestObserver, 这些 CombineLatestObserver 是真正的 Publisher 的监听者.
- CombineLatestObserver 的 on 操作, 会调用 CombineLatestSink 的 next, fail, done 方法, 通过 CombineLatestProtocol 指定的协议.
- CombineLatestSink 会在 next, fail, done 内部维护自己的状态, 然后根据结果, 判断应该给后续节点发送什么样的信号.
- */
-
-/*
- 如果, 我们自己去写, 可能就是一个 check 函数, 里面进行所有的状态判断, 如果都有值了, 就进行后续操作.
- 然后, 每个异步操作的最后, 都进行这个 check 函数.
+ 这里的设计比较复杂. 直接看 CombineLatest + Collection 就可以了.
  */
 class CombineLatestSink<Observer: ObserverType> : Sink<Observer> , CombineLatestProtocol {
     
@@ -29,15 +22,8 @@ class CombineLatestSink<Observer: ObserverType> : Sink<Observer> , CombineLatest
     private let arity: Int
     private var numberOfValues = 0 // 这个代表着, 当前有多少个 CombineLatestObserver 已经接收到了数据.
     private var numberOfDone = 0 // 这个代表着, 当前有多少个 CombineLatestObserver 已经接收到了 Complete 事件.
-    private var hasValue: [Bool] // 每个 CombineLatestObserver 的状态记录
-    private var isDone: [Bool] // 每个 CombineLatestObserver 的状态记录.
-    
-    /*
-     从以上的实现可以看到, 同我们自己写一个 Check 函数的实现, 没有任何的区别.
-     rx 将这些逻辑, 都封装起来变为一个个的可组装的节点, 使用这些节点, 可以大大的减轻逻辑的复杂度.
-     
-     不过, 使用这些节点的前提, 是需要明确的记忆各个方法的作用是什么, 如果能够知道实现原理, 更加会对代码胸有成竹.
-     */
+    private var hasValue: [Bool] // 记录了每个 Publisher 是否已经 Next 了.
+    private var isDone: [Bool] // 记录了每个 Publisher 是否已经 Complete
     
     // 参数数量
     init(arity: Int, observer: Observer, cancel: Cancelable) {

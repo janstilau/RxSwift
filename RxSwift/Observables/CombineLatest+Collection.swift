@@ -71,7 +71,7 @@ final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection
             
             self.values[atIndex] = element
             
-            // 没太明白这段逻辑.
+            // 只有全部有值了, 才向后续节点, 发射信号.
             if self.numberOfValues < self.parent.count {
                 let numberOfOthersThatAreDone = self.numberOfDone - (self.isDone[atIndex] ? 1 : 0)
                 if numberOfOthersThatAreDone == self.parent.count - 1 {
@@ -97,6 +97,7 @@ final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection
                 return
             }
             
+            // Complete, 记录每个 Source 的 complete 的状态值. 
             self.isDone[atIndex] = true
             self.numberOfDone += 1
             
@@ -114,6 +115,7 @@ final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection
         for i in self.parent.sources {
             let index = j
             let source = i.asObservable()
+            // 使用循环, 把 sources 里面的所有 source 都进行了注册.
             let disposable = source.subscribe(AnyObserver { event in
                 self.on(event, atIndex: index)
             })
@@ -122,15 +124,14 @@ final private class CombineLatestCollectionTypeSink<Collection: Swift.Collection
             j += 1
         }
         
-        // 和其他的 Combine Lastes 的逻辑, 没有任何的区别. 在这里, 使用了 Collection 的相关函数,
+        // 如果, 根本就没有 soruce, 直接发射一个 next, 一个 complete.
         if self.parent.sources.isEmpty {
             do {
                 let result = try self.parent.resultSelector([])
                 self.forwardOn(.next(result))
                 self.forwardOn(.completed)
                 self.dispose()
-            }
-            catch let error {
+            } catch let error {
                 self.forwardOn(.error(error))
                 self.dispose()
             }

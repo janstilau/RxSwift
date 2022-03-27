@@ -104,7 +104,7 @@ final private class AmbSink<Observer: ObserverType>: Sink<Observer> {
                     o.cancel = disposeAll
                     otherSubscription.dispose()
                 }
-                    
+                
                 // 然后就是 直接 forward.
                 if self.choice == me {
                     self.forwardOn(event)

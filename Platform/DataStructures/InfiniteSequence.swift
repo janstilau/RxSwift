@@ -1,7 +1,7 @@
 /*
  Repeat 一定次数的 Sequence.
  
- 这个会在 Retry 中使用. 
+ 这个会在 Retry 中使用.
  */
 struct InfiniteSequence<Element> : Sequence {
     

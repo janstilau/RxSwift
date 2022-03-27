@@ -8,14 +8,11 @@
 
 extension ObservableType {
 
+    // only emit an item from an Observable if a particular timespan has passed without it emitting another item
+    // 就是, 如果 source 发射信号太频繁了, 在这个 Sink 里面, 会有拦截的操作.
     /*
      Ignores elements from an observable sequence which are followed by another element within a specified relative time duration, using the specified scheduler to run throttling timers.
-
-     - seealso: [debounce operator on reactivex.io](http://reactivex.io/documentation/operators/debounce.html)
-
-     - parameter dueTime: Throttling duration for each element.
-     - parameter scheduler: Scheduler to run the throttle timers on.
-     - returns: The throttled sequence.
+     only emit an item from an Observable if a particular timespan has passed without it emitting another item
      */
     public func debounce(_ dueTime: RxTimeInterval, scheduler: SchedulerType)
         -> Observable<Element> {
@@ -69,6 +66,7 @@ final private class DebounceSink<Observer: ObserverType>
 
             let d = SingleAssignmentDisposable()
             self.cancellable.disposable = d
+            
             // self.propagate, 使用这种方法, 将引用了 self 的闭包传递了过去.
             d.setDisposable(scheduler.scheduleRelative(currentId, dueTime: dueTime, action: self.propagate))
         case .error:
@@ -89,8 +87,11 @@ final private class DebounceSink<Observer: ObserverType>
         self.lock.performLocked {
             let originalValue = self.value
 
-            // 如果 id 没变, 则是没有在其中有新的数据过来了. 就可以 forward 了.
-            if let value = originalValue, self.id == currentId {
+            // 如果 id 没变, 则是没有在其中有新的数据过来了.
+            // 这个时候, 才会进行 forward.
+            // 实际使用的时候, textField 不断的输入, 直到 2 秒内不在输入的时候, 才会发射信号. 
+            if let value = originalValue,
+               self.id == currentId {
                 self.value = nil
                 self.forwardOn(.next(value))
             }

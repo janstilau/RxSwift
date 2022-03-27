@@ -12,13 +12,16 @@ extension ObservableType {
     /*
      监听一个事件序列, 当这个事件序列发生错误之后, 不会进行 Dispose, 而是使用 handler 生成一个新的事件序列, 继续监听这个新生成的事件序列.
      */
-    public func `catch`(_ handler: @escaping (Swift.Error) throws -> Observable<Element>)
+    public func `catch`(
+        _ handler: @escaping (Swift.Error) throws -> Observable<Element>)
     -> Observable<Element> {
         Catch(source: self.asObservable(), handler: handler)
     }
     
     // 当发生错误之后, 直接使用 element 产生一个新的队列.
     // 有了上面的通用的设计, 对于返回一个确定值的情况, 就是使用 Observable.just 生成一个事件序列, 然后返回那个值就可以了.
+    // 这里就看出了 Just 的用途了, 我们其实是想要的是一个确切值, 因为 Api 要求的是一个 Observable<Element>, 所以使用 Just.
+    // 因为 Just 只有一个 Next, 然后里面进行 Complete 的发送, 也满足 catchAndReturn 的业务要求 .
     public func catchAndReturn(_ element: Element)
     -> Observable<Element> {
         // 当, 发生了错误之后, 产生一个 element 的 next 信号, 然后整个信号序列结束了.
@@ -27,7 +30,6 @@ extension ObservableType {
 }
 
 // catch with callback
-
 final private class CatchSinkProxy<Observer: ObserverType>: ObserverType {
     typealias Element = Observer.Element
     typealias Parent = CatchSink<Observer>
@@ -47,8 +49,6 @@ final private class CatchSinkProxy<Observer: ObserverType>: ObserverType {
             break
         case .error, .completed:
             // 如果是结束事件, 那么直接调用 parent 的 dipose.
-            // 这是合理的做法, catch handler 生成的 Sequence, 不会触发 CatchSink 的 on 逻辑, 而是将所有的 event 交给了 CatchSinkProxy 来处理
-            // 不这样, CatchSink 再次触发 error, 那么就无限循环了.
             self.parent.dispose()
         }
     }
@@ -68,10 +68,13 @@ final private class CatchSink<Observer: ObserverType>: Sink<Observer>, ObserverT
         super.init(observer: observer, cancel: cancel)
     }
     
+    // 当, Sink 除了进行 source subscribe self 之外, 有其他的逻辑的时候, 会在 Sink 内专门定义一个 run 方法.
+    // 这算是 rx 这个库的一个通用设计思想. 
     func run() -> Disposable {
         let d1 = SingleAssignmentDisposable()
         self.subscription.disposable = d1
-        // CatchSink 还是成为原来的 Source 的 Observer.
+        // 这个专门的 Run, 主要做的工作就是, 返回的是 SerialDisposable 对象.
+        // 这样的设计, 主要是因为, 当 source error 的时候, 应该替换 SerialDisposable 中的 dispose 对象.
         d1.setDisposable(self.parent.source.subscribe(self))
         return self.subscription
     }
@@ -86,12 +89,13 @@ final private class CatchSink<Observer: ObserverType>: Sink<Observer>, ObserverT
             self.forwardOn(event)
             self.dispose()
         case .error(let error):
-            // 当发生错误之后, 不会将错误, 传递给自己的下游节点.
+            // 当发生错误之后, 不会将错误, 传递给自己的下游节点, 而是根据之前存储的 Handler, 生成一个新的 Publisher, 替换之前的 source 触发.
+            // 没有将新生成的 Publsiher 注册到 self, 而是一个 CatchSinkProxy, 不然新生成的 Publsiher 的 Error 又会触发 Handler 的操作了.
             do {
                 // 使用之前存储的根据 Error 生成 Sequence 的 Handler, 生成一个新的 Publisher
                 let catchSequence = try self.parent.handler(error)
                 let observer = CatchSinkProxy(parent: self)
-                // subscription 的赋值, 会导致之前的 disposable 触发 dispose 的.
+                // 响应链路替换之后, 替换 self.subscription 中的 dispose 对象.
                 self.subscription.disposable = catchSequence.subscribe(observer)
             } catch let e {
                 self.forwardOn(.error(e))
@@ -121,6 +125,10 @@ final private class Catch<Element>: Producer<Element> {
     }
 }
 
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CatchSequence 和 Catch 有着本质的区别. CatchSequence 会不断的进行尝试. 他生成的其实是 TailRecursiveSink 这种类型.
+
 extension ObservableType {
     // 如果, 一个 Swift.Sequence 里面的元素, 都是一个 Publisher 的话, 会生成 CatchSequence
     public static func `catch`<Sequence: Swift.Sequence>(sequence: Sequence) -> Observable<Element>
@@ -129,24 +137,13 @@ extension ObservableType {
     }
 }
 
-
-
-/*
- 
- */
-
 extension ObservableType {
     
     // 如果, 失败了, 那么使用原来的 Publisher 再次生成响应链条. 直到正常的 Complete.
     /*
      Repeats the source observable sequence until it successfully terminates.
-     
-     **This could potentially create an infinite sequence.**
-     
-     - seealso: [retry operator on reactivex.io](http://reactivex.io/documentation/operators/retry.html)
-     
-     - returns: Observable sequence to repeat until it successfully terminates.
      */
+    // 使用的是 CatchSequence 这种通用逻辑, 不过参数序列, 是用的 InfiniteSequence(repeatedValue 这种类型.
     public func retry() -> Observable<Element> {
         CatchSequence(sources: InfiniteSequence(repeatedValue: self.asObservable()))
     }
@@ -193,7 +190,6 @@ final private class CatchSequenceSink<Sequence: Swift.Sequence, Observer: Observ
     
     // 取得了下一个 Publisher, 应该怎么处理. 在子类中重写, 这里就是直接将和自己相连.
     override func subscribeToNext(_ source: Observable<Element>) -> Disposable {
-        // 获取下一个 Publisher, 然后 Publisher 构建原有的响应链条的源头.
         source.subscribe(self)
     }
     
@@ -224,7 +220,6 @@ final private class CatchSequence<Sequence: Swift.Sequence>: Producer<Sequence.E
         self.sources = sources
     }
     
-    // 这种, 另起一行将参数顶头写的方式, 是官方推荐的写法.
     override func run<Observer: ObserverType>(
         _ observer: Observer,
         cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {

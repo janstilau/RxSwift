@@ -7,6 +7,10 @@
 //
 
 extension ObservableType {
+    /*
+     Just 其实很有用. 因为 Rx 里面经常有辅助管道, 例如 Merge, FlatMap, 这些都是需要的都是一个新的 Publisher.
+     如果我们有着明确的输出, 那么使用 Just 就可以了.
+     */
     public static func just(_ element: Element) -> Observable<Element> {
         Just(element: element)
     }

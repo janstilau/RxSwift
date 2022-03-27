@@ -1,9 +1,5 @@
-
-/*
- AsSingle 是对于原有的 Publisher 的包装. 为的就是确认, 只会有一次 element 的发射.
- 所以, AsSingleSink 要保证, 所包装的 Publisher 要有 single 的特性. 这一点, 是通过建立一个 AsSingleSink 中间层达到的.
- 原来的 Publisher 还是原有的方式发射信号, 在 SingleSink 这里进行拦截. 
- */
+// 要么是 ele + comlete, 要么是 error
+// 所以 AsSingleSink 其实就是对于它的 Source 提要求, 如果不满足要求, 就发送 error 到后续的节点.
 private final class AsSingleSink<Observer: ObserverType> : Sink<Observer>, ObserverType {
     typealias Element = Observer.Element
     
@@ -22,6 +18,7 @@ private final class AsSingleSink<Observer: ObserverType> : Sink<Observer>, Obser
             self.forwardOn(event)
             self.dispose()
         case .completed:
+            // 当 Complete 的时候, 必须是接受过 Next 信号, 存储过值, 否则就是 error. 
             if let element = self.element {
                 self.forwardOn(element)
                 self.forwardOn(.completed)
