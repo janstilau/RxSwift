@@ -11,6 +11,8 @@
  就是定义一个闭包, 然后使用这个闭包, 来实现对应的 Protocol 要求的功能.
  */
 
+// 这是一个非常非常重要的一个类.
+// 这是从响应式的世界, 到达命令式世界的桥梁.
 final class AnonymousObserver<Element>: ObserverBase<Element> {
     
     typealias EventHandler = (Event<Element>) -> Void

@@ -64,7 +64,8 @@ public final class SerialDisposable : DisposeBase, Cancelable {
         self._dispose()?.dispose()
     }
     
-    // 个人非常不喜欢的写法, 为什么在 get 中, 要进行副作用. 
+    // _dispose 里面, 其实做了两件事情, 1 是状态值的改变, 将 Bool 这个状态值, 在锁的环境下, 进行了切换.
+    // 2 是返回当前存储的外部 dispoable 对象.
     private func _dispose() -> Disposable? {
         self.lock.performLocked {
             guard !self.isDisposed else { return nil }

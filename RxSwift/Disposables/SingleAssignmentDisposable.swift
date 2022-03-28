@@ -17,6 +17,7 @@
  这个类在 Schdule 的时候被使用了, Schedule 是一个延时操作, 可能在对应的 Action 被触发之前, 就进行了 dispose. 这个时候, 直接就是 DisposeState 的改变.
  也可能在 Action 触发之后进行 dispose, 这个时候 private var disposable = nil as Disposable 已经有值了, 就需要进行 DisposeState 的改变, 外加存储的 private var disposable 调用 dispose()
  */
+
 public final class SingleAssignmentDisposable : DisposeBase, Cancelable {
     
     private struct DisposeState: OptionSet {

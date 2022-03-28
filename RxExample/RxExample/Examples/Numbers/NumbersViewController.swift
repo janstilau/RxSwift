@@ -161,13 +161,12 @@ class NumbersViewController: ViewController, UIScrollViewDelegate {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        Single.create { singleObserver in
-            singleObserver(.success("呵呵哒"))
-            singleObserver(.failure(RxSwift.RxError.argumentOutOfRange))
-            return Disposables.create()
-        }.subscribe { event in
+        let request = URLRequest.init(url: URL.init(string: "https://www.baidu.com")!)
+        let responseObservable = URLSession.shared.rx.response(request: request)
+        let subscription = responseObservable.subscribe { event in
             print(event)
         }
+        subscription.dispose()
     }
     
     func openYami() {

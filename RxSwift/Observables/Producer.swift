@@ -8,7 +8,12 @@
 
 
 /*
- Producer 中, 记录的是事件发生的时候的处理逻辑, 并不会立刻对事件进行处理.
+ 各种, Operator 的执行结果, 返回的是一个 Producer 对象.
+ 而 Producer 是一个 Observable. 所以, 它能够继续调用 Observable 的方法, 也能最终调用 subscribe 函数.
+ 
+ 而各个 Producer 的 subscribe 方法中, 实际上是生成了各个 Sink 对象. 各个 Sink 对象, 是 Observer.
+ 各个 Sink 对象, 被 Observable.subscribe 的时候, 是真正的 Observer 串联的过程 .
+ 各个 Observable 在各个响应链路中, 对象消失, 是一个个 Sink 串连, 并且将各自的指针, 插入到前方节点中进行保存.
  */
 class Producer<Element>: Observable<Element> {
     
@@ -21,7 +26,6 @@ class Producer<Element>: Observable<Element> {
      当真正的需要订阅的时候, Producer 才会生成 Sink 节点, 添加到响应链条里面.
      一般来说, 一个 Publisher, 很多的 Operator, 然后终点是一个 Subscriber.
      */
-    
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         if !CurrentThreadScheduler.isScheduleRequired {
             // The returned disposable needs to release all references once it was disposed.
@@ -54,7 +58,7 @@ class Producer<Element>: Observable<Element> {
      |               |
      FilterSink        MapSink
      
-     最终返回的是 FilterDisposer, 通过上面的关系, 可以看到, FilterDisposer 的 Dispose 可以引起整个链条的 Dispose 触发. 
+     最终返回的是 FilterDisposer, 通过上面的关系, 可以看到, FilterDisposer 的 Dispose 可以引起整个链条的 Dispose 触发.
      */
     func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable)
     where Observer.Element == Element {
@@ -105,6 +109,8 @@ private final class SinkDisposer: Cancelable {
     }
     
     func dispose() {
+        // fetchOr 会修改 self.state 的值.
+        // 所以第二次进入的时候, 不会引起这个方法的递归调用.
         let previousState = fetchOr(self.state, DisposeState.disposed.rawValue)
         
         // 已经 disposded, 直接返回, 防止重复 dispose.
@@ -122,7 +128,9 @@ private final class SinkDisposer: Cancelable {
                 rxFatalError("Subscription not set")
             }
             
+            // Sink dispose 会修改 Sink 的状态, Sink 的状态为 Disposed 了, 就不会 forward 任何的事件了.
             sink.dispose()
+            // 然后才是 subscription 的 Dispose. 这个顺序是非常重要的. 因为 subscription.dispose() 还是可能会触发事件的, 例如 dataTaskRequest 的 cancel, 但是因为 Sink 先 disposed 了, 后续节点, 还是不会受到取消事件.
             subscription.dispose()
             
             // 主动, 放开引用, 放开了循环引用. 这里非常重要, Sink 的生命周期, 其实是靠 Sink 和 SinkDisposer 循环引用保持的.

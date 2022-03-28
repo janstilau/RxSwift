@@ -37,9 +37,8 @@ final private class SubscribeOnSink<Ob: ObservableType, Observer: ObserverType>:
         super.init(observer: observer, cancel: cancel)
     }
     
-    /*
-     SubscribeOnSink 在 On 方法里面, 没有任何的特殊设计. 就是传统的 forward.
-     */
+    // 这个 Sink, 主要的作用, 是在 Subscribe 的时候, 执行特殊的逻辑.
+    // 所以他的 On 其实就是完全的 Forward. 没有特殊的逻辑.
     func on(_ event: Event<Element>) {
         self.forwardOn(event)
         
@@ -49,29 +48,21 @@ final private class SubscribeOnSink<Ob: ObservableType, Observer: ObserverType>:
     }
     
     /*
-     Run, 其实就是在 subscribe 的时候, 是否要进行特殊的操作.
-     最重要的其实就是, 在 Producer 要生成事件的应该发生在什么地方 .
-     主要就是线程的切换.
+     如果一个 Sink 有 run 方法, 那么就是这个 Sink, 在 Subscribe 的时候, 有着特殊的设计.
+     SubscribeOn 的特殊设计就是. 将 source subscribe 这件事, 经过 scheduler 进行调度.
      */
     func run() -> Disposable {
         let disposeEverything = SerialDisposable()
         let cancelSchedule = SingleAssignmentDisposable()
-        
         disposeEverything.disposable = cancelSchedule
         
-        // 在 特定的 scheduler 进行 subscribe 的动作.
-        
-        // 相应链条还是完整的保留了下来, 自己的这个节点, 在真正的相应链条里面, 就是纯粹的中间中介.
-        // 之所以有自己的这一环节, 仅仅是在创建这样一个链条的时候, 要将创建这一过程, 通过 scheduler 进行调度.
-        
-        // disposeSchedule 指的是, 调度这件事, 是否需要取消.
+        // 在这里没有明白, cancelSchedule 这个对象的意义在哪里.
         let disposeSchedule = self.parent.scheduler.schedule(()) { _ -> Disposable in
             let subscription = self.parent.source.subscribe(self)
             disposeEverything.disposable = ScheduledDisposable(scheduler: self.parent.scheduler,
                                                                disposable: subscription)
             return Disposables.create()
         }
-        
         cancelSchedule.setDisposable(disposeSchedule)
         
         return disposeEverything
