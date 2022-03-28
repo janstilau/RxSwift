@@ -11,8 +11,10 @@
  各种, Operator 的执行结果, 返回的是一个 Producer 对象.
  而 Producer 是一个 Observable. 所以, 它能够继续调用 Observable 的方法, 也能最终调用 subscribe 函数.
  
+ 各种 Observable 的方法, 仅仅是在做数据收集的工作. 真正的这些数据能够起到作用, 是在 Sink 中.
+ 
  而各个 Producer 的 subscribe 方法中, 实际上是生成了各个 Sink 对象. 各个 Sink 对象, 是 Observer.
- 各个 Sink 对象, 被 Observable.subscribe 的时候, 是真正的 Observer 串联的过程 .
+ 在 Producer 调用 subscribe 的时候, 是实际的 Sink 的生成, 并且串连起来的过程.
  各个 Observable 在各个响应链路中, 对象消失, 是一个个 Sink 串连, 并且将各自的指针, 插入到前方节点中进行保存.
  */
 class Producer<Element>: Observable<Element> {
@@ -33,7 +35,6 @@ class Producer<Element>: Observable<Element> {
             let sinkAndSubscription = self.run(observer, cancel: disposer)
             disposer.setSinkAndSubscription(sink: sinkAndSubscription.sink,
                                             subscription: sinkAndSubscription.subscription)
-            
             return disposer
         } else {
             return CurrentThreadScheduler.instance.schedule(()) { _ in
@@ -48,12 +49,13 @@ class Producer<Element>: Observable<Element> {
     
     /*
      子类, 子类化 run 的具体实现.
-     返回 Sink 对象, 以及存储的 Source 注册这个 Sink 返回的 Subscription 对象.
+     返回 Sink 对象, 以及返回的 Subscription 对象.
      
      Publisher()->Map->Filter->Subject
      
      在以上的这个链条里面, 当 Filter Subscribe Subject 的时候, 返回的是一个 SinkDisposer 对象.
      SinkDisposer 对象里面, 存储着 FilterSink 对象, 以及 Map Subscribe FilterSink 的返回值, 还是一个 SinkDisposer 对象.
+     Filter 的 Subscribe 方法, 会触发它的 source 的 subscribe 的方法. 就是这样, 将真正的响应者链条进行了串连.
      FilterDisposer - MapDisposer - PublisherDisposer
      |               |
      FilterSink        MapSink
@@ -74,7 +76,7 @@ private final class SinkDisposer: Cancelable {
     }
     
     private let state = AtomicInt(0) // 初始状态, 还没有被 subscribe 的
-    private var sink: Disposable? // 使用这个值, 保留了新生成的 Sink 对象的生命周期.
+    private var sink: Disposable? // 这是一个循环引用, 保证了节点, 只有在 Dispose 触发的时候, 才会真正的消亡. 
     /*
      Map.Filter.Subscribe
      

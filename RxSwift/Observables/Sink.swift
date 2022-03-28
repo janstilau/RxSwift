@@ -12,7 +12,9 @@
 
 /*
  RxSwift 的强大之处, 就在于各种 Operation, 以及真正实现了 Operator 逻辑的 Sink 类.
- 这些小的工具类, 就如同 Sequence 的各种函数式方法一样, 具有组合的能力.
+ 最终的响应链条里面, 其实就是一个个 Sink 的链接. 中间可能会有 Subject, 数据从最初的节点, 流转到后面的节点.
+ 这个流转的过程, 不同的 Sink 类有自己的实现. 可能会有线程间调度, 也可能会缓存, 但是方向是不变的, 从前到后.
+ 这也表明了异步编程的常用套路, 只要各个回调, 按照顺序触发就可以. 中间是可以有延迟和环境切换的.
  它们的作用, 是通用的, 方便他人阅读, 颗粒度小, 具有良好架构能力的人, 可以使用这些, 写出流式清晰的代码.
  */
 
@@ -20,7 +22,7 @@ class Sink<Observer: ObserverType>: Disposable {
     
     // Sink 和 自己的
     fileprivate let observer: Observer // Sink 操作后数据后, 应该传递数据的去向
-    fileprivate let cancel: Cancelable
+    fileprivate let cancel: Cancelable // 一般来说是 SinkDisposer
     
     private let disposed = AtomicInt(0)
     
@@ -30,6 +32,7 @@ class Sink<Observer: ObserverType>: Disposable {
         // 这个传递过来的 cancel, 一般是一个 SinkDisposer.
         // SinkDisposer 会强引用自己, 这里会有一个循环引用. 这个循环引用, 会在 dispose 里面打破
         // 这是一个故意设计出来的机制, 因为, 响应链条的生命周期是不会交给外界处理的, 只会在 dispose 中进行相关的释放工作.
+        // 引用循环在这里创建. 
         self.cancel = cancel
     }
     
@@ -50,20 +53,6 @@ class Sink<Observer: ObserverType>: Disposable {
         isFlagSet(self.disposed, 1)
     }
     
-    /*
-     这里的逻辑有点怪.
-     如果, 是 Stop 事件到达了, 触发 Sink 的 dispose
-     Sink 的 Dispose 仅仅会进行状态的改变, 然后调用 cancel 的 dispose. Sink 的 cancel 一般是一个 SinkDisposer. 和 Sink 进行循环引用.
-     SinkDisposer 里面有 Sink 和 上一个 PUBLISER Subscribe 这个 Sink 返回的 Subscription.
-     SinkDisposer 会触发 Sink 和 Subscription 的 Dispose.
-     所以 Sink 又一次会被 dispsoe. 然后再次到达 SinkDisposer 的 Dispose, return 掉.
-     
-     这样的设计, 是无论是因为 Event 到达, Sink 进行 Dispose, 或者 Subscription dispose. 都会让 Subscription 的 dispose 触发,
-     Subscription 的 dispose 触发, 会引起 Sink 和 SinkDispose 之间的循环引用打破, Sink 可以被释放.
-     Subscription 的 dispose 触发, 会引起它存储的链条上游的 Subscription 的 dispose 触发.
-     所以, Subscription 的 dispose 可能会触发很多次, 但是因为里面有剪枝操作, 所以不会引起问题.
-     Sink 的 dispose 多次触发没什么问题, 仅仅是状态的改变.
-     */
     func dispose() {
         // 将自身的状态, 设置为 disposed
         let _ = fetchOr(self.disposed, 1)

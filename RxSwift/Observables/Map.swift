@@ -69,8 +69,11 @@ final private class Map<SourceType, ResultType>: Producer<ResultType> {
     // 各种 Sink 类里面, run 的逻辑, 几乎是一样的.
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable)
     -> (sink: Disposable, subscription: Disposable) where Observer.Element == ResultType {
+        // MapSink 创建的时候, 将后续的 Observer, 和 MapSink 进行了关联.
+        // MAPSink 的前方节点传递数据给 MapSink 之后, 会触发 MapSink 的 Transform 逻辑, 然后把结果, 传递给后面的 Observer
         let sink = MapSink(transform: self.transform, observer: observer, cancel: cancel)
-        // 真正的 Subscribe 的时候, 构建处理链条, 是从后向前的.
+        // 然后, 会将 MapSink 和前方的 source 进行关联.
+        // source.subscribe 中, 又会将 source 创建出来的 Sink, 和 MapSink 进行关联.
         let subscription = self.source.subscribe(sink)
         return (sink: sink, subscription: subscription)
     }

@@ -14,6 +14,7 @@ import Foundation
  */
 
 // 个人感觉, 应该是里面有一个锁, 而不是自己是一个锁.
+// 所有的状态相关的值, 都是使用 AtomicInt 这个类实现的.
 final class AtomicInt: NSLock {
     fileprivate var value: Int32
     public init(_ value: Int32 = 0) {
@@ -29,7 +30,7 @@ final class AtomicInt: NSLock {
  在 AtomicInt 的锁环境下, 进行 Int 值的更改.
  更新新值, 返回旧值, 这是一个常见的设计方案.
  
- Atomic 的意义就在于, 将成员变量, 和所绑定在一起了, 无论在哪个线程进行这个成员变量的修改, 都会在锁的环境.
+ Atomic 的意义就在于, 将成员变量, 和锁绑定在一起了, 无论在哪个线程进行这个成员变量的修改, 都会在锁的环境.
  相比较下, 类里面有一个锁, 然后用这个锁进行类内所有相关数据的修改, 这是一个需要程序员精心策划的过程, 稍有不慎, 就导致锁的滥用, 将不相干的数据, 用一把锁进行互斥.
  */
 func add(_ this: AtomicInt, _ value: Int32) -> Int32 {
