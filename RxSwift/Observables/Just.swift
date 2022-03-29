@@ -9,7 +9,8 @@
 extension ObservableType {
     /*
      Just 其实很有用. 因为 Rx 里面经常有辅助管道, 例如 Merge, FlatMap, 这些都是需要的都是一个新的 Publisher.
-     如果我们有着明确的输出, 那么使用 Just 就可以了.
+     这个新的 Publisher, 仅仅是为了触发某个逻辑, 这个时候使用 Just 就好了.
+     这个用法, 就是一个中间量发射了一个信号, 触发主逻辑的后续操作.
      */
     public static func just(_ element: Element) -> Observable<Element> {
         Just(element: element)
@@ -74,8 +75,9 @@ final private class Just<Element>: Producer<Element> {
         self.element = element
     }
     
-    // Just, 完全重写了父类的 subscribe 方法. 返回了一个 FakeDisposable.
-    // 当一个 Just 进行 subscribe 的时候, 直接就是将存储的值, 发送给 observer, 然后结束.
+    // Producer 的 subscribe 有个固定的套路, 生成一个 SinkDisposer, 然后调用 run 方法, 进行循环引用的建立.
+    // 但是, 如果根本不需要这个 Sink 节点, 那么其实可以省略这个节点. 对于这种 Producer, 它的 subscribe 会被重写.
+    // 直接在方法内, 触发后续节点的 On 事件就可以了 .
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         observer.on(.next(self.element))
         observer.on(.completed)

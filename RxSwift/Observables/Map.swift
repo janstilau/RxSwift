@@ -42,6 +42,7 @@ final private class MapSink<SourceType, Observer: ObserverType>: Sink<Observer>,
                 self.forwardOn(.next(mappedElement))
             } catch let e {
                 self.forwardOn(.error(e))
+                // 对于 Sink 来说, dispose 1. 关闭自己的循环引用. 2 将自己的 self.disposed 设置为 1, 这样 Sink 就不会给后续节点传输数据了. 
                 self.dispose()
             }
         case .error(let error):

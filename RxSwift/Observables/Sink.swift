@@ -53,6 +53,9 @@ class Sink<Observer: ObserverType>: Disposable {
         isFlagSet(self.disposed, 1)
     }
     
+    // 对于 Sink 来说, dispose 并不会真的让资源释放.
+    // 他只是让自身的状态发生改变, 然后 cancel.dispose, 而这个 cancel, 一般是一个 SinkDisposer, SinkDisposer 的 dispose, 会切断双方的循环引用.
+    // 当
     func dispose() {
         // 将自身的状态, 设置为 disposed
         let _ = fetchOr(self.disposed, 1)

@@ -21,6 +21,7 @@ extension ObservableType {
 
 // Empty 的含义时, 会发送一个 Complete 事件.
 final private class EmptyProducer<Element>: Producer<Element> {
+    // Empty 的 Operator, 同样不需要一个 Sink 节点, 所以完全重写 subscribe 方法就可以.
     override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
         observer.on(.completed)
         return Disposables.create()

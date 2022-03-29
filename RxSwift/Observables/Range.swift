@@ -8,7 +8,8 @@
 
 extension ObservableType where Element: RxAbstractInteger {
     /*
-     Generates an observable sequence of integral numbers within a specified range, using the specified scheduler to generate and send out observer messages.
+     Generates an observable sequence of integral numbers within a specified range,
+     using the specified scheduler to generate and send out observer messages.
      */
     public static func range(start: Element,
                              count: Element,
@@ -22,7 +23,7 @@ final private class RangeProducer<Element: RxAbstractInteger>: Producer<Element>
     fileprivate let start: Element
     fileprivate let count: Element
     fileprivate let scheduler: ImmediateSchedulerType
-
+    
     init(start: Element, count: Element, scheduler: ImmediateSchedulerType) {
         self.start = start
         self.count = count
@@ -47,8 +48,6 @@ final private class RangeSink<Observer: ObserverType>: Sink<Observer> where Obse
     }
     
     func run() -> Disposable {
-        // 这里, 写的实在是在复杂了.
-        // 要有调度器的存在, 要有数据的更改. 
         return self.parent.scheduler.scheduleRecursive(0 as Observer.Element)
         { i, recurse in
             if i < self.parent.count {
@@ -56,6 +55,7 @@ final private class RangeSink<Observer: ObserverType>: Sink<Observer> where Obse
                 // 在这里, 进行了递归的调用.
                 recurse(i + 1)
             } else {
+                // 当, Range 结束了, 直接触发 completed 事件的传递, 然后主动 dispose
                 self.forwardOn(.completed)
                 self.dispose()
             }

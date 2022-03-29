@@ -17,6 +17,9 @@ import Foundation
 extension ObservableType {
     
     // 提交了一个闭包, 来完成 event 的处理. 将这个闭包存储到 AnonymousObserver 中, 将 AnonymousObserver 对象, 纳入到响应链条里面.
+    
+    // 这个是响应链条的终点了, 所以, 直接返回了 Disposable
+    
     public func subscribe(_ on: @escaping (Event<Element>) -> Void) -> Disposable {
         let observer = AnonymousObserver { e in
             on(e)
@@ -91,6 +94,15 @@ extension ObservableType {
         }
         
         // disposable 是用来触发, 额外的用户传入的 dispose 事件的响应.
+        /*
+         如果最后是 Map.subscribe.
+         self.asObservable().subscribe(observer) 返回的就是 Map 的 SinkDisposer
+         里面有 Map 这个 Sink, 一起 Map 的前面节点的 subscribe 的结果 .
+         
+         所以, subscribe 的返回结果, 是最后一个节点 Sink 对应的 SinkDisposer.
+         dispose 的顺序也就是, 最后一个 Sink 的状态改变, 最后一个 Sink 的 Cancel 调用 dispose, 触发前面的一个 Sink 的 Dispose, 链式触发.
+         所以, 其实建立节点的过程, 是从后向前. 主动调用 Dispose 触发的顺序, 也是从后向前. 
+         */
         return Disposables.create( self.asObservable().subscribe(observer), disposable )
     }
 }

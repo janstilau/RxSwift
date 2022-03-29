@@ -12,14 +12,13 @@ import RxSwift
 /*
  各种 Bind 到 SubjectRelay, 就是使用一个 AnonymousObserver, 包装 Relay 的 accept 方法的调用 .
  各种 Relay 类, 都是 Observable 类, Relay 的包装, 使得它们丢失了 Observer 的能力.
- 
- 
  */
 extension ObservableType {
     /*
      Creates new subscription and sends elements to publish relay(s).
      */
     // PublishRelay 已经失去了 Observer 的能力了, 所以不能直接被 subscribe.
+    // 这是特意这样做的, Relay 只能调用 accept 方法, 来触发信号的发送.
     public func bind(to relays: PublishRelay<Element>...) -> Disposable {
         bind(to: relays)
     }

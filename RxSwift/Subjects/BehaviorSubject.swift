@@ -85,6 +85,9 @@ public final class BehaviorSubject<Element>
     // 就是根据当前的状态, 返回应该接受到 event 的所有观察者们.
     func synchronized_on(_ event: Event<Element>) -> Observers {
         self.lock.lock(); defer { self.lock.unlock() }
+        
+        // 对于 Subject 来说, 它在接受到 StopEvent 之后, 没有将它的 Observer 进行删除.
+        // 其实对于 Sink 来说也是这样的. 后续的 observer 没有置为 nil. Sink dispose 会让自身的循环引用切除, 但对后方的引用不会消除.
         if self.stoppedEvent != nil || self.isDisposed {
             return Observers()
         }
@@ -95,6 +98,7 @@ public final class BehaviorSubject<Element>
             // 记录 element, 和 stopevent 的方法, 应该和获取观察者的代码逻辑分开.
             self.element = element
         case .error, .completed:
+            // 如果, 存储了 stoppedEvent, 那么之后 on 的时候, 后面的节点, 也就接收不到事件了. 
             self.stoppedEvent = event
         }
         

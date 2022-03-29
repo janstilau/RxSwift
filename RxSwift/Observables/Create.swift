@@ -42,7 +42,7 @@ final private class AnonymousObservableSink<Observer: ObserverType>: Sink<Observ
     }
     
     // Create 方法创建的, AnonymousObservableSink, 是所有的信号发射的源头.
-    // 它的状态变化, 传递给后面的 Sink 对象, 后面的 Sink 对象, 有着自己对于这个信号的处理逻辑. 
+    // 它的状态变化, 传递给后面的 Sink 对象, 后面的 Sink 对象, 有着自己对于这个信号的处理逻辑.
     func run(_ parent: Parent) -> Disposable {
         // 将自身, 当做观察者, 传递给被传递的闭包中.
         parent.subscribeHandler(AnyObserver(self))
