@@ -12,7 +12,8 @@ import UIKit
 import RxSwift
 
 extension Reactive where Base: UIApplication {
-    /// Bindable sink for `isNetworkActivityIndicatorVisible`.
+    
+    //
     public var isNetworkActivityIndicatorVisible: Binder<Bool> {
         return Binder(self.base) { application, active in
             application.isNetworkActivityIndicatorVisible = active
@@ -21,8 +22,8 @@ extension Reactive where Base: UIApplication {
     
     /// Reactive wrapper for `UIApplication.didEnterBackgroundNotification`
     public static var didEnterBackground: ControlEvent<Void> {
+        // ControlEvent 表示的是事件发生了, 这个事件不一定就是 UIControl 的事件.
         let source = NotificationCenter.default.rx.notification(UIApplication.didEnterBackgroundNotification).map { _ in }
-        
         return ControlEvent(events: source)
     }
     

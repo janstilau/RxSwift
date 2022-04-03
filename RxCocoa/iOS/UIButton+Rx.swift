@@ -31,7 +31,9 @@ import UIKit
  各种方法, 返回了对象里面, 封装了数据过来之后, 应该执行的逻辑. 
  */
 extension Reactive where Base: UIButton {
-    /// Reactive wrapper for `setTitle(_:for:)`
+    
+    // Binder 是一个 ObserverType, 所以这是用来赋值的 .
+    // _ = Observable.just("normal").subscribe(button.rx.title(for: .normal))
     public func title(for controlState: UIControl.State = []) -> Binder<String?> {
         Binder(self.base) { button, title in
             button.setTitle(title, for: controlState)

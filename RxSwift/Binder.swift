@@ -26,6 +26,7 @@ public struct Binder<Value>: ObserverType {
         self.binding = { event in
             switch event {
             case .next(let element):
+                // 当事件来临的时候, 在对应的 scheduler 环境里面, 调用传递过来实现存储的闭包. 
                 _ = scheduler.schedule(element) { element in
                     if let target = weakTarget {
                         binding(target, element)

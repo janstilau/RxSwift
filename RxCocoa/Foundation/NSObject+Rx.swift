@@ -23,7 +23,7 @@ private var deallocatedSubjectContext: UInt8 = 0
 
 #if !os(Linux)
 
-/**
+/*
  KVO is a tricky mechanism.
  
  When observing child in a ownership hierarchy, usually retaining observing target is wanted behavior.
@@ -36,7 +36,7 @@ private var deallocatedSubjectContext: UInt8 = 0
  * some third method ...
  
  Both approaches can fail in certain scenarios:
- * problems arise when swizzlers return original object class (like KVO does when nobody is observing)
+ * problems arise when swizzlers return original objœect class (like KVO does when nobody is observing)
  * Problems can arise because replacing dealloc method isn't atomic operation (get implementation,
  set implementation).
  
@@ -44,7 +44,6 @@ private var deallocatedSubjectContext: UInt8 = 0
  to replace dealloc method. In case that isn't the case, it should be ok.
  */
 extension Reactive where Base: NSObject {
-    
     
     /**
      Observes values on `keyPath` starting from `self` with `options` and retains `self` if `retainSelf` is set.
@@ -134,6 +133,8 @@ extension Reactive where Base: AnyObject {
     
     // 这是一个懒加载的机制, 如果调用, 才会生成 DeallocObservable 挂钩到 Obj 上.
     // OBJ 消亡的时候, DeallocObservable 也会消亡. 然后它里面的 Subject 会发出信号来.
+    
+    // 这在 ControlProperty 的时候, 使用了
     public var deallocated: Observable<Void> {
         return self.synchronized {
             if let deallocObservable = objc_getAssociatedObject(self.base, &deallocatedSubjectContext) as? DeallocObservable {
@@ -370,10 +371,6 @@ private final class KVOObserver
     var retainSelf: KVOObserver?
     
     init(parent: KVOObservableProtocol, callback: @escaping Callback) {
-#if TRACE_RESOURCES
-        _ = Resources.incrementTotal()
-#endif
-        
         super.init(target: parent.target, retainTarget: parent.retainTarget, keyPath: parent.keyPath, options: parent.options.nsOptions, callback: callback)
         self.retainSelf = self
     }
@@ -383,11 +380,6 @@ private final class KVOObserver
         self.retainSelf = nil
     }
     
-    deinit {
-#if TRACE_RESOURCES
-        _ = Resources.decrementTotal()
-#endif
-    }
 }
 
 private final class KVOObservable<Element>
@@ -420,7 +412,6 @@ private final class KVOObservable<Element>
             }
             observer.on(.next(value as? Element))
         }
-        
         return Disposables.create(with: observer.dispose)
     }
     

@@ -141,7 +141,7 @@ extension Reactive where Base: URLSession {
             
             // 返回的 Subscribe, 就是 Task 进行 cancel.
             // 当, taskCancel 后, 还是会触发 dataTask 里面的回调.
-            // 所以, 这个 Observable 还是可以正常的进行终点. 
+            // 所以, 这个 Observable 还是可以正常的进行终点.
             return Disposables.create(with: task.cancel)
         }
     }
