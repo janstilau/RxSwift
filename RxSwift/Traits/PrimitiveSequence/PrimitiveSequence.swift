@@ -16,7 +16,9 @@
  PrimitiveSequence 是将这些操作, 都包装到了自己的接口上, 所以 asSingle, asMaybe, 各种操作, 需要返回的是 PrimitiveSequence 对象.
  */
 
+// 这里, 其实已经讲的很清楚了. Source 
 // Observable sequences containing 0 or 1 element.
+// 这里说的很清楚, 使用 PrimitiveSequence 最多只应该有一个 Next 事件.
 public struct PrimitiveSequence<Trait, Element> {
     let source: Observable<Element>
     // Element 是为了确定事件的关联数据类型.
@@ -27,8 +29,15 @@ public struct PrimitiveSequence<Trait, Element> {
 }
 
 /// Observable sequences containing 0 or 1 element
+// 各种都是在 Protocol 上, 增加方法. 这样所有的实现类, 都可以直接使用.
+// Protocol Extension 应该使用 Protocol 中的 Primitive Method 进行编程.
+// 这里, Primitive Method 其实就是 init 方法. 所以各个 Extension 里面的方法, 就是操作 source, 然后使用新创建的 Source 进行 init.
 public protocol PrimitiveSequenceType {
     /// Additional constraints
+    // 这个类型, 没有真正的参与到类的使用里面, 它仅仅是在编译的时候, 做类型区分的.
+    // public typealias Single<Element> = PrimitiveSequence<SingleTrait, Element>
+    // Single 的 Trait, 是 SingleTrait 这个类型, 在这个类型下, 为 PrimitiveSequenceType 增加了很多的方法. 这些方法只能在 Single 下使用.
+    // 这是编译控制的.
     associatedtype Trait
     
     /// Sequence element type
@@ -49,6 +58,15 @@ extension PrimitiveSequence: PrimitiveSequenceType {
     }
 }
 
+// PrimitiveSequence 并不是一个 Observable, 他仅仅是 ObservableConvertibleType
+// 所以, 如果想要当做一个 Observable 来使用, 先要使用 asObservable 获取一个 Observable 对象.
+// 如果直接使用 PrimitiveSequence, 主要是为了使用它的 Trait 方法.
+
+// 这里可以看到, ObservableConvertibleType 和 ObservableType 的区别了.
+// ObservableType 能够直接进行 subscribe, 而 ObservableConvertibleType 需要专门调用 asObservable 来获取到 ObservableType, 然后才能进行 subscribe
+// ObservableConvertibleType 在这里被用到了, 他并不是一个 ObservableType, 但是可以使用 asObservable 纳入到响应式的世界里面.
+// 给他添加各种方法, 并不是在 ObservableType 上添加, 而是给这个特殊类型上增加, 增加的都是特化方法.
+// 然后这些特化方法, 还是要纳入到响应式的世界里面, 就调用 asObservable, 来获取到原本的 Observable, 使用原本的概念, 来实现这些特化方法.
 extension PrimitiveSequence: ObservableConvertibleType {
     public func asObservable() -> Observable<Element> {
         self.source

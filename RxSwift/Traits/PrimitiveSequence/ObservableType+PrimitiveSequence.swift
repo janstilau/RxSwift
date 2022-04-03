@@ -7,7 +7,10 @@
 //
 
 // asXXX 的构建之后, 然后构建 PrimitiveSequence
-// 因为 Single 其实是 PrimitiveSequence 的特化. 
+// 因为 Single 其实是 PrimitiveSequence 的特化.
+
+// 这几个 Extension 方法, 返回的数据结构都是 PrimitiveSequence
+// 因为, 只能是返回这些特殊的数据结构, 才能调用在它上面定义的 SingleEvent 方法.
 extension ObservableType {
     /*
      The `asSingle` operator throws a `RxError.noElements` or `RxError.moreThanOneElement`
@@ -23,6 +26,7 @@ extension ObservableType {
      The `first` operator emits only the very first item emitted by this Observable,
      or nil if this Observable completes without emitting anything.
      */
+    // First, 
     public func first() -> Single<Element?> {
         PrimitiveSequence(raw: First(source: self.asObservable()))
     }
