@@ -11,6 +11,7 @@ extension ObservableType {
     // 它的唯一的作用, 其实就是将 事件在 scheduler 的调度之后, 传递给后方的 observer.
     public func observe(on scheduler: ImmediateSchedulerType)
     -> Observable<Element> {
+        // 这里的判断, 主要的目的, 就是在一个串行队列上, 进行 on 的调度. 这样保证了原始的顺序.
         guard let serialScheduler = scheduler as? SerialDispatchQueueScheduler else {
             return ObserveOn(source: self.asObservable(), scheduler: scheduler)
         }
@@ -82,13 +83,13 @@ final private class ObserveOnSink<Observer: ObserverType>: ObserverBase<Observer
         }
         if shouldStart {
             // 在这里, 开启了调度器, 调度器的动作, 就是自己的 run 函数.
+            // scheduleRecursive 就是一个垃圾设计. 炫技狂魔. 每次都要缕一遍相关代码.
             self.scheduleDisposable.disposable = self.scheduler.scheduleRecursive((), action: self.run)
         }
     }
     
     // 在锁的环境下, 进行数据的读取. 然后触发后续的操作.
-    // 坦率的说, scheduleRecursive 设计的不够好, 复杂的逻辑 .
-    // 如果自己写一个会简单的多.
+    // run 已经是 self.scheduler.scheduleRecursive 调度之后了, 所以, 环境已经进行了切换. 
     func run(_ state: (),
              _ recurse: (()) -> Void) {
         let (nextEvent, observer) = self.lock.performLocked { () -> (Event<Element>?, Observer) in

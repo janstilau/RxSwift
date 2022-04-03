@@ -91,19 +91,19 @@ public class CurrentThreadScheduler : ImmediateSchedulerType {
          
          Scheduler.CurrentThread.Schedule(() =>
          {
-             Console.WriteLine("A");
-
-             Scheduler.CurrentThread.Schedule(() =>
-             {
-                 Console.WriteLine("C");
-             });
-
-             Scheduler.CurrentThread.Schedule(() =>
-             {
-                 Console.WriteLine("D");
-             });
-
-             Console.WriteLine("B");
+         Console.WriteLine("A");
+         
+         Scheduler.CurrentThread.Schedule(() =>
+         {
+         Console.WriteLine("C");
+         });
+         
+         Scheduler.CurrentThread.Schedule(() =>
+         {
+         Console.WriteLine("D");
+         });
+         
+         Console.WriteLine("B");
          });
          */
         // 这里的代码, 是为了以上的嵌套调用准备的.
