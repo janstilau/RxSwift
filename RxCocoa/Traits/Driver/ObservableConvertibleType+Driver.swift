@@ -40,15 +40,13 @@ extension ObservableConvertibleType {
         return Driver(source)
     }
 
-    /**
+    /*
     Converts observable sequence to `Driver` trait.
-    
-    - parameter onErrorRecover: Calculates driver that continues to drive the sequence in case of error.
-    - returns: Driver trait.
     */
     public func asDriver(onErrorRecover: @escaping (_ error: Swift.Error) -> Driver<Element>) -> Driver<Element> {
         let source = self
             .asObservable()
+        // 主动的进行了主线程的切换.
             .observe(on:DriverSharingStrategy.scheduler)
             .catch { error in
                 onErrorRecover(error).asObservable()

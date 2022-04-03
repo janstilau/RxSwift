@@ -9,11 +9,13 @@
 import RxSwift
 
 /*
- 其实 bind 的逻辑, 和 Subscribe 的逻辑没有任何的区别. 更多的是, 语义上的差别.
+ Bind 相比较 subscribe, subscribe 里面直接传递的是各个相应的闭包.
+ 而 Bind 需要的则是 Observer 对象. 在 Bind 内部, 是使用了 Observer 的抽象逻辑的构建. 
  */
 extension ObservableType {
     
-    public func bind<Observer: ObserverType>(to observers: Observer...) -> Disposable where Observer.Element == Element {
+    public func bind<Observer: ObserverType>(to observers: Observer...) -> Disposable
+    where Observer.Element == Element {
         self.subscribe { event in
             // 各个 observers 并没有直接和信号源联系, 而是找了一个中间层.
             // 中间层对象在响应链条中, 分发给各个 Subscriber.

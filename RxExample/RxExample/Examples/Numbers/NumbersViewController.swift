@@ -136,6 +136,10 @@ class NumbersViewController: ViewController, UIScrollViewDelegate {
     
     @IBOutlet weak var result: UILabel!
     
+    @IBOutlet weak var touchBtn: UIButton!
+    
+    var btnDisposale: Disposable?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -158,9 +162,24 @@ class NumbersViewController: ViewController, UIScrollViewDelegate {
         .map { $0.description }
         .bind(to: result.rx.text)
         .disposed(by: disposeBag)
+        
+        /*
+         Sink 的生命周期. 
+         */
+        btnDisposale =
+        touchBtn.rx.tap.map { _ in
+            return "TouchBtnClicked"
+        }.take(3).subscribe { event in
+            print(event)
+        }
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+            
+        btnDisposale?.dispose()
+    }
+    
+    func testNetwork() {
         let request = URLRequest.init(url: URL.init(string: "https://www.baidu.com")!)
         let responseObservable = URLSession.shared.rx.response(request: request)
         let subscription = responseObservable.subscribe { event in

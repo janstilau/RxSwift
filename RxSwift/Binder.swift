@@ -8,7 +8,7 @@
 
 /*
  Binder 是用来当做 Observer 的.
- 它的 On 就是使用调用传递过来的闭包, 一般来说, 就是将数据, 设置到 Base 的某个值上. 
+ 它的 On 就是使用调用传递过来的闭包, 一般来说, 就是将数据, 设置到 Base 的某个值上.
  */
 public struct Binder<Value>: ObserverType {
     public typealias Element = Value
@@ -30,7 +30,7 @@ public struct Binder<Value>: ObserverType {
                     if let target = weakTarget {
                         binding(target, element)
                     }
-                    // 这里仅仅是调度执行环境, 没有必要取消. 
+                    // 这里仅仅是调度执行环境, 没有必要取消.
                     return Disposables.create()
                 }
             case .error(let error):

@@ -110,6 +110,12 @@ private final class SinkDisposer: Cancelable {
         }
     }
     
+    /*
+     Sink 是当前 Sink 对象, 通过这个循环引用, 可以保证 Sink 可以自管理. 必须明确的调用 dispose 之后, Sink 对象才会消失.
+     Subscription 则是前方节点的 SinkDisposer 引用.
+     Sink 的 dispose, 可能是从后向前触发, 就是最后的 subscription 调用 Dispose, 顺着 Subscription 触发. 这个时候, 上游节点的 Subscription 会触发 dispose 操作.
+     也可能是从前往后触发, 上游节点已经 dispose 了, 但是下游节点还是会触发上游节点的 dispose. 所以, 要在 dispose 内进行状态的判断, 避免重复 dispose 逻辑被调用了. 
+     */
     func dispose() {
         // fetchOr 会修改 self.state 的值.
         // 所以第二次进入的时候, 不会引起这个方法的递归调用.
