@@ -21,7 +21,7 @@ public final class ConcurrentMainScheduler : SchedulerType {
     public typealias Time = Date
 
     private let mainScheduler: MainScheduler
-    private let mainQueue: DispatchQueue
+    private let mainQueue: DispatchQueue //
 
     /// - returns: Current time.
     public var now: Date {

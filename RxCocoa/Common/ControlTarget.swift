@@ -27,13 +27,10 @@ final class ControlTarget: RxTarget {
     let selector: Selector = #selector(ControlTarget.eventHandler(_:))
     
     weak var control: Control?
-#if os(iOS) || os(tvOS)
     let controlEvents: UIControl.Event
-#endif
     
     var callback: Callback?
     
-#if os(iOS) || os(tvOS)
     init(control: Control, controlEvents: UIControl.Event, callback: @escaping Callback) {
         self.control = control
         self.controlEvents = controlEvents
@@ -44,7 +41,6 @@ final class ControlTarget: RxTarget {
         // 在构建方法里面, 进行了 target action 的监听.
         control.addTarget(self, action: selector, for: controlEvents)
     }
-#endif
     
     // 然后在 Control 的 Event 触发的时候, 进行 CallBack 的调用,
     // 这在自己的公司的代码工具库里面, 也经常使用.
