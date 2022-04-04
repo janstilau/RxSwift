@@ -12,7 +12,9 @@ import UIKit
 import RxSwift
 
 extension Reactive where Base: UIRefreshControl {
+    
     /// Bindable sink for `beginRefreshing()`, `endRefreshing()` methods.
+    // 和其他的不同, 这里的 Binder, 主要是想要触发新的动作. 
     public var isRefreshing: Binder<Bool> {
         return Binder(self.base) { refreshControl, refresh in
             if refresh {
@@ -22,7 +24,6 @@ extension Reactive where Base: UIRefreshControl {
             }
         }
     }
-
 }
 
 #endif

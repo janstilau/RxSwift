@@ -69,6 +69,10 @@ import RxSwift
  RxScrollViewDelegateProxy.register { RxTableViewDelegateProxy(parentObject: $0) }
  
  */
+
+// 这个协议, 大部分的方法, 都是类方法.
+// 而类方法, 一般来说, 都是配置方法.
+// 所以, 这个协议的实现者, 是将自己纳入到体系中, 来确保对象可以正常使用 .
 public protocol DelegateProxyType: AnyObject {
     
     associatedtype ParentObject: AnyObject
@@ -122,10 +126,9 @@ public protocol DelegateProxyType: AnyObject {
 extension DelegateProxyType {
     /// Unique identifier for delegate
     public static var identifier: UnsafeRawPointer {
-        // 在, 实际使用函数的时候, 该确定的类型一定都是确定好了. 所以在方法里面, 直接使用类型参数是没有问题的.
+        // 在, 实际使用函数的时候, 该确定的类型一定都是确定好了.
         // 在泛型编程里面, 把类型参数, 当做变量使用.
         let delegateIdentifier = ObjectIdentifier(Delegate.self)
-        // 没有一个从 ObjectIdentifier 到 Pointer 的转换函数, 这里的 Int 只是转型的需要.
         let integerIdentifier = Int(bitPattern: delegateIdentifier)
         return UnsafeRawPointer(bitPattern: integerIdentifier)!
     }
@@ -193,7 +196,6 @@ extension DelegateProxyType {
     
     // 这是一个工厂方法, 里面会 object 和 生成 Proxy 对象的 Proxy 绑定机制.
     // 每次都要经过这个方法, 原因在于, 外界可能会修改 delegate 对象. 这里频繁的调用, 可以让这个值, 重新变为 proxy 家族的值, 然后把原来的值, 当做 forward delegate
-    // 这个方法, 带有副作用. 
     public static func proxy(for object: ParentObject) -> Self {
         MainScheduler.ensureRunningOnMainThread()
         
@@ -211,6 +213,7 @@ extension DelegateProxyType {
             assert(self.assignedProxy(for: object) === proxy)
         }
         let currentDelegate = self._currentDelegate(for: object)
+        // castOrFatalError 本身, 就有着根据返回值类型, 来确定类型的逻辑, 这里写 Self. 也就是, 谁调用这个函数, 返回谁的类型.
         let delegateProxy: Self = castOrFatalError(proxy)
         
         /*
@@ -267,6 +270,7 @@ extension DelegateProxyType {
     
     private static func assignedProxy(for object: ParentObject) -> AnyObject? {
         let maybeDelegate = objc_getAssociatedObject(object, self.identifier)
+        // 没有使用哈希表, 是使用了关联对象这种技术, 读取了相关数据 key 的数据.
         return castOptionalOrFatalError(maybeDelegate)
     }
     
@@ -413,58 +417,60 @@ extension ObservableType {
  */
 private class DelegateProxyFactory {
     
-    /*
-     将, 数据封装到内部. 提供静态方法进行注册和调用.
-     */
     private static var _sharedFactories: [UnsafeRawPointer: DelegateProxyFactory] = [:]
     
-    // 工厂类的缓存机制.
-    // 传入一个类对象进来, 返回生成这个类的实例对象的工厂对象.
-    fileprivate static func sharedFactory<DelegateProxy: DelegateProxyType>(
-        for proxyType: DelegateProxy.Type) -> DelegateProxyFactory {
-        
-        // 导出都有缓存的机制. 所以, 要限制必须在一个线程在做这个事情.
-        MainScheduler.ensureRunningOnMainThread()
-        
-        // 懒加载的机制 .
-        let identifier = DelegateProxy.identifier
-        if let factory = _sharedFactories[identifier] {
+    // 每一个 DelegateProxyType 都有自己的一个工厂类, 在 createProxy 的时候, 找到自己的工厂类.
+    // 自己的工厂类如何根据传入的值创建代理对象, 是要看 registerKnownImplementations 里面怎么实现的.
+    // 之前对于协议上的 static 方法不是太感冒, 其实就是固定的方法名, 在特定的场合下进行调用. 不过这个类型确定要比对象麻烦.
+    // 有可能是类型绑定确定的, 也有可能是根据参数的类型确定的.
+    fileprivate static func sharedFactory<DelegateProxy: DelegateProxyType>(for proxyType: DelegateProxy.Type)
+    -> DelegateProxyFactory {
+            
+            // 导出都有缓存的机制. 所以, 要限制必须在一个线程在做这个事情.
+            MainScheduler.ensureRunningOnMainThread()
+            
+            // 懒加载的机制 .
+            let identifier = DelegateProxy.identifier
+            if let factory = _sharedFactories[identifier] {
+                return factory
+            }
+            
+            let factory = DelegateProxyFactory(for: proxyType)
+            _sharedFactories[identifier] = factory
+            
+            /*
+             真正的把类型参数当做参数用的使用典范.
+             只有第一次使用的时候, 才会去调用 registerKnownImplementations
+             */
+            DelegateProxy.registerKnownImplementations()
             return factory
         }
-        
-        let factory = DelegateProxyFactory(for: proxyType)
-        _sharedFactories[identifier] = factory
-        
-        /*
-         真正的把类型参数当做参数用的使用典范.
-         只有第一次使用的时候, 才会去调用 registerKnownImplementations
-         */
-        DelegateProxy.registerKnownImplementations()
-        return factory
-    }
     
-    // 存储, Type 的 指针值, 对应工厂生成方法.
-    // 工厂方法, 是一个闭包, 传入需要 Delegate 的对象, 返回 Delegate 对象.
     private var _factories: [ObjectIdentifier: ((AnyObject) -> AnyObject)]
+    
+    // 这两个值卵用没有, 只能是 Debug 的时候自省使用.
     private var _delegateProxyType: Any.Type
     private var _identifier: UnsafeRawPointer
     
-    // 私有构造方法, 因为只会通过 static 方法才会调用. 外界不能使用.
     private init<DelegateProxy: DelegateProxyType>(for proxyType: DelegateProxy.Type) {
         self._factories = [:]
         self._delegateProxyType = proxyType
         self._identifier = proxyType.identifier
     }
     
-    // 在函数式编程里面, 函数就是按照自己的业务命名的, 不会有 action, Block 这种结尾.
+    /*
+     泛型, 只能保证编译的时候必须是对应类型的值, 才能通过编译. 但是存储的时候, 是无法存储类型信息的.
+     _factories: [ObjectIdentifier: ((AnyObject) -> AnyObject)]. 还是用的 Void 的方式进行的存储.
+     ObjectIdentifier 其实就是指针的包装而已.
+     在 createProxy 的时候, 也是找到类型指针, 再到 _factories 进行的查找.
+     */
     fileprivate func extend<DelegateProxy: DelegateProxyType, ParentObject>(make: @escaping (ParentObject) -> DelegateProxy) {
         MainScheduler.ensureRunningOnMainThread()
         
         guard self._factories[ObjectIdentifier(ParentObject.self)] == nil else {
             rxFatalError("The factory of \(ParentObject.self) is duplicated. DelegateProxy is not allowed of duplicated base object type.")
         }
-        // 这里是, 实际的进行工厂方法注册的地方 .
-        // 每一个 DelegateProxy 都要实现 registerKnownImplementations 方法, 将如何生成 Proxy 的过程 ,注册到 factory 的内部.
+        
         self._factories[ObjectIdentifier(ParentObject.self)] = { make(castOrFatalError($0)) }
     }
     

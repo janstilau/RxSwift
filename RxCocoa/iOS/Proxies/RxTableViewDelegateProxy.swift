@@ -23,7 +23,6 @@ open class RxTableViewDelegateProxy
         self.tableView = tableView
         super.init(scrollView: tableView)
     }
-    
 }
 
 extension RxTableViewDelegateProxy: UITableViewDelegate {}

@@ -17,7 +17,6 @@ extension Reactive where Base: UIDatePicker {
         value
     }
     
-    /// Reactive wrapper for `date` property.
     public var value: ControlProperty<Date> {
         return base.rx.controlPropertyWithDefaultEvents(
             getter: { datePicker in
