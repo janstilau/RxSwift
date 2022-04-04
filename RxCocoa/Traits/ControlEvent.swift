@@ -45,6 +45,13 @@ public protocol ControlEventType : ObservableType {
 // 而是在外界进行创建, 然后自己仅仅是作为概念的包装.
 
 
+/*
+ 核心, 还是 Obsersables, 但是有了很多的对于 obsersable 的包装类.
+ 这些包装类, 都提供了变化成为 obsersable 的接口, 这些包装类里面的类型参数, 也都和 Observable 的一致.
+ 
+ 这些包装类的主要作用, 1. 在 init 的时候, 最传入的 obsersable 进行加工, 所以这些包装类里面, 存储的已经不是传入的最原始的信号了, 而是自己加工后的.
+ 2. 增加独特的接口, 使得外界使用的时候, 更加的方便.
+ */
 public struct ControlEvent<PropertyType> : ControlEventType {
     
     public typealias Element = PropertyType
@@ -60,6 +67,7 @@ public struct ControlEvent<PropertyType> : ControlEventType {
     // ControlEvent 并不管理 events 的构建过程, 这个过程是外部创建的.
     
     public init<Ev: ObservableType>(events: Ev) where Ev.Element == Element {
+        // 确保了, 在主线程进行注册操作. 
         self.events = events.subscribe(on: ConcurrentMainScheduler.instance)
     }
     

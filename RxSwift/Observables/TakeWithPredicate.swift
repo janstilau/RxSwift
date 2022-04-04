@@ -61,6 +61,7 @@ final private class TakeUntilSinkOther<Other, Observer: ObserverType>
         self.synchronizedOn(event)
     }
     
+    // 只要, 收到了信号, 就是 parent 的 Completed
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next:
@@ -98,6 +99,7 @@ final private class TakeUntilSink<Other, Observer: ObserverType>
         self.synchronizedOn(event)
     }
     
+    // 所有的信号的接受, 都是直接 forward.
     func synchronized_on(_ event: Event<Element>) {
         switch event {
         case .next:

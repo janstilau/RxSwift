@@ -15,7 +15,7 @@
 public struct AnyObserver<Element> : ObserverType {
     
     public typealias EventHandler = (Event<Element>) -> Void
-    private let observer: EventHandler // 接口实现的 block 对象 .
+    private let observer: EventHandler
     
     public init(eventHandler: @escaping EventHandler) {
         self.observer = eventHandler
@@ -26,6 +26,7 @@ public struct AnyObserver<Element> : ObserverType {
         self.observer = observer.on
     }
     
+    // 在 On 里面, 就是直接调用存储的闭包对象就可以了. 
     public func on(_ event: Event<Element>) {
         // 在实现接口的时候, 直接使用保存的闭包进行调用
         self.observer(event)

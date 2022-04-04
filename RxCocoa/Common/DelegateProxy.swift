@@ -39,9 +39,9 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
     public init<Proxy: DelegateProxyType>(parentObject: ParentObject,
                                           delegateProxy: Proxy.Type)
     where Proxy: DelegateProxy<ParentObject, Delegate>,
-          Proxy.ParentObject == ParentObject,
-          Proxy.Delegate == Delegate {
-              
+    Proxy.ParentObject == ParentObject,
+    Proxy.Delegate == Delegate {
+        
         self._parentObject = parentObject
         self._currentDelegateFor = delegateProxy._currentDelegate
         self._setCurrentDelegateTo = delegateProxy._setCurrentDelegate
@@ -257,7 +257,7 @@ private let mainScheduler = MainScheduler()
 
 private final class MessageDispatcher {
     
-    // 
+    //
     private let dispatcher: PublishSubject<[Any]>
     private let result: Observable<[Any]>
     

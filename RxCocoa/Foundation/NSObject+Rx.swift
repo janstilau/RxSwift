@@ -133,8 +133,6 @@ extension Reactive where Base: AnyObject {
     
     // 这是一个懒加载的机制, 如果调用, 才会生成 DeallocObservable 挂钩到 Obj 上.
     // OBJ 消亡的时候, DeallocObservable 也会消亡. 然后它里面的 Subject 会发出信号来.
-    
-    // 这在 ControlProperty 的时候, 使用了
     public var deallocated: Observable<Void> {
         return self.synchronized {
             if let deallocObservable = objc_getAssociatedObject(self.base, &deallocatedSubjectContext) as? DeallocObservable {
@@ -142,6 +140,7 @@ extension Reactive where Base: AnyObject {
             }
             
             let deallocObservable = DeallocObservable()
+            // 给自己的 base 挂钩一个关联对象.
             objc_setAssociatedObject(self.base, &deallocatedSubjectContext, deallocObservable, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
             
             return deallocObservable.subject
@@ -546,12 +545,16 @@ extension Reactive where Base: AnyObject {
     }
 }
 
+// 这个用的不是很多, 仅仅在 NSControl, 和 UIBarButtonItem 里面使用到了.
+// 如果, 可以取到值, 那么一定是该类型的值. 如果取不到, 使用工厂方法, 进行生成.
+// 这是一个非常常用的设计思路. 
 extension Reactive where Base: AnyObject {
-    /**
+    /*
      Helper to make sure that `Observable` returned from `createCachedObservable` is only created once.
      This is important because there is only one `target` and `action` properties on `NSControl` or `UIBarButtonItem`.
      */
-    func lazyInstanceObservable<T: AnyObject>(_ key: UnsafeRawPointer, createCachedObservable: () -> T) -> T {
+    func lazyInstanceObservable<T: AnyObject>(_ key: UnsafeRawPointer,
+                                              createCachedObservable: () -> T) -> T {
         if let value = objc_getAssociatedObject(self.base, key) {
             return value as! T
         }

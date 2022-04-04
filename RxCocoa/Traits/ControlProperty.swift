@@ -84,6 +84,7 @@ public struct ControlProperty<PropertyType> : ControlPropertyType {
     /// adjacent sequence values need to be different (e.g. because of interaction between programmatic and user updates,
     /// or for any other reason).
     public var changed: ControlEvent<PropertyType> {
+        // self.values 是
         ControlEvent(events: self.values.skip(1))
     }
     
