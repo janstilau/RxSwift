@@ -22,6 +22,7 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
     public typealias ParentObject = P
     public typealias Delegate = D
     
+    // 懒加载的机制, 真正的实现, 指令到响应的实现逻辑. 是使用了 Subject 作为分发.
     private var _sentMessageForSelector = [Selector: MessageDispatcher]()
     private var _methodInvokedForSelector = [Selector: MessageDispatcher]()
     
@@ -36,7 +37,7 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
     /// - parameter parentObject: Optional parent object that owns `DelegateProxy` as associated object.
     
     // parentObject 被监听的对象
-    // delegateProxy 被监听对象的代理对象.
+    // delegateProxy 被监听对象的代理对象的类型.
     public init<Proxy: DelegateProxyType>(parentObject: ParentObject, delegateProxy: Proxy.Type)
     where Proxy: DelegateProxy<ParentObject, Delegate>,
     Proxy.ParentObject == ParentObject,
@@ -282,7 +283,7 @@ private final class MessageDispatcher {
                     weakDelegateProxy?.checkSelectorIsObservable(selector);
                     weakDelegateProxy?.reset()
                 },
-                onDispose: { weakDelegateProxy?.reset() })
+                onDispose: { weakDelegateProxy?.reset() }) // do 在这里结束了.
                 
                 .share()
                 .subscribe(on: mainScheduler)

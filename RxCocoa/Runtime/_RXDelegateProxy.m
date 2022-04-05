@@ -127,6 +127,7 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
 /*
  在 rx 里面, 实际上是用到了 OC 的最后一层转发机制.
  */
+// 这算作是, 方法转发这个机制, 使用的最好的一项了. 使用底层机制, 将指令和响应式的编码方式, 进行了整合. 
 -(void)forwardInvocation:(NSInvocation *)anInvocation {
     BOOL isVoid = RX_is_method_signature_void(anInvocation.methodSignature);
     NSArray *arguments = nil;
