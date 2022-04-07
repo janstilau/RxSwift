@@ -18,9 +18,11 @@ import RxCocoaRuntime
 /// This implementation is not thread safe and can be used only from one thread (Main thread).
 
 open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
+    
     public typealias ParentObject = P
     public typealias Delegate = D
     
+    // 懒加载的机制, 真正的实现, 指令到响应的实现逻辑. 是使用了 Subject 作为分发.
     private var _sentMessageForSelector = [Selector: MessageDispatcher]()
     private var _methodInvokedForSelector = [Selector: MessageDispatcher]()
     
@@ -35,13 +37,12 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
     /// - parameter parentObject: Optional parent object that owns `DelegateProxy` as associated object.
     
     // parentObject 被监听的对象
-    // delegateProxy 被监听对象的代理对象.
-    public init<Proxy: DelegateProxyType>(parentObject: ParentObject,
-                                          delegateProxy: Proxy.Type)
+    // delegateProxy 被监听对象的代理对象的类型.
+    public init<Proxy: DelegateProxyType>(parentObject: ParentObject, delegateProxy: Proxy.Type)
     where Proxy: DelegateProxy<ParentObject, Delegate>,
-          Proxy.ParentObject == ParentObject,
-          Proxy.Delegate == Delegate {
-              
+    Proxy.ParentObject == ParentObject,
+    Proxy.Delegate == Delegate {
+        
         self._parentObject = parentObject
         self._currentDelegateFor = delegateProxy._currentDelegate
         self._setCurrentDelegateTo = delegateProxy._setCurrentDelegate
@@ -49,7 +50,9 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
         super.init()
     }
     
-    /**
+    // 这里, 讲的很清楚, 为什么具有返回值的 delegate 方法, 不应该由这套机制来触发.
+    // 这也解释了, 为什么 UIScrollView 里面, 专门找了一个 PublishSubject, 来记录了当前的 Offset 的值 .
+    /*
      Returns observable sequence of invocations of delegate methods. Elements are sent *before method is invoked*.
      
      Only methods that have `void` return value can be observed using this method because
@@ -98,8 +101,8 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
         
         if let subject = subject {
             return subject.asObservable()
-        }
-        else {
+        } else {
+            // 懒加载的机制.
             let subject = MessageDispatcher(selector: selector, delegateProxy: self)
             self._sentMessageForSelector[selector] = subject
             return subject.asObservable()
@@ -184,6 +187,7 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
     
     // proxy
     
+    // 在 ForwardInvocation 里面, 通过 SEL, 找到了 MessageDispatcher, 然后调用对应的 on 方法.
     open override func _sentMessage(_ selector: Selector, withArguments arguments: [Any]) {
         self._sentMessageForSelector[selector]?.on(.next(arguments))
     }
@@ -225,9 +229,10 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
     
     override open func responds(to aSelector: Selector!) -> Bool {
         guard let aSelector = aSelector else { return false }
-        return super.responds(to: aSelector)
-        || (self._forwardToDelegate?.responds(to: aSelector) ?? false)
-        || (self.voidDelegateMethodsContain(aSelector) && self.hasObservers(selector: aSelector))
+        return ( super.responds(to: aSelector) ||
+                 (self._forwardToDelegate?.responds(to: aSelector) ?? false) ||
+                 (self.voidDelegateMethodsContain(aSelector) && self.hasObservers(selector: aSelector))
+        )
     }
     
     fileprivate func reset() {
@@ -235,6 +240,7 @@ open class DelegateProxy<P: AnyObject, D>: _RXDelegateProxy {
         
         let maybeCurrentDelegate = self._currentDelegateFor(parentObject)
         
+        // 何故如此.
         if maybeCurrentDelegate === self {
             self._setCurrentDelegateTo(nil, parentObject)
             self._setCurrentDelegateTo(castOrFatalError(self), parentObject)
@@ -257,7 +263,7 @@ private let mainScheduler = MainScheduler()
 
 private final class MessageDispatcher {
     
-    // 
+    // 使用, Subject, 进行多路收集.
     private let dispatcher: PublishSubject<[Any]>
     private let result: Observable<[Any]>
     
@@ -272,9 +278,13 @@ private final class MessageDispatcher {
         
         // 这里, 展示了 do 的作用, 就是在实际来临的时候, 做一些事情.
         self.result = dispatcher
-            .do(onSubscribed: { weakDelegateProxy?.checkSelectorIsObservable(selector); weakDelegateProxy?.reset() },
-                onDispose: { weakDelegateProxy?.reset() })
-                // 这里没太明白, 本来 PublisherSubject 就带有 share 属性.
+            .do(
+                onSubscribed: {
+                    weakDelegateProxy?.checkSelectorIsObservable(selector);
+                    weakDelegateProxy?.reset()
+                },
+                onDispose: { weakDelegateProxy?.reset() }) // do 在这里结束了.
+                
                 .share()
                 .subscribe(on: mainScheduler)
                 }

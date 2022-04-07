@@ -12,17 +12,18 @@ import UIKit
 import RxSwift
 
 extension Reactive where Base: UIApplication {
-    /// Bindable sink for `isNetworkActivityIndicatorVisible`.
+    
+    // Binder, 存储了当信号来临的时候, 应该怎么使用信号中的元素, 来更新存储的 UI 对象.
+    // Binder 是一个 Observer, 所以, 这是信号链的终点.
     public var isNetworkActivityIndicatorVisible: Binder<Bool> {
         return Binder(self.base) { application, active in
             application.isNetworkActivityIndicatorVisible = active
         }
     }
     
-    /// Reactive wrapper for `UIApplication.didEnterBackgroundNotification`
+    // 包装了通知检测的机制, 在触发后, 进行信号的发送.
     public static var didEnterBackground: ControlEvent<Void> {
         let source = NotificationCenter.default.rx.notification(UIApplication.didEnterBackgroundNotification).map { _ in }
-        
         return ControlEvent(events: source)
     }
     
@@ -98,8 +99,8 @@ extension Reactive where Base: UIApplication {
     
     /// Reactive wrapper for `UIApplication.userDidTakeScreenshotNotification`
     public static var userDidTakeScreenshot: ControlEvent<Void> {
+        // 原来还有 userDidTakeScreenshotNotification 这个通知, 可以直接拿到截屏的通知.
         let source = NotificationCenter.default.rx.notification(UIApplication.userDidTakeScreenshotNotification).map { _ in }
-        
         return ControlEvent(events: source)
     }
 }

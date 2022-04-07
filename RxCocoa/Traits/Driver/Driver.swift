@@ -41,6 +41,8 @@ public struct DriverSharingStrategy: SharingStrategyProtocol {
     
     public static var scheduler: SchedulerType { SharingScheduler.make() }
     
+    // 其实, 还是使用了 Observable 的 share 函数, 来做 share 的真正实现逻辑.
+    // Driver 有了 replay 的效果. 
     public static func share<Element>(_ source: Observable<Element>) -> Observable<Element> {
         source.share(replay: 1, scope: .whileConnected)
     }

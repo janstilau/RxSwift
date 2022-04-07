@@ -19,6 +19,8 @@ extension ObservableType {
      */
     // SubscribeOn 表示的是, 注册这个行为, 应该被 scheduler 调度.
     // ObserverOn 表示的是, 事件的后续处理, 应该被 scheduler 调度.
+    // 为什么少使用, 是因为, 大部分的注册, 是在主线程完成的.
+    // 注册, 相当于是数据配置, 这种配置不会很耗时. 而数据的流转, 可能比较耗时, 所以 observeOn 会被大量使用.
     
     public func subscribe(on scheduler: ImmediateSchedulerType)
     -> Observable<Element> {
@@ -53,18 +55,16 @@ final private class SubscribeOnSink<Ob: ObservableType, Observer: ObserverType>:
      */
     func run() -> Disposable {
         let disposeEverything = SerialDisposable()
-        let cancelSchedule = SingleAssignmentDisposable()
-        disposeEverything.disposable = cancelSchedule
         
-        // 在这里没有明白, cancelSchedule 这个对象的意义在哪里.
+        // 在注册的时候, 将整个注册任务的实现, 调度到相应的环境里面.
+        // 一般来说, 这是信号的源头, 被称为 computable code 的执行.
         let disposeSchedule = self.parent.scheduler.schedule(()) { _ -> Disposable in
             let subscription = self.parent.source.subscribe(self)
             disposeEverything.disposable = ScheduledDisposable(scheduler: self.parent.scheduler,
                                                                disposable: subscription)
             return Disposables.create()
         }
-        cancelSchedule.setDisposable(disposeSchedule)
-        
+        disposeEverything.disposable = disposeSchedule
         return disposeEverything
     }
 }
@@ -78,7 +78,6 @@ final private class SubscribeOn<Ob: ObservableType>: Producer<Ob.Element> {
         self.source = source
         self.scheduler = scheduler
     }
-    
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Ob.Element {
         let sink = SubscribeOnSink(parent: self, observer: observer, cancel: cancel)
         let subscription = sink.run()

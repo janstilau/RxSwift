@@ -16,6 +16,7 @@ import Foundation
 
 // ConcurrentDispatchQueueScheduler 和串行的实现没有任何的区别.
 // 所以, 在传入 DispatchQueue 的时候, 其实是需要创建者保证, 传入的是一个符合类定义场景的 queue 才合适.
+
 public class ConcurrentDispatchQueueScheduler: SchedulerType {
     public typealias TimeInterval = Foundation.TimeInterval
     public typealias Time = Date
@@ -31,6 +32,7 @@ public class ConcurrentDispatchQueueScheduler: SchedulerType {
     ///
     /// - parameter queue: Target dispatch queue.
     /// - parameter leeway: The amount of time, in nanoseconds, that the system will defer the timer.
+    // 如果, 直接传入了一个 DispatchQueue, 那么需要在外界, DispatchQueue 的创建者来保证, 这是一个 concurrent 的对象.
     public init(queue: DispatchQueue,
                 leeway: DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0)) {
         self.configuration = DispatchQueueConfiguration(queue: queue, leeway: leeway)
@@ -40,11 +42,12 @@ public class ConcurrentDispatchQueueScheduler: SchedulerType {
     ///
     /// - parameter qos: Target global dispatch queue, by quality of service class.
     /// - parameter leeway: The amount of time, in nanoseconds, that the system will defer the timer.
+    // 如果, 在内部创建这个 queue, 那么在内部中, 就保证了, 这个 queue 是 concurrent 的特性的. 
     public convenience init(qos: DispatchQoS, leeway: DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0)) {
         self.init(queue: DispatchQueue(
             label: "rxswift.queue.\(qos)",
             qos: qos,
-            attributes: [DispatchQueue.Attributes.concurrent],
+            attributes: [DispatchQueue.Attributes.concurrent], //
             target: nil),
                   leeway: leeway
         )

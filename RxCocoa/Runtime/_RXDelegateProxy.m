@@ -23,33 +23,34 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
 
 @implementation _RXDelegateProxy
 
+//
 +(NSSet*)collectVoidSelectorsForProtocol:(Protocol *)protocol {
     NSMutableSet *selectors = [NSMutableSet set];
-
+    
     unsigned int protocolMethodCount = 0;
     struct objc_method_description *pMethods =
     protocol_copyMethodDescriptionList(protocol, NO, YES, &protocolMethodCount);
-
+    
     for (unsigned int i = 0; i < protocolMethodCount; ++i) {
         struct objc_method_description method = pMethods[i];
         if (RX_is_method_with_description_void(method)) {
             [selectors addObject:SEL_VALUE(method.name)];
         }
     }
-            
+    
     free(pMethods);
-// 到这里, protocol 的所有 void 方法就已经搞定了.
+    // 到这里, protocol 的所有 void 方法就已经搞定了.
     
     unsigned int numberOfBaseProtocols = 0;
     // 这里是查询 Protocol 的父类 Protocol, 然后把父类的所有方法都搞出来, 添加到 selectors 里面去..
     Protocol * __unsafe_unretained * pSubprotocols = protocol_copyProtocolList(protocol, &numberOfBaseProtocols);
-
+    
     for (unsigned int i = 0; i < numberOfBaseProtocols; ++i) {
         [selectors unionSet:[self collectVoidSelectorsForProtocol:pSubprotocols[i]]];
     }
     
     free(pSubprotocols);
-
+    
     return selectors;
 }
 
@@ -57,23 +58,24 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
  这是, 每个 _RXDelegateProxy 的子类都会触发的方法.
  */
 +(void)initialize {
+    
     // 使用类对象来上锁.
     @synchronized (_RXDelegateProxy.class) {
         if (voidSelectorsPerClass == nil) {
             voidSelectorsPerClass = [[NSMutableDictionary alloc] init];
         }
-
+        
         NSMutableSet *voidSelectors = [NSMutableSet set];
-
+        
 #define CLASS_HIERARCHY_MAX_DEPTH 100
-
+        
         NSInteger  classHierarchyDepth = 0;
         Class      targetClass         = NULL;
-
+        
         for (classHierarchyDepth = 0, targetClass = self;
              classHierarchyDepth < CLASS_HIERARCHY_MAX_DEPTH && targetClass != nil;
              ++classHierarchyDepth, targetClass = class_getSuperclass(targetClass)
-        ) {
+             ) {
             unsigned int count;
             Protocol *__unsafe_unretained *pProtocols = class_copyProtocolList(targetClass, &count);
             
@@ -84,7 +86,7 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
             
             free(pProtocols);
         }
-
+        
         if (classHierarchyDepth == CLASS_HIERARCHY_MAX_DEPTH) {
             NSLog(@"Detected weird class hierarchy with depth over %d. Starting with this class -> %@", CLASS_HIERARCHY_MAX_DEPTH, self);
 #if DEBUG
@@ -125,6 +127,7 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
 /*
  在 rx 里面, 实际上是用到了 OC 的最后一层转发机制.
  */
+// 这算作是, 方法转发这个机制, 使用的最好的一项了. 使用底层机制, 将指令和响应式的编码方式, 进行了整合. 
 -(void)forwardInvocation:(NSInvocation *)anInvocation {
     BOOL isVoid = RX_is_method_signature_void(anInvocation.methodSignature);
     NSArray *arguments = nil;
@@ -138,7 +141,7 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
         [self._forwardToDelegate respondsToSelector:anInvocation.selector]) {
         [anInvocation invokeWithTarget:self._forwardToDelegate];
     }
-
+    
     if (isVoid) {
         [self _methodInvoked:anInvocation.selector withArguments:arguments];
     }
@@ -147,12 +150,12 @@ static NSMutableDictionary *voidSelectorsPerClass = nil;
 // 
 // abstract method
 -(void)_sentMessage:(SEL)selector withArguments:(NSArray *)arguments {
-
+    
 }
 
 // abstract method
 -(void)_methodInvoked:(SEL)selector withArguments:(NSArray *)arguments {
-
+    
 }
 
 -(void)dealloc {

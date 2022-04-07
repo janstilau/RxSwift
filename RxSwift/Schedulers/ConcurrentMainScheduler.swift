@@ -9,7 +9,7 @@
 import Dispatch
 import Foundation
 
-/**
+/*
 Abstracts work that needs to be performed on `MainThread`. In case `schedule` methods are called from main thread, it will perform action immediately without scheduling.
 
 This scheduler is optimized for `subscribeOn` operator. If you want to observe observable sequence elements on main thread using `observeOn` operator,
@@ -21,7 +21,7 @@ public final class ConcurrentMainScheduler : SchedulerType {
     public typealias Time = Date
 
     private let mainScheduler: MainScheduler
-    private let mainQueue: DispatchQueue
+    private let mainQueue: DispatchQueue //
 
     /// - returns: Current time.
     public var now: Date {

@@ -13,6 +13,8 @@
 
 // 这是一个非常非常重要的一个类.
 // 这是从响应式的世界, 到达命令式世界的桥梁.
+// 已经分析出来了, 其实会有一个 Sink 对象串联出来的响应链条. 那么最后的节点, 其实就是这个 AnonymousObserver 对象.
+// subscribe 函数, 最终会生成这样的一个对象, 作为指令式的世界, 在响应式世界的插入点. 
 final class AnonymousObserver<Element>: ObserverBase<Element> {
     
     typealias EventHandler = (Event<Element>) -> Void

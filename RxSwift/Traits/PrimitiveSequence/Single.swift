@@ -11,9 +11,9 @@ import Foundation
 #endif
 
 /// Sequence containing exactly 1 element
-/// 必须要有一个, 不能直接 Complete.
-// 注意, 这里是必须有, 所以 要么是 ele + comlete, 要么是 error
+// 要么是 ele + comlete, 要么是 error
 public enum SingleTrait { }
+
 /// Represents a push style sequence containing 1 element.
 public typealias Single<Element> = PrimitiveSequence<SingleTrait, Element>
 
@@ -38,28 +38,25 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
      */
     /*
      Single.create { singleObserver in
-        singleObserver(.success("呵呵哒"))
-        singleObserver(.failure(RxSwift.RxError.argumentOutOfRange))
-        return Disposables.create()
+     singleObserver(.success("呵呵哒"))
+     singleObserver(.failure(RxSwift.RxError.argumentOutOfRange))
+     return Disposables.create()
      }.subscribe { event in
-        print(event)
+     print(event)
      }
      */
     
     /*
      Observable<Element>.create { observer
-        observer.onNext()
-        obverver.onComplete()
+     observer.onNext()
+     obverver.onComplete()
      }
      这是之前的 Observable 的创建过程. Single 应该有自己的 event 处理格式. 这里包装了一层.
-     
-     异步任务的创建, subscription 的生成, 都应该在 Single 的 subscribe 中.
-     所以, Observable<Element>.create 创建一个 Observer. 然后这个 Observer 的状态, 由
-     Single 的 subscribe 来决定.
-     Single 的 subscribe 的参数, Observable<Element>.create 传递过去的. 主要目的就是 Single subscribe 中主动调用, 来触发 observer 的状态变化的逻辑.
      */
     public static func create(subscribe: @escaping (@escaping SingleObserver) -> Disposable) -> Single<Element> {
         
+        // Observable<Element>.create 所接受的闭包, 是真正的创建异步序列的地方.
+        // 这个权利, 被交给了 subscribe 实现.
         let source = Observable<Element>.create { observer in
             return subscribe { event in
                 switch event {
@@ -71,13 +68,14 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
                 }
             }
         }
-        
         return PrimitiveSequence(raw: source)
     }
     
     /*
      Subscribes `observer` to receive events for this sequence.
      */
+    // Single 是限制, 他只是发射一个 next 出来. 但是它的 source 是传递进来的.
+    // 通过包装一层, 他中间的
     public func subscribe(_ observer: @escaping (SingleEvent<Element>) -> Void) -> Disposable {
         var stopped = false
         /*
@@ -186,7 +184,7 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
     /*
      Returns an observable sequence that contains a single element.
      */
-    // 从原始的 Observer 的 Just, 变为了 Single 的形态 
+    // 从原始的 Observer 的 Just, 变为了 Single 的形态
     public static func just(_ element: Element) -> Single<Element> {
         Single(raw: Observable.just(element))
     }

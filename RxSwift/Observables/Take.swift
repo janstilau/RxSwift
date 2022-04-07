@@ -116,6 +116,7 @@ final private class TakeTimeSink<Element, Observer: ObserverType>
     
     func tick() {
         self.lock.performLocked {
+            // 当, 时间到达了之后, 是传递一个 Complete 信号到后方节点. 
             self.forwardOn(.completed)
             self.dispose()
         }

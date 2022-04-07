@@ -18,11 +18,8 @@ public final class ScheduledDisposable : Cancelable {
         isFlagSet(self.disposed, 1)
     }
 
-    /**
+    /*
     Initializes a new instance of the `ScheduledDisposable` that uses a `scheduler` on which to dispose the `disposable`.
-
-    - parameter scheduler: Scheduler where the disposable resource will be disposed on.
-    - parameter disposable: Disposable resource to dispose on the given scheduler.
     */
     public init(scheduler: ImmediateSchedulerType, disposable: Disposable) {
         self.scheduler = scheduler

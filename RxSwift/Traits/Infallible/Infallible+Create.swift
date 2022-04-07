@@ -28,6 +28,7 @@ extension Infallible {
      - returns: The observable sequence with the specified implementation for the `subscribe` method.
      */
     public static func create(subscribe: @escaping (@escaping InfallibleObserver) -> Disposable) -> Infallible<Element> {
+        // 这里和 Single 一样的. 
         let source = Observable<Element>.create { observer in
             subscribe { event in
                 switch event {

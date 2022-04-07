@@ -13,9 +13,8 @@ private final class AsMaybeSink<Observer: ObserverType> : Sink<Observer>, Observ
     func on(_ event: Event<Element>) {
         switch event {
         case .next:
-            // 如果, 有多个 next 事件发生, 那么就报错.
-            // as 并不是, 在一次 next 接受之后, 就主动的发送 complete 了.
-            // 而是要求, 调用 AsMaybeSink 的 Source 只应该发射一个 Next 信号. 如果多发了, 那么自动在 AsMaybeSink 内部, 就转化成为一个 Error 事件.
+            // 在第一次收到数据之后, 没有直接进行 forward, 而是存起来.
+            // 如果收到了两次 Next, 直接报错, 原来存储的 ele 也不会进行发送 .
             if self.element != nil {
                 self.forwardOn(.error(RxError.moreThanOneElement))
                 self.dispose()

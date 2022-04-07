@@ -39,6 +39,8 @@ public struct SharedSequence<SharingStrategy: SharingStrategyProtocol, Element> 
     let source: Observable<Element>
     
     // 最重要的抽象, 其实就是对 source 进行了一次 share 处理.
+    // share 是一个常见的事情, 所以将这些包装起来.
+    // 只要使用了 SharedSequence, 一定会触发 share. 这要比依靠外界使用者, 主动调用 share 靠谱的多. 
     init(_ source: Observable<Element>) {
         self.source = SharingStrategy.share(source)
     }

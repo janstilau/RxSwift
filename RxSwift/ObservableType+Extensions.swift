@@ -14,6 +14,11 @@ import Foundation
  这是一座桥梁.
  可以将响应式的 Publisher 链式代码, 终结并且桥接到指令式的世界里面来.
  */
+/*
+ 不管概念如何, 最终还是内存对象之前的链接.
+ AnonymousObserver, 是真正的作为响应链构建的一环.
+ 他要满足 Obserser 的抽象 .
+ */
 extension ObservableType {
     
     // 提交了一个闭包, 来完成 event 的处理. 将这个闭包存储到 AnonymousObserver 中, 将 AnonymousObserver 对象, 纳入到响应链条里面.
@@ -101,7 +106,7 @@ extension ObservableType {
          
          所以, subscribe 的返回结果, 是最后一个节点 Sink 对应的 SinkDisposer.
          dispose 的顺序也就是, 最后一个 Sink 的状态改变, 最后一个 Sink 的 Cancel 调用 dispose, 触发前面的一个 Sink 的 Dispose, 链式触发.
-         所以, 其实建立节点的过程, 是从后向前. 主动调用 Dispose 触发的顺序, 也是从后向前. 
+         所以, 其实建立节点的过程, 是从后向前. 主动调用 Dispose 触发的顺序, 也是从后向前.
          */
         return Disposables.create( self.asObservable().subscribe(observer), disposable )
     }

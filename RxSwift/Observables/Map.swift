@@ -28,6 +28,10 @@ final private class MapSink<SourceType, Observer: ObserverType>: Sink<Observer>,
     // 在内部存储了如何变化的闭包. 
     private let transform: Transform
     
+    deinit {
+        print("MapSink Dealloc")
+    }
+    
     init(transform: @escaping Transform, observer: Observer, cancel: Cancelable) {
         self.transform = transform
         super.init(observer: observer, cancel: cancel)

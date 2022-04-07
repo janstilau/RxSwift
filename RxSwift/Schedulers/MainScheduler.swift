@@ -71,6 +71,8 @@ public final class MainScheduler : SerialDispatchQueueScheduler {
         let cancel = SingleAssignmentDisposable()
         
         // 否则, 就把任务添加到 MainQueue 的末尾.
+        // SingleAssignmentDisposable 的作用, 如果, action 没有实际发挥作用, 这就是一个标志为. 当调度到这个命令对象的时候, 直接不执行就好了.
+        // 如果 action 已经实际调用了, 那么就保存一下返回的 Disposable 的值.
         self.mainQueue.async {
             if !cancel.isDisposed {
                 cancel.setDisposable(action(state))

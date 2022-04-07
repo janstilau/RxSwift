@@ -10,22 +10,22 @@ import Dispatch
 import Foundation
 
 /*
-Abstracts the work that needs to be performed on a specific `dispatch_queue_t`.
-It will make sure that even if concurrent dispatch queue is passed, it's transformed into a serial one.
-
-It is extremely important that this scheduler is serial, because
-certain operator perform optimizations that rely on that property.
-
-Because there is no way of detecting is passed dispatch queue serial or
-concurrent, for every queue that is being passed, worst case (concurrent)
-will be assumed, and internal serial proxy dispatch queue will be created.
-
-This scheduler can also be used with internal serial queue alone.
-
-In case some customization need to be made on it before usage,
-internal serial queue can be customized using `serialQueueConfiguration`
-callback.
-*/
+ Abstracts the work that needs to be performed on a specific `dispatch_queue_t`.
+ It will make sure that even if concurrent dispatch queue is passed, it's transformed into a serial one.
+ 
+ It is extremely important that this scheduler is serial, because
+ certain operator perform optimizations that rely on that property.
+ 
+ Because there is no way of detecting is passed dispatch queue serial or
+ concurrent, for every queue that is being passed, worst case (concurrent)
+ will be assumed, and internal serial proxy dispatch queue will be created.
+ 
+ This scheduler can also be used with internal serial queue alone.
+ 
+ In case some customization need to be made on it before usage,
+ internal serial queue can be customized using `serialQueueConfiguration`
+ callback.
+ */
 
 public class SerialDispatchQueueScheduler : SchedulerType {
     
@@ -36,16 +36,20 @@ public class SerialDispatchQueueScheduler : SchedulerType {
     public var now : Date {
         Date()
     }
-
+    
+    /*
+     DispatchQueueConfiguration 是一个工具对象, 中间存储一个 queue. 所有的调度逻辑, 集中到 DispatchQueueConfiguration 内部实现. 
+     */
     let configuration: DispatchQueueConfiguration
     
-    // 如果, 直接传递过来一个 DispatchQueue, 就直接使用过了.
+    
     init(serialQueue: DispatchQueue, leeway: DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0)) {
         self.configuration = DispatchQueueConfiguration(queue: serialQueue, leeway: leeway)
     }
-
+    
     // 内部创建一个串行队列.
-    public convenience init(internalSerialQueueName: String, serialQueueConfiguration: ((DispatchQueue) -> Void)? = nil, leeway: DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0)) {
+    public convenience init(internalSerialQueueName: String,
+                            serialQueueConfiguration: ((DispatchQueue) -> Void)? = nil, leeway: DispatchTimeInterval = DispatchTimeInterval.nanoseconds(0)) {
         // 内部创建一个 DispatchQueue
         let queue = DispatchQueue(label: internalSerialQueueName, attributes: [])
         serialQueueConfiguration?(queue)
@@ -60,21 +64,22 @@ public class SerialDispatchQueueScheduler : SchedulerType {
                                         target: queue)
         self.init(serialQueue: serialQueue, leeway: leeway)
     }
-
+    
     public final func schedule<StateType>(_ state: StateType, action: @escaping (StateType) -> Disposable) -> Disposable {
         self.scheduleInternal(state, action: action)
     }
-
+    
+    //
     func scheduleInternal<StateType>(_ state: StateType, action: @escaping (StateType) -> Disposable) -> Disposable {
         self.configuration.schedule(state, action: action)
     }
-
+    
     public final func scheduleRelative<StateType>(_ state: StateType, dueTime: RxTimeInterval, action: @escaping (StateType) -> Disposable) -> Disposable {
         self.configuration.scheduleRelative(state, dueTime: dueTime, action: action)
     }
     
     public func schedulePeriodic<StateType>(_ state: StateType, startAfter: RxTimeInterval, period: RxTimeInterval, action: @escaping (StateType) -> StateType) -> Disposable {
-        // 直接, 使用了 DispatchQueueConfiguration 完成了定时器的工作. 
+        // 直接, 使用了 DispatchQueueConfiguration 完成了定时器的工作.
         self.configuration.schedulePeriodic(state, startAfter: startAfter, period: period, action: action)
     }
 }

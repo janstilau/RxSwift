@@ -6,6 +6,7 @@
 //  Copyright © 2020 Krunoslav Zaher. All rights reserved.
 //
 
+// 将, 一个普通的 Publisher, 转化为 Infallible, 一定是显示的将错误进行了处理才可以. 
 public extension ObservableConvertibleType {
     /// Convert to an `Infallible`
     ///
@@ -13,7 +14,7 @@ public extension ObservableConvertibleType {
     func asInfallible(onErrorJustReturn element: Element) -> Infallible<Element> {
         Infallible(self.asObservable().catchAndReturn(element))
     }
-
+    
     /// Convert to an `Infallible`
     ///
     /// - parameter infallible: Fall back to this provided infallible on error
@@ -23,7 +24,7 @@ public extension ObservableConvertibleType {
     func asInfallible(onErrorFallbackTo infallible: Infallible<Element>) -> Infallible<Element> {
         Infallible(self.asObservable().catch { _ in infallible.asObservable() })
     }
-
+    
     /// Convert to an `Infallible`
     ///
     /// - parameter onErrorRecover: Recover with the this infallible closure

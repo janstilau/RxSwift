@@ -23,7 +23,7 @@ private var deallocatedSubjectContext: UInt8 = 0
 
 #if !os(Linux)
 
-/**
+/*
  KVO is a tricky mechanism.
  
  When observing child in a ownership hierarchy, usually retaining observing target is wanted behavior.
@@ -36,7 +36,7 @@ private var deallocatedSubjectContext: UInt8 = 0
  * some third method ...
  
  Both approaches can fail in certain scenarios:
- * problems arise when swizzlers return original object class (like KVO does when nobody is observing)
+ * problems arise when swizzlers return original objœect class (like KVO does when nobody is observing)
  * Problems can arise because replacing dealloc method isn't atomic operation (get implementation,
  set implementation).
  
@@ -44,7 +44,6 @@ private var deallocatedSubjectContext: UInt8 = 0
  to replace dealloc method. In case that isn't the case, it should be ok.
  */
 extension Reactive where Base: NSObject {
-    
     
     /**
      Observes values on `keyPath` starting from `self` with `options` and retains `self` if `retainSelf` is set.
@@ -141,6 +140,7 @@ extension Reactive where Base: AnyObject {
             }
             
             let deallocObservable = DeallocObservable()
+            // 给自己的 base 挂钩一个关联对象.
             objc_setAssociatedObject(self.base, &deallocatedSubjectContext, deallocObservable, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
             
             return deallocObservable.subject
@@ -370,10 +370,6 @@ private final class KVOObserver
     var retainSelf: KVOObserver?
     
     init(parent: KVOObservableProtocol, callback: @escaping Callback) {
-#if TRACE_RESOURCES
-        _ = Resources.incrementTotal()
-#endif
-        
         super.init(target: parent.target, retainTarget: parent.retainTarget, keyPath: parent.keyPath, options: parent.options.nsOptions, callback: callback)
         self.retainSelf = self
     }
@@ -383,11 +379,6 @@ private final class KVOObserver
         self.retainSelf = nil
     }
     
-    deinit {
-#if TRACE_RESOURCES
-        _ = Resources.decrementTotal()
-#endif
-    }
 }
 
 private final class KVOObservable<Element>
@@ -420,7 +411,6 @@ private final class KVOObservable<Element>
             }
             observer.on(.next(value as? Element))
         }
-        
         return Disposables.create(with: observer.dispose)
     }
     
@@ -555,12 +545,16 @@ extension Reactive where Base: AnyObject {
     }
 }
 
+// 这个用的不是很多, 仅仅在 NSControl, 和 UIBarButtonItem 里面使用到了.
+// 如果, 可以取到值, 那么一定是该类型的值. 如果取不到, 使用工厂方法, 进行生成.
+// 这是一个非常常用的设计思路. 
 extension Reactive where Base: AnyObject {
-    /**
+    /*
      Helper to make sure that `Observable` returned from `createCachedObservable` is only created once.
      This is important because there is only one `target` and `action` properties on `NSControl` or `UIBarButtonItem`.
      */
-    func lazyInstanceObservable<T: AnyObject>(_ key: UnsafeRawPointer, createCachedObservable: () -> T) -> T {
+    func lazyInstanceObservable<T: AnyObject>(_ key: UnsafeRawPointer,
+                                              createCachedObservable: () -> T) -> T {
         if let value = objc_getAssociatedObject(self.base, key) {
             return value as! T
         }

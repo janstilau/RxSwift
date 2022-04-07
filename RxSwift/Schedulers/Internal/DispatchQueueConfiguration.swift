@@ -9,11 +9,8 @@
 import Dispatch
 import Foundation
 
-/*
- DispatchQueueConfiguration
- 这个类就是是使用 DispatchQueue 进行 Schedule 的逻辑的封装处理.
- */
 struct DispatchQueueConfiguration {
+    // 在定义里面, 并没有区分这个 queue 是否是串行队列.
     let queue: DispatchQueue
     let leeway: DispatchTimeInterval
 }
@@ -61,12 +58,14 @@ extension DispatchQueueConfiguration {
             if compositeDisposable.isDisposed {
                 return
             }
+            // 使得, compositeDisposable 有了取消 action 触发的异步操作的能力.
             _ = compositeDisposable.insert(action(state))
-            // cancelTimer 还是在 compositeDisposable 里面, 这是没有问题的, 因为在 cancelTimer dispose 之后, 里面的资源就释放了. 重复调用, 没有副作用.
+            // cancelTimer 还是在 compositeDisposable 里面, 这是没有问题的, 因为在 cancelTimer dispose 之后, 会有状态为的变化. 所以重复调用不会引起重复的 dispose.
             cancelTimer.dispose()
         })
         timer.resume()
 
+        // 使得, compositeDisposable 有了取消调度的能力.
         _ = compositeDisposable.insert(cancelTimer)
 
         return compositeDisposable

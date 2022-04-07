@@ -16,7 +16,7 @@ private final class FirstSink<Element, Observer: ObserverType> : Sink<Observer>,
     func on(_ event: Event<Element>) {
         switch event {
         case .next(let value):
-            // 如果有数据, 发送整个数据之后, 立马就发送 complte 并且 dispose 了.
+            // 如果有数据, 那么得到第一个数据之后, 立马进行 complete.
             self.forwardOn(.next(value))
             self.forwardOn(.completed)
             self.dispose()
@@ -24,7 +24,7 @@ private final class FirstSink<Element, Observer: ObserverType> : Sink<Observer>,
             self.forwardOn(.error(error))
             self.dispose()
         case .completed:
-            // 如果没有数据, 就发送一个 nil 回去.
+            // 如果没有数据直接 Complete 了, 那么发送一个 Nil 之后, 立马进行 complete.
             self.forwardOn(.next(nil))
             self.forwardOn(.completed)
             self.dispose()

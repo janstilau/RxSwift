@@ -2,8 +2,11 @@
 // 其实, 没有特定的限制. 只是少了 onError 的处理 .
 // 从下面的快捷方法来看, 也是没有了 error 的处理.
 
+// InfallibleType 就是 ObservableConvertibleType, 没有办法限制, 不会失败. 仅仅是在语义上限制.
 public protocol InfallibleType: ObservableConvertibleType {}
 
+// 和 Primitive 一样, 就是包装一个 source 这个值.
+// 然后, 在 Infallible 上增加操作. 实际上, 各种纳入到响应链条的操作, 铁定是使用 source
 public struct Infallible<Element>: InfallibleType {
     private let source: Observable<Element>
     init(_ source: Observable<Element>) {
@@ -13,7 +16,7 @@ public struct Infallible<Element>: InfallibleType {
 }
 
 extension InfallibleType {
-    /**
+    /*
      Subscribes an element handler, a completion handler and disposed handler to an observable sequence.
      
      Error callback is not exposed because `Infallible` can't error out.

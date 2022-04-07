@@ -12,6 +12,7 @@ import RxSwift
 import UIKit
 
 extension Reactive where Base: UIScrollView {
+    
     public typealias EndZoomEvent = (view: UIView?, scale: CGFloat)
     public typealias WillEndDraggingEvent = (velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>)
     
@@ -110,6 +111,7 @@ extension Reactive where Base: UIScrollView {
     
     /// Reactive wrapper for delegate method `scrollViewDidEndZooming(_:with:atScale:)`
     public var didEndZooming: ControlEvent<EndZoomEvent> {
+        // optional func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat)
         let source = delegate.methodInvoked(#selector(UIScrollViewDelegate.scrollViewDidEndZooming(_:with:atScale:))).map { value -> EndZoomEvent in
             return (try castOptionalOrThrow(UIView.self, value[1] as AnyObject), try castOrThrow(CGFloat.self, value[2]))
         }

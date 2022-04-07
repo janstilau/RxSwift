@@ -35,6 +35,8 @@ public struct Reactive<Base> {
         // Binder 封装的是一个 On 方法.
         // 而这个 On 方法, 就是使用前方信号的数据, 进行 base[keyPath: keyPath] = value 的赋值操作.
         // 这就是 bind(to: label.rx.text) 能成功的原因. Binder 是一个 Observer
+        
+        // 这种, 传递一个闭包过去的包装类, 有着无限的可能性.
         Binder(self.base) { base, value in
             base[keyPath: keyPath] = value
         }
