@@ -20,7 +20,7 @@
 
 class Sink<Observer: ObserverType>: Disposable {
     
-    // Sink 和 自己的
+    // Observer 是不会变为 nil 的. 所以, 如果 Sink dispose 之后, 其实还是保留了下一个节点的指针. 
     fileprivate let observer: Observer // Sink 操作后数据后, 应该传递数据的去向
     fileprivate let cancel: Cancelable // 一般来说是 SinkDisposer
     

@@ -26,7 +26,7 @@ public final class DisposeBag: DisposeBase {
     
     private var lock = SpinLock()
     
-    // state
+    // 将, 所有的 disposable 对象, 进行统一的管理.
     private var disposables = [Disposable]()
     private var isDisposed = false
     

@@ -110,6 +110,10 @@ private final class SinkDisposer: Cancelable {
         }
     }
     
+    /*
+     调用 dispose 释放资源. 是这里打破了循环引用.
+     但是, 作为 Sink 来说, 
+     */
     func dispose() {
         // fetchOr 会修改 self.state 的值.
         // 所以第二次进入的时候, 不会引起这个方法的递归调用.

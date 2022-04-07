@@ -124,7 +124,9 @@ public final class PublishSubject<Element> : Observable<Element>
     public func dispose() {
         self.lock.performLocked { self.synchronized_dispose() }
     }
-    
+
+    // Subject 的dispose, 会把下个节点删除.
+    // 所以 Subject 的 Dispose 会引起内存的变化.
     final func synchronized_dispose() {
         self.disposed = true
         self.observers.removeAll()
