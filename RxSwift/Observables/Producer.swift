@@ -24,11 +24,10 @@ class Producer<Element>: Observable<Element> {
     }
     
     /*
-     Producer 并不是实际的相应联调上的节点对象, 它是节点的生产者.
-     当真正的需要订阅的时候, Producer 才会生成 Sink 节点, 添加到响应链条里面.
-     一般来说, 一个 Publisher, 很多的 Operator, 然后终点是一个 Subscriber.
+     Sink 和 SinkDisposer 之间, 有着循环引用, 就是因为这层机制, 使得各个 PineLine 可以独立的存活.
      */
-    override func subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable where Observer.Element == Element {
+    override func subscribe<Observer: ObserverType>(_ observer: Observer)
+    -> Disposable where Observer.Element == Element {
         if !CurrentThreadScheduler.isScheduleRequired {
             // The returned disposable needs to release all references once it was disposed.
             let disposer = SinkDisposer()
@@ -47,21 +46,6 @@ class Producer<Element>: Observable<Element> {
         }
     }
     
-    /*
-     子类, 子类化 run 的具体实现.
-     返回 Sink 对象, 以及返回的 Subscription 对象.
-     
-     Publisher()->Map->Filter->Subject
-     
-     在以上的这个链条里面, 当 Filter Subscribe Subject 的时候, 返回的是一个 SinkDisposer 对象.
-     SinkDisposer 对象里面, 存储着 FilterSink 对象, 以及 Map Subscribe FilterSink 的返回值, 还是一个 SinkDisposer 对象.
-     Filter 的 Subscribe 方法, 会触发它的 source 的 subscribe 的方法. 就是这样, 将真正的响应者链条进行了串连.
-     FilterDisposer - MapDisposer - PublisherDisposer
-     |               |
-     FilterSink        MapSink
-     
-     最终返回的是 FilterDisposer, 通过上面的关系, 可以看到, FilterDisposer 的 Dispose 可以引起整个链条的 Dispose 触发.
-     */
     func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable)
     where Observer.Element == Element {
         rxAbstractMethod()
