@@ -1,17 +1,10 @@
-
-
 /*
- Subject 的意义在于, 这是一个从指令式编码模块, 到响应式编码模块的交接点.
- 我们可以使用原有的指令式的代码, 来计算出值, 然后使用 Subject 进行信号的发射.
- 而 Subject 的内部, 其实是保存了各个 Observers 的.
+ Subject 是一个交接点, 可以将原有的指令世界的逻辑, 通过 Subject 转移到响应式的世界.
+ 一般来说, 这个 Subject 会是一个成员变量, 业务类完成自己的操作只有, 会修改这个成员变量. Subject 的成员变量的修改, 会触发信号的发送.
+ 这样, 任何监听这个成员变量的地方, 就可以触发之前注册的各种业务逻辑了.
  */
-
-/*
- 真正的使用 rx 开发, 进行各种 Observable 的组装实在是过于复杂.
- 对于想要信号槽的那种松耦合的开发场景, 使用 Subject 是一个非常通用的行为.
- 在 App 架构那本书里面, 简化版的 MVVM 也是使用了 Subject 来当做源头.
- */
-public final class PublishSubject<Element> : Observable<Element>
+public final class PublishSubject<Element> :
+Observable<Element>
 , SubjectType
 , Cancelable
 , ObserverType
@@ -21,11 +14,6 @@ public final class PublishSubject<Element> : Observable<Element>
     
     typealias Observers = AnyObserver<Element>.s
     typealias DisposeKey = Observers.KeyType
-    
-    /// Indicates whether the subject has any observers
-    public var hasObservers: Bool {
-        self.lock.performLocked { self.observers.count > 0 }
-    }
     
     private let lock = RecursiveLock()
     
@@ -40,6 +28,11 @@ public final class PublishSubject<Element> : Observable<Element>
         self.disposed
     }
     
+    /// Indicates whether the subject has any observers
+    public var hasObservers: Bool {
+        self.lock.performLocked { self.observers.count > 0 }
+    }
+    
     /// Creates a subject.
     public override init() {
         super.init()
@@ -51,8 +44,8 @@ public final class PublishSubject<Element> : Observable<Element>
     public func on(_ event: Event<Element>) {
         dispatch(self.synchronized_on(event), event)
     }
-    
-    // 这是一个 Get 函数, 这里的命名不好.
+
+    // 一个 Get 函数里面, 有这么大的副作用, 不明白为什么要这样的设计.
     func synchronized_on(_ event: Event<Element>) -> Observers {
         self.lock.lock(); defer { self.lock.unlock() }
         
@@ -90,18 +83,20 @@ public final class PublishSubject<Element> : Observable<Element>
     // synchronized_subscribe 这种明显函数名的命名, 展示了这个方法, 就是在锁的环境下. 方法内部不需要考虑所的问题.
     func synchronized_subscribe<Observer: ObserverType>(_ observer: Observer) -> Disposable
     where Observer.Element == Element {
+        // 如果, 已经 Stopped 了, 那么新的监听者, 会监听到之前存储的 StoppedEvent.
         if let stoppedEvent = self.stoppedEvent {
             observer.on(stoppedEvent)
             return Disposables.create()
         }
         
+        // 如果, 已经 isDisposed 了, 那么不应该在注册新的监听者.
         if self.isDisposed {
             observer.on(.error(RxError.disposed(object: self)))
             return Disposables.create()
         }
         
         // 在 Share 里面, 使用了 Subject. 因为 Subject 这种存储, 是真正的分发的结构. 所有的后继节点, 公用一个源头.
-        // Bag 里面, 仅仅存储闭包, 而这个闭包, 其实是有生命周期管理的. 
+        // 这种, 直接存储对象的方法的方式, 是会保留对象的生命周期的. 
         let key = self.observers.insert(observer.on)
         return SubscriptionDisposable(owner: self, key: key)
     }

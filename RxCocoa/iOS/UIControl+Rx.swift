@@ -77,6 +77,7 @@ extension Reactive where Base: UIControl {
             return Disposables.create(with: controlTarget.dispose)
         }.take(until: deallocated)
         
+        // Binder, 存储一个 Setter 闭包, 在 on 函数里面, 使用这个 Setter 闭包, 来处理 next(value) 的值. 
         let bindingObserver = Binder(base, binding: setter)
         return ControlProperty<T>(values: source, valueSink: bindingObserver)
     }

@@ -23,6 +23,7 @@ public struct Binder<Value>: ObserverType {
                                    binding: @escaping (Target, Value) -> Void) {
         weak var weakTarget = target
         
+        // 之所以, 需要这一层构建, 主要是为了处理环境 的调度. 也就是主线程的调度 .
         self.binding = { event in
             switch event {
             case .next(let element):
@@ -43,6 +44,7 @@ public struct Binder<Value>: ObserverType {
         }
     }
     
+    // Binder 作为一个 Observer, 主要的功能就是可以接受 Event 事件.
     public func on(_ event: Event<Value>) {
         self.binding(event)
     }

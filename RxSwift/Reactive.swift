@@ -28,8 +28,16 @@ public struct Reactive<Base> {
     public let base: Base
     public init(_ base: Base) {
         self.base = base
+        
     }
     
+    
+    /*
+     Base, 可以用来确定 对象的类型.
+     Property, 可以用来确定, 对象属性的类型.
+     
+     实际上, 这是利用编译器, 来确保 API 的高可用性. 
+     */
     public subscript<Property>(dynamicMember keyPath: ReferenceWritableKeyPath<Base, Property>) -> Binder<Property>
     where Base: AnyObject {
         // Binder 封装的是一个 On 方法.
@@ -74,5 +82,6 @@ extension ReactiveCompatible {
 }
 
 import Foundation
+import UIKit
 
 extension NSObject: ReactiveCompatible { }
