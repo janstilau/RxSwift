@@ -61,9 +61,7 @@ extension ObservableType {
     }
     
     /*
-     实际上, 经常使用的方法.
-     使用者, 提供了各个不同的场景应该调用的方法, 但是其实他们都是 event 的 switch 处理分支逻辑.
-     所以, 还是构建一个 AnonymousObserver, 将所有的这些分支处理逻辑, 合并到一个 Block 里面.
+     最最核心的一个类, 命令式的节点. 
      */
     public func subscribe(
         onNext: ((Element) -> Void)? = nil,
