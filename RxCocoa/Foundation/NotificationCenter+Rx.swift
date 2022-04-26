@@ -25,6 +25,8 @@ extension Reactive where Base: NotificationCenter {
          当, 触发了信号发送的时候, 这个 Sink 接受到信号, 然后传递到后方的节点上.
          现在, 触发信号发送的时机, 是 NotificationCenter post 的时候. 
          */
+        
+        // 相比较 Combine 里面的实现, 这里的实现, 简单清晰太多了. 
         return Observable.create { [weak object] observer in
             let nsObserver = self.base.addObserver(forName: name, object: object, queue: nil) { notification in
                 observer.on(.next(notification))
